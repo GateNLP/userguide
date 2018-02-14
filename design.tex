@@ -1,0 +1,376 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% design.tex
+%
+% hamish, 25/8/1
+%
+% $Id: design.tex,v 1.7 2005/02/10 17:08:59 ian Exp $
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapt[chap:design]{Design Notes}
+\markboth{Design Notes}{Design Notes}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%% qqqqqqqqqqqqqqqqqqqqqqqqq %%%%
+\begin{quote}
+Why has the pleasure of slowness disappeared? Ah, where have they gone,
+the amblers of yesteryear? Where have they gone, those
+loafing heroes of folk song, those vagabonds who roam from one mill to
+another and bed down under the stars? Have they vanished
+along with footpaths, with grasslands and clearings, with nature? There
+is a Czech proverb that describes their easy indolence by a
+metaphor: `they are gazing at God's windows.' A person gazing at God's
+windows is not bored; he is happy. In our world, indolence
+has turned into having nothing to do, which is a completely different
+thing: a person with nothing to do is frustrated, bored, is
+constantly searching for an activity he lacks. 
+
+{\it Slowness}, Milan Kundera, 1995  (pp. 4-5).
+\end{quote}
+%%%% qqqqqqqqqqqqqqqqqqqqqqqqq %%%%
+
+
+GATE is a backplane into which specialised Java Beans plug.
+These beans are loose-coupled with respect to each other - they communicate
+entirely by means of the GATE framework.
+Inter-component communication is handled by model components -
+LanguageResources, and events.
+
+Components are defined by conformance to various interfaces (e.g.
+LanguageResource), ensuring
+separation of interface and implementation.
+
+The reason for adding to the normal bean initialisation mech is that
+LRs, PRs and VRs all have characteristic parameterisation
+phases; the GATE resources/components model makes explicit these phases.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:design:patterns]{Patterns}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+GATE is structured around a number of what we might call principles, or
+patterns, or alternatively, clever ideas stolen from better minds than
+mine. These patterns are:
+\begin{itemize}
+\item 
+modelling most things as extensible sets of components (cf.\ Section~\ref{sec:design:components});
+\item 
+separating components into
+model, view, or controller (cf.\ Section~\ref{sec:design:mvc}) types;
+\item 
+hiding implementation behind interfaces (cf.\ Section~\ref{sec:design:interfaces}).
+\end{itemize}
+
+Four interfaces in the top-level package describe the GATE view of
+components:
+Resource, ProcessingResource, LanguageResource and VisualResource.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:design:components]{Components}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsect{Architectural Principle}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+Wherever users of the architecture may wish to extend the set of a
+particular type of entity, those types should be expressed as components.
+
+Another way to express this is to say that the architecture is based on
+{\em agents}. I've avoided this in the past because of an association
+between this term and the idea of bits of code moving around between
+machines of their own volition. I take this to be somewhat pointless, and
+probably the result of an anthropomorphic obsession with mobility as a
+correlate of intelligence. If we drop this connotation, however, we can
+say that GATE is an agent-based architecture. If we want to, that is.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsect{Framework Expression}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Many of the classes in the framework are components, by which we mean
+classes that conform to an interface with certain standard properties. In
+our case these properties are based on the Java Beans component
+architecture, with the addition of component metadata, automated loading
+and standardised storage, threading and distribution.
+
+All components inherit from Resource, via one of the three sub-interfaces
+LanguageResource (LR), VisualResource (VR) or ProcessingResource (PR)
+VisualResources (VRs) are straightforward -- they represent visualisation and
+editing components that participate in GUIs -- but the distinction between
+language and processing resources merits further discussion.
+
+Like other software, LE programs consist of data and algorithms. The
+current orthodoxy in software development is to model both data and
+algorithms together, as {\it objects}\footnote{Older
+development methods like Jackson Structured Design \cite{Jac75}
+or Structured Analysis \cite{You89} kept them
+largely separate.}. Systems that adopt the new approach are
+referred to as Object-Oriented (OO), and there are good reasons to believe
+that OO software is easier to build and maintain than other varieties
+\cite{Boo94,You96}.
+
+In the domain of human language processing R\&D, however, the
+terminology is a little more complex.
+Language data, in various forms, is of such
+significance in the field that it is frequently worked on independently
+of the algorithms that process it. For example: a treebank\footnote{A
+corpus of texts annotated with syntactic analyses.}
+can be developed independently of the
+parsers that may later be trained from it; a thesaurus can be developed
+independently of the query expansion or sense tagging mechanisms that may later
+come to use it. This type of data has come to have its
+own term, {\it Language Resources} (LRs) \cite{Lrec98}, covering many
+data sources, from lexicons to corpora.
+
+In recognition of this distinction, we will adopt the following
+terminology:
+%
+\begin{description}
+%
+\item[Language Resource (LR):] refers to data-only resources such as
+lexicons, corpora, thesauri or ontologies.
+Some LRs come with software (e.g. Wordnet has both a user
+query interface and C and Prolog APIs), but where this is only a means of
+accessing the underlying data we will still define such resources as LRs.
+%
+\item[Processing Resource (PR):] refers to resources whose character is
+principally programmatic or algorithmic, such as lemmatisers, generators,
+translators, parsers or speech recognisers. For example, a part-of-speech
+tagger is best characterised by reference to the process it performs on
+text. PRs typically {\it include} LRs, e.g. a tagger often has a lexicon; a
+word sense disambiguator uses a dictionary or thesaurus.
+%
+\end{description}
+%
+Additional terminology worthy of note in this context:
+{\it language data}
+refers to LRs which are at their core examples of language in practice, or
+`performance data', e.g. corpora of texts
+or speech recordings (possibly including
+added descriptive information as markup);
+{\it data about language} refers to LRs which are purely descriptive, such as a
+grammar or lexicon.
+
+PRs can be viewed as algorithms that map between different types of LR,
+and which typically use LRs in the mapping process. An MT engine, for
+example, maps a monolingual corpus into a multilingual aligned corpus
+using lexicons, grammars, etc.\footnote{This point is due to Wim Peters.}
+
+Further support for the PR/LR terminology may be gleaned from the argument in
+favour of declarative data structures for grammars, knowledge bases, etc. This
+argument was current in the late 1980s and early 1990s \cite{Gaz89},
+partly as a response to what has been seen as the overly
+procedural nature of previous techniques such as augmented transition networks.
+Declarative structures represent a separation between data about language and
+the algorithms that use the data to perform language processing tasks; a similar
+separation to that used in GATE.
+
+Adopting the PR/LR distinction is a matter of conforming to established domain
+practice and terminology. It does not imply that we cannot model the domain (or
+build software to support it) in an Object-Oriented manner; indeed the models
+in GATE are themselves Object-Oriented.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:design:mvc]{Model, view, controller}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+According to Buschmann et al
+(Pattern-Oriented Software Architecture, 1996),
+the Model-View-Controller (MVC)
+pattern 
+\begin{quotation} 
+...divides an interactive application into three components. The model
+contains the core functionality and data. Views display information to the
+user. Controllers handle user input. Views and controllers together comprise
+the user interface. A change-propagation mechanism ensures consistency between
+the user interface and the model. \mbox{$[$}p.125\mbox{$]$}\end{quotation}
+A variant of MVC, the Document-View pattern, 
+\begin{quotation} 
+...relaxes the separation of view and controller... The View component of
+Document-View combines the responsibilities of controller and view in MVC, and
+implements the user interface of the system.\end{quotation}
+A benefit of both arrangements is that 
+\begin{quotation} 
+...loose coupling of the document and view components enables multiple
+simultaneous synchronized but different views of the same document.\end{quotation}
+
+Geary (Graphic Java 2, 3rd Edtn., 1999) gives a slightly different view:
+\begin{quotation} 
+MVC separates applications into three types of objects:
+\begin{itemize}
+\item 
+{\bf Models:} Maintain data and provide data accessor methods
+\item 
+{\bf Views:} Paint a visual representation of some or all of a model's data
+\item 
+{\bf Controllers:} Handle events
+... By encapsulating what other architectures intertwine, MVC applications are
+much more flexible and reusable than their traditional counterparts.
+\end{itemize}
+\mbox{$[$}pp. 71, 75\mbox{$]$}\end{quotation}
+Swing, the Java user interface framework, uses
+\begin{quotation} 
+a specialised version of the classic MVC meant to support pluggable look and
+feel instead of applications in general.
+\mbox{$[$}p. 75\mbox{$]$}\end{quotation}
+
+GATE may be regarded as an MVC architecture in two ways:
+\begin{itemize}
+\item 
+directly, because we use the Swing toolkit for the GUIs;
+\item 
+by analogy, where LRs are models, VRs are views and PRs are controllers.
+Of these, the latter sits least
+easily with the MVC scheme, as PRs may indeed be controllers but may also
+not be.
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:design:interfaces]{Interfaces}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsect{Architectural Principle}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The implementation of types should generally be hidden from the clients of
+the architecture.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsect{Framework Expression}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+With a few exceptions (such as for utility classes),
+clients of the framework work with the {\tt gate.*} package.
+This package is mostly composed of interface definitions.
+Instantiations of these interfaces are obtained via the {\tt Factory}
+class.
+
+The subsidiary packages of GATE provide the implementations of the
+{\tt gate.*} interfaces that are accessed via the factory. They
+themselves avoid directly constructing classes from other packages
+(with a few exceptions, such as JAPE's need for unattached annotation
+sets). Instead they use the factory.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:design:exceptions]{Exception Handling}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+When and how to use exceptions? Borrowing from Bill Venners, here
+are some {\bf guidelines} (with examples):
+
+\begin{enumerate}
+\item 
+Exceptions exist to refer problem conditions up the call stack to a level at
+which they may be dealt with.
+{\tt{}"{}}If your method encounters an abnormal condition {\em that it can't handle},
+it should throw an exception.{\tt{}"{}} If the method can handle the problem rationally,
+it should catch the exception and deal with it.\newline
+
+{\bf Example:}\newline
+If the creation of a resource such as a document requires a URL as a parameter,
+the method that does the creation needs to construct the URL and read from it. If
+there is an exception during this process, the GATE method should abort by throwing
+its own exception. The exception will be dealt with higher up the food chain, e.g. 
+by asking the user to input another URL, or by aborting a batch script.
+
+\item 
+All GATE exceptions should inherit from gate.util.GateException (a descendant of
+java.lang.Exception, hence a checked exception) or
+gate.util.GateRuntimeException (a descendant of java.lang.RuntimeException,
+hence an unchecked exception). This rule means that clients of GATE code can
+catch all sorts of exceptions thrown by the system with only two catch
+statements. (This rule may be broken by methods that are not public, so long as
+their callers catch the non-GATE exceptions and deal with them or convert them
+to GateException/GateRuntimeException.)
+Almost {\bf all} exceptions thrown by GATE should be checked exceptions: the
+point of an exception is that clients of your code get to know about it, so use
+a checked exception to make the compiler force them to deal with it. Except:\newline
+
+{\bf Example:}\newline
+With reference to the previous example, a problem using the URL will be
+signalled by something like an UnknownHostException or an IOException. These
+should be caught and re-thrown as descendants of GateException.
+
+\item 
+In a situation where an exceptional condition is an indication of a bug in the
+GATE library, or in the implementation of some other library, then it is
+permissible to throw an unchecked exception.\newline
+
+{\bf Example:}\newline
+If a method is creating annotations on a document, and before creating the
+annotations it checks that their start and end points are valid ranges in
+relation to the content of the document (i.e. they fall within the offset space
+of the document, and the end is after the start), then if the method receives an
+InvalidOffsetException from the AnnotationSet.add call, something is seriously
+wrong. In such cases it may be best to throw a GateRuntimeException.
+
+\item 
+Where you are inheriting from a non-GATE class and therefore have the exception
+signatures fixed for you, you may add a new exception deriving from a non-GATE
+class.\newline
+
+{\bf Example:}\newline
+The SAX XML parser API uses SaxException. Implementing a SAX parser for a
+document type involves overriding methods that throw this exception. Where you
+want to have a subtype for some problem which is specific to GATE processing,
+you could use GateSaxException which extends SaxException.
+
+\item 
+Test code is different: in the JUnit test cases it is fine just to declare that
+each method throws Exception and leave it at that. The JUnit test runner will
+pick up the exceptions and report them to you. Test methods should, however,
+try and ensure that the exceptions thrown are meaningful. For example, avoid
+null pointer exceptions in the test code itself, e.g. by using assertNonNull.\newline
+
+{\bf Example:}
+\begin{lstlisting}  
+  public void testComments() throws Exception { 
+    ResourceData docRd = (ResourceData) reg.get("gate.Document"); 
+    assertNotNull(
+      "testComments: couldn't find document res data", docRd
+    ); 
+    String comment = docRd.getComment(); 
+    assert( 
+      "testComments: incorrect or missing COMMENT on document", 
+      comment != null && comment.equals("GATE document") 
+    ); 
+  } // testComments() 
+\end{lstlisting}
+
+See also the testing notes.
+
+\item 
+{\tt{}"{}}Throw a different exception type for each abnormal condition.{\tt{}"{}} You can go too
+far on this one - a hundred exception types per package would certainly be too
+much - but in general you should create a new exception type for each different
+sort of problem you encounter.\newline
+
+{\bf Example:}\newline
+The gate.creole package has a ResourceInstantiationException - this deals with
+all problems to do with creating resources. We could have had
+{\tt{}"{}}ResourceUrlProblem{\tt{}"{}} and {\tt{}"{}}ResourceParameterProblem{\tt{}"{}} but that would probably have
+ended up with too many. On the other hand, just throwing everything as
+GateException is too coarse (Hamish take note!).
+
+\item 
+Put exceptions in the package that they're thrown from (unless they're used in
+many packages, in which case they can go in gate.util). This makes it easier to
+find them in the documentation and prevents name clashes.\newline
+
+{\bf Example:}\newline
+gate.jape.ParserException is correctly placed; if it was in gate.util it might
+clash with, for example, gate.xml.ParserException if there was such.
+\end{enumerate}

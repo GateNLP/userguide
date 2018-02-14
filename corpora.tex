@@ -1,0 +1,1472 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% corpora.tex
+%
+% hamish, 25/8/1
+%
+% $Id: corpora.tex,v 1.23 2006/07/19 13:27:50 ian Exp $
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapt[chap:corpora]{Language Resources: Corpora, Documents and Annotations}
+\markboth{Language Resources: Corpora, Documents and Annotations}{Language Resources: Corpora, Documents and Annotations}
+%\chapt{Corpora, Documents and Annotations}\label{chap:corpora}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\nnormalsize
+%%%% qqqqqqqqqqqqqqqqqqqqqqqqq %%%%
+\ifprintedbook \else
+\begin{quote}
+Sometimes in life you've got to dance like nobody's watching.
+\\
+\ldots
+
+I think they should introduce `sleeping' to the Olympics. It would be an 
+excellent field event, in which the `athletes' (for want of a better word)
+all lay down in beds, just beyond where the javelins land,
+and the first one to fall asleep and not wake up for three hours
+would win gold. I, for one, would be interested in seeing what kind of
+personality would be suited to sleeping in a competitive environment.
+\\
+\ldots
+
+Life is a mystery to be lived, not a problem to be solved.
+
+{\it Round Ireland with a Fridge}, Tony Hawks, 1998 (pp. 119, 147, 179).
+\end{quote}
+\fi
+%%%% qqqqqqqqqqqqqqqqqqqqqqqqq %%%%
+
+This \chapthing\ documents GATE's model of corpora, documents and annotations
+on documents. Section \ref{sec:corpora:features} describes the simple
+attribute/value data model that corpora, documents and annotations all share. Section
+\ref{sec:corpora:corpora}, Section \ref{sec:corpora:documents} and Section
+\ref{sec:corpora:dags} describe corpora, documents and annotations on documents
+respectively. Section \ref{sec:corpora:formats} describes GATE's support for
+diverse document formats, and Section \ref{sec:corpora:xml} describes
+facilities for XML input/output.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:corpora:features]{Features: Simple Attribute/Value Data}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+GATE has a single model for information that describes documents, collections
+of documents (corpora), and annotations on documents, based on attribute/value
+pairs. Attribute names are strings; values can be any Java object. The API
+for accessing this feature data is Java's {\tt Map} interface (part of the
+Collections API).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:corpora:corpora]{Corpora: Sets of Documents plus Features}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+A Corpus in GATE is a Java Set whose members are Documents.
+Both Corpora and Documents are types of LanguageResource (LR); all
+LRs have a FeatureMap (a Java Map) associated with them that
+stored attribute/value information about the resource. FeatureMaps are also
+used to associate arbitrary information with ranges of documents (e.g. pieces
+of text) via the annotation model (see below).
+
+Documents have a DocumentContent which is
+a text at present (future versions may add support for audiovisual content)
+and one or more AnnotationSets which are Java Sets.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:corpora:documents]{Documents: Content plus Annotations plus Features}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Documents are modelled as content plus annotations (see Section
+\ref{sec:corpora:dags}) plus features (see Section \ref{sec:corpora:features}).
+The content of a document can be any subclass of {\tt DocumentContent}.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:corpora:dags]{Annotations: Directed Acyclic Graphs}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Annotations are organised in graphs, which are modelled as Java sets of 
+Annotation.  Annotations may be considered as the arcs in the graph; 
+they have a start Node and an end Node, an ID, a type and a
+FeatureMap. Nodes have pointers into the sources document, e.g. character
+offsets.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:corpora:schemas]{Annotation Schemas}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Annotation schemas provide a means to define types of annotations in GATE.
+GATE uses the XML Schema language supported by W3C for these definitions.
+When using GATE Developer to
+create/edit annotations, a component is available
+({\tt gate.gui.SchemaAnnotationEditor}) which is
+driven by an annotation schema file. This component will constrain the data
+entry process to ensure that only annotations that correspond to a particular
+schema are created. (Another component allows unrestricted annotations to be
+created.)
+
+Schemas are resources just like other GATE components. Below we give some
+examples of such schemas. Section \ref{sec:developer:schemaannotationeditor}
+describes how to create new schemas.  Note that each schema file defines a
+single annotation type, however it is possible to use \emph{include}
+definitions in a schema to refer to other schemas in order to load a whole set
+of schemas as a group.  The default schemas for ANNIE annotation types (defined
+in \verb!resources/schema! in the ANNIE plugin) give an example of this
+technique.
+
+\small
+\subsubsection*{Date Schema}
+\begin{small}
+\begin{verbatim}
+<?xml version="1.0"?>
+<schema
+xmlns="http://www.w3.org/2000/10/XMLSchema">
+ <!-- XSchema deffinition for Date-->
+  <element name="Date">
+    <complexType>
+      <attribute name="kind"  use="optional">
+        <simpleType>
+          <restriction base="string">
+            <enumeration value="date"/>
+            <enumeration value="time"/>
+            <enumeration value="dateTime"/>
+          </restriction>
+        </simpleType>
+    </attribute>
+  </complexType>
+ </element>
+</schema>
+\end{verbatim}
+\end{small}
+
+\subsubsection*{Person Schema}
+\begin{small}
+\begin{verbatim}
+<?xml version="1.0"?>
+<schema
+xmlns="http://www.w3.org/2000/10/XMLSchema">
+    <!-- XSchema definition for Person-->
+    <element name="Person" />
+</schema>
+\end{verbatim}
+\end{small}
+
+\subsubsection*{Address Schema}
+\begin{small}
+\begin{verbatim}
+<?xml version="1.0"?> <schema
+xmlns="http://www.w3.org/2000/10/XMLSchema">
+    <!-- XSchema definition for Address-->
+    <element name="Address">
+      <complexType>
+        <attribute name="kind"  use="optional">
+          <simpleType>
+            <restriction base="string">
+              <enumeration value="email"/>
+              <enumeration value="url"/>
+              <enumeration value="phone"/>
+              <enumeration value="ip"/>
+              <enumeration value="street"/>
+              <enumeration value="postcode"/>
+              <enumeration value="country"/>
+              <enumeration value="complete"/>
+            </restriction>
+        </simpleType>
+    </attribute>
+  </complexType>
+</element>
+</schema>
+\end{verbatim}
+\end{small}
+\nnormalsize
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:corpora:ann-examples]{Examples of Annotated Documents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+This section shows some simple examples of annotated documents.
+
+This material is adapted from \cite{Gri96b}, the TIPSTER Architecture Design
+document upon which GATE version 1 was based. Version 2 has a similar model,
+although annotations are now graphs, and instead of multiple spans per
+annotation each annotation now has a single start/end node pair. The current
+model is largely compatible with \cite{Bir99}, and roughly isomorphic with
+{\tt{}"{}}stand-off markup{\tt{}"{}} as latterly adopted by the SGML/XML
+community.
+
+Each example is shown in the form of a table. At the top of the table is the
+document being annotated; immediately below the line with the document is a
+ruler showing the position (byte offset) of each character 
+(see \htlink{http://www.itl.nist.gov/iaui/894.02/related\string _projects/tipster/}{TIPSTER Architecture Design Document}).
+
+Underneath this appear the annotations, one annotation per line. 
+For each annotation is shown its Id, Type, Span (start/end offsets derived 
+from the start/end nodes), and Features. Integers are used as the annotation 
+Ids.  The features are shown in the form name = value.
+
+The first example shows a single sentence and the result of three
+annotation procedures: tokenization with part-of-speech assignment, name
+recognition, and sentence boundary recognition. Each token has a single
+feature, its part of speech (pos), using the tag set from the University of
+Pennsylvania Tree Bank; each name also has a single feature, indicating the
+type of name: person, company, etc.
+
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+ \multicolumn{5}{|c|}{\textbf{Text}}\\
+\hline
+\multicolumn{5}{|c|}
+ {\texttt{Cyndi savored the soup.}}\\
+\hline
+\multicolumn{5}{|c|}
+ {\texttt{\^{}0...\^{}5...\^{}10..\^{}15..\^{}20}}\\
+\hline
+\multicolumn{5}{|c|}
+  {\textbf{Annotations}}\\
+\hline
+  Id & Type & SpanStart & Span End & Features\\
+\hline
+  1 & token & 0 & 5 & pos=NP\\
+\hline
+  2 & token & 6 & 13 & pos=VBD\\
+\hline
+  3 & token & 14 & 17 & pos=DT\\
+\hline
+  4 & token & 18 & 22 & pos=NN\\
+\hline
+  5 & token & 22 & 23 & \\
+\hline
+  6 & name & 0 & 5 & name\_type=person\\
+\hline
+  7 & sentence & 0 & 23 & \\
+\hline
+\end{tabular}
+\caption{Result of annotation on a single sentence}
+\label{table:annotation1}
+\end{center}
+\end{table}
+
+
+Annotations will typically be organized to describe a hierarchical
+decomposition of a text. A simple illustration would be the decomposition of a
+sentence into tokens. A more complex case would be a full syntactic analysis,
+in which a sentence is decomposed into a noun phrase and a verb phrase, a verb
+phrase into a verb and its complement, etc. down to the level of individual
+tokens. Such decompositions can be represented by annotations on nested sets of
+spans. Both of these are illustrated in the second example, which is an
+elaboration of our first example to include parse information. Each
+non-terminal node in the parse tree is represented by an annotation of type
+parse.
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+ \multicolumn{5}{|c|}{\textbf{Text}}\\
+\hline
+\multicolumn{5}{|c|}
+  {\texttt{Cyndi savored the soup.}}\\
+\hline
+\multicolumn{5}{|c|}
+  {\texttt{\^{}0...\^{}5...\^{}10..\^{}15..\^{}20}}\\
+\hline
+\multicolumn{5}{|c|}
+  {\textbf{Annotations}}\\
+\hline
+  Id & Type & SpanStart & Span End & Features\\
+\hline
+  1 & token & 0 & 5 & pos=NP\\
+\hline
+  2 & token & 6 & 13 & pos=VBD\\
+\hline
+  3 & token & 14 & 17 & pos=DT\\
+\hline
+  4 & token & 18 & 22 & pos=NN\\
+\hline
+  5 & token & 22 & 23 & \\
+\hline
+  6 & name & 0 & 5 & name\_type=person\\
+\hline
+  7 & sentence & 0 & 23 & constituents=[1],[2],[3].[4],[5]\\
+\hline
+\end{tabular}
+\caption{Result of annotations including parse information}
+\label{table:annotation2}
+\end{center}
+\end{table}
+
+In most cases, the hierarchical structure could be recovered from the
+spans. However, it may be desirable to record this structure directly through a
+constituents feature whose value is a sequence of annotations representing
+the immediate constituents of the initial annotation. For the annotations of
+type parse, the constituents are either non-terminals (other annotations in the
+parse group) or tokens. For the sentence annotation, the constituents feature
+points to the constituent tokens. A reference to another annotation is
+represented in the table as {\tt{}"{}}\mbox{$[$} Annotation Id\mbox{$]$}{\tt{}"{}}; for example, {\tt{}"{}}\mbox{$[$}3\mbox{$]$}{\tt{}"{}} represents a
+reference to annotation 3. Where the value of an feature is a sequence of items, these items are separated by commas. No special operations are provided
+in the current architecture for manipulating constituents. At a less esoteric
+level, annotations can be used to record the overall structure of documents,
+including in particular documents which have structured headers, as is shown in
+the third example (Table \ref{table:annotation3}).
+
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+\multicolumn{5}{|c|}
+  {\textbf{Text}}\\
+\hline
+\multicolumn{5}{|c|}
+  {\texttt{To: All Barnyard Animals}}\\
+\hline
+\multicolumn{5}{|c|}
+  {\texttt{\^{}0...\^{}5...\^{}10..\^{}15..\^{}20.}}\\
+\hline
+\multicolumn{5}{|c|}
+  {\texttt{From: Chicken Little}}\\
+\hline
+\multicolumn{5}{|c|}
+  {\texttt{\^{}25..\^{}30..\^{}35..\^{}40..}}\\
+\hline
+\multicolumn{5}{|c|}
+  {\texttt{Date: November 10,1194}}\\
+\hline
+\multicolumn{5}{|c|}
+  {\texttt{...\^{}50..\^{}55..\^{}60..\^{}65.}}\\
+\hline
+\multicolumn{5}{|c|}
+  {\texttt{Subject: Descending Firmament}}\\
+\hline
+\multicolumn{5}{|c|}
+  {\texttt{.\^{}70..\^{}75..\^{}80..\^{}85..\^{}90..\^{}95}}\\
+\hline
+\multicolumn{5}{|c|}
+  {\texttt{Priority: Urgent}}\\
+\hline
+\multicolumn{5}{|c|}
+  {\texttt{.\^{}100.\^{}105.\^{}110.}}\\
+\hline
+\multicolumn{5}{|c|}
+  {\texttt{The sky is falling. The sky is falling.}}\\
+\hline
+\multicolumn{5}{|c|}
+  {\texttt{....\^{}120.\^{}125.\^{}130.\^{}135.\^{}140.\^{}145.\^{}150.}}\\
+\hline
+\multicolumn{5}{|c|}
+  {\textbf{Annotations}}\\
+\hline
+  Id & Type & SpanStart & Span End & Features\\
+\hline                         
+  1 & Addressee & 4 & 24 & \\
+\hline
+  2 & Source & 31 & 45 & \\
+\hline
+  3 & Date & 53 & 69 & ddmmyy=101194\\
+\hline
+  4 & Subject& 78 & 98 & \\
+\hline
+  5 & Priority & 109 & 115 & \\
+\hline
+  6 & Body & 116 & 155 & \\
+\hline
+  7 & Sentence & 116 & 135 &\\
+\hline
+  8 & Sentence & 136 & 155 & \\
+\hline
+\end{tabular}
+\caption{Annotation showing overall document structure}
+\label{table:annotation3}
+\end{center}
+\end{table}
+
+
+If the Addressee, Source, ... annotations are recorded when the
+document is indexed for retrieval, it will be possible to perform retrieval
+selectively on information in particular fields. Our final example (Table \ref{table:annotation4})
+involves an annotation which effectively modifies the document. The current
+architecture does not make any specific provision for the modification of the
+original text. However, some allowance must be made for processes such as
+spelling correction. This information will be recorded as a correction
+feature on token annotations and possibly on name
+annotations:
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+\multicolumn{5}{|c|}
+  {\textbf{Text}}\\
+\hline
+\multicolumn{5}{|c|}
+  {\texttt{Topster tackles 2 terrorbytes.}}\\
+\hline
+\multicolumn{5}{|c|}
+  {\texttt{\^{}0...\^{}5...\^{}10..\^{}15..\^{}20..\^{}25..}}\\
+\hline
+\multicolumn{5}{|c|}
+  {\textbf{Annotations}}\\
+\hline
+
+  Id & Type & SpanStart & Span End & Features\\
+\hline                         
+  1 & token & 0 & 7 & pos=NP correction=TIPSTER\\
+\hline                         
+  2 & token & 8 & 15 & pos=VBZ\\
+\hline                         
+  3 & token & 16 & 17 & pos=CD\\
+\hline                         
+  4 & token & 18 & 29 & pos=NNS correction=terabytes\\
+\hline                         
+  5 & token & 29 & 30 & \\
+\hline
+
+\end{tabular}
+\caption{Annotation modifying the document}
+\label{table:annotation4}
+\end{center}
+\end{table}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:corpora:viewing]{Creating, Viewing and Editing Diverse Annotation Types}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Note that annotation types should consist of a single word with no spaces.
+Otherwise they may not be recognised by other components such as JAPE
+transducers, and may create problems when annotations are saved as inline (`Save
+Preserving Format' in the context menu).
+
+To view and edit annotation types, see Section \ref{sec:developer:annotations}.
+To add annotations of a new type, see Section \ref{sec:developer:edit}.
+To add a new annotation schema, see Section
+\ref{sec:developer:schemaannotationeditor}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\sect{Ontology-based Corpus Annotation Tool}\label{sec:corpora:ocat}
+
+%The Ontology-based Corpus Annotation Tool (OCAT) is a GATE plugin, which uses
+%one or more ontologies for annotation. Version 1 of OCAT supports only
+%annotation with information about the ontology class. Future versions will
+%support annotation with instance information and properties. Details of its
+%functionality can be found in Section \ref{sec:ontologies:ocat}.
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:corpora:formats]{Document Formats}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The following document formats are supported by GATE by default:
+\begin{itemize}
+\item
+Plain Text
+\item
+HTML
+\item
+SGML
+\item
+XML
+\item
+RTF
+\item
+Email
+\item
+PDF (some documents)
+\item
+Microsoft Office (some formats)
+\item
+OpenOffice (some formats)
+\item
+UIMA CAS XML format
+\item
+CoNLL/IOB
+\end{itemize}
+
+Additional formats are provided by plugins -- you must load the relevant
+plugin before attempting to parse these document types
+\begin{itemize}
+\item Twitter JSON (in the {\tt Twitter} plugin, see
+  section~\ref{sec:social:twitter:format})
+\item DataSift JSON, a common format for social media data from
+  \htlinkplain{http://datasift.com} (in the {\tt Format\_DataSift} plugin, see
+  section~\ref{sec:creole:datasift})
+\item FastInfoset, a compressed binary encoding of GATE XML (in the
+  {\tt Format\_FastInfoset} plugin, see section~\ref{sec:creole:fastinfoset})
+\item MediaWiki markup, as used by Wikipedia and many other public wiki sites
+  (in the {\tt Format\_MediaWiki} plugin, see
+  section~\ref{sec:creole:mediawiki})
+\item The formats used by PubMed and the Cochrane collaboration for biomedical
+  literature (in the {\tt Format\_PubMed} plugin, see
+  section~\ref{sec:creole:pubmed})
+\item CSV files containing one column of text data and optionally additional
+  columns of metadata (in the {\tt Format\_CSV} plugin, see
+  section~\ref{sec:creole:csv})
+\end{itemize}
+
+By default GATE will try and identify the type of the document, then strip
+and convert any markup into GATE's annotation format. To disable this
+process, set the {\tt markupAware} parameter on the document to {\tt false}.
+
+When reading a document of one of these types, GATE extracts the text
+between tags (where such exist)
+and create a GATE annotation filled as follows:
+
+The name of the tag will constitute the annotation's type, all the
+tags attributes will materialize in the annotation's features and
+the annotation will span over the text covered by the tag. A few
+exceptions of this rule apply for the RTF, Email and Plain Text
+formats, which will be described later in the input section of
+these formats.
+
+The text between tags is extracted and appended to the GATE
+document's content and all annotations created from tags will be
+placed into a GATE annotation set named `Original markups'.
+
+{\em Example:}
+
+If the markup is like this:
+
+\small
+\begin{small}
+\begin{verbatim}
+<aTagName attrib1="value1" attrib2="value2" attrib3="value3"> A
+piece of text</aTagName>
+\end{verbatim}
+\end{small}
+\nnormalsize
+
+then the annotation created by GATE will look like:
+
+\small
+\begin{small}
+\begin{verbatim}
+annotation.type = "aTagName";
+annotation.fm = {attrib1=value1;atrtrib2=value2;attrib3=value3};
+annotation.start = startNode;
+annotation.end = endNode;
+\end{verbatim}
+\end{small}
+\nnormalsize
+
+The startNode and endNode are created from offsets referring the
+beginning and the end of `A piece of text' in the document's
+content.
+
+The documents supported by GATE have to be in one of the encodings
+accepted by Java. The most popular is the {\em `UTF-8'} encoding
+which is also the most storage efficient one for UNICODE. If, when
+loading a document in GATE the {\em encoding} parameter is set to
+`'(the empty string), then the default encoding of the platform
+will be used.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:corpora:detecting-reader]{Detecting the Right Reader}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+In order to successfully apply the document creation algorithm described above,
+GATE needs to detect the proper reader to use for each document format.  If the
+user knows in advance what kind of document they are loading then they can
+specify the MIME type (e.g. {\em text/html}) using the init parameter
+{\tt mimeType}, and GATE will respect this.  If an explicit type is not given,
+GATE attempts to determine the type by other means, taking
+%When opening a document in GATE, the file extension (e.g. {\tt xml})
+%is important but if
+%not present, GATE uses some other means to detect its type.
+%In order to do that, it takes into
+into consideration (where possible) the information provided by three
+sources:
+\begin{itemize}
+\item
+Document's extension
+\item
+The web server's content type
+\item
+Magic numbers detection
+\end{itemize}
+
+The first represents the extension of a file like ({\em
+xml,htm,html,txt,sgm,rtf, etc}), the second represents the HTTP
+information sent by a web server regarding the content type of the
+document being send by it ({\em text/html; text/xml, etc}), and the
+third one represents certain sequences of chars which are ultimately
+number sequences. GATE is capable of supporting multimedia documents,
+if the right reader is added to the framework.  Sometimes, multimedia
+documents are identified by a signature consisting in a sequence of
+numbers. Inside GATE they are called magic numbers. For textual
+documents, certain char sequences form such magic numbers. Examples of
+magic numbers sequences will be provided in the Input section of each
+format supported by GATE.
+
+All those tests are applied to each document read, and after that,
+a voting mechanism decides what is the best reader to associate
+with the document. There is a degree of priority for all those
+tests. The document's extension test has the highest priority. If
+the system is in doubt which reader to choose, then the one
+associated with document's extension will be selected. The next
+higher priority is given to the web server's content type and the
+third one is given to the magic numbers detection. However, any
+two tests that identify the same mime type, will have the highest
+priority in deciding the reader that will be used. The web server
+test is not always successful as there might be documents that are
+loaded from a local file system, and the magic number detection
+test is not always applicable. In the next paragraphs we will se
+how those tests are performed and what is the general mechanism
+behind reader detection.
+
+The method that detects the proper reader is a static one, and it
+belongs to the {\tt gate.DocumentFormat} class. It uses the
+information stored in the maps filled by the init() method of each
+reader. This method comes with three signatures:
+
+\small
+\begin{lstlisting}
+static public DocumentFormat getDocumentFormat( gate.Document
+aGateDocument, URL url)
+
+static public DocumentFormat getDocumentFormat(gate.Document
+aGateDocument, String fileSuffix)
+
+static public DocumentFormat getDocumentFormat(gate.Document
+aGateDocument, MimeType mimeType)
+
+\end{lstlisting}
+\nnormalsize
+
+The first two methods try to detect the right MimeType for the
+GATE document, and after that, they call the third one to return
+the reader associate with a MimeType. Of course, if an explicit
+{\tt mimeType} parameter was specified, GATE calls the third form
+of the method directly, passing the specified type. GATE uses the
+implementation from `http://jigsaw.w3.org' for mime types.
+
+The magic numbers test is performed using the information form \\
+magic2mimeTypeMap map. Each key from this map, is searched in the
+first bufferSize (the default value is 2048) chars of text. The
+method that does this is called \\ {\tt
+runMagicNumbers(InputStreamReader aReader)} and it belongs to
+DocumentFormat class. More details about it can be found in the
+GATE API documentation.
+
+In order to activate a reader to perform the unpacking, the creole
+definition of a GATE document defines a parameter called
+`markupAware' initialized with a default value of {\bf true}.
+This parameter, forces GATE to detect a proper reader for the
+document being read. If no reader is found, the document's content
+is load and presented to the user, just like any other text editor
+(this for textual documents).
+
+You can also use Tika format auto-detection by setting the mimeType of a
+document to "application/tika". Then the document will be parsed only by
+Tika.
+
+The next subsections investigates particularities for each format
+and will describe the file extensions registered with each
+document format.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:corpora:xml]{XML}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsect[sec:corpora:input]{Input}
+
+GATE permits the processing of any XML document and offers support
+for XML namespaces. It benefits the power of Apache's Xerces
+parser and also makes use of Sun's JAXP layer. Changing the XML
+parser in GATE can be achieved by simply replacing the value of a
+Java system property (`javax.xml.parsers.SAXParserFactory').
+
+GATE will accept any well formed XML document as input. Although
+it has the possibility to validate XML documents against DTDs it
+does not do so because the validating procedure is time consuming
+and in many cases it issues messages that are annoying for the
+user.
+
+There is an open problem with the general approach of reading XML, HTML and SGML
+documents in GATE. As we previously said, the text covered by tags/elements is
+appended to the GATE document content and a GATE annotation refers to this
+particular span of text. When appending, in cases such as `{\tt
+end.</P><P>Start}' it might happen that the ending word of the previous
+annotation is concatenated with the beginning phrase of the annotation currently
+being created, resulting in a garbage input for GATE processing resources that
+operate at the text surface.
+
+Let's take another example in order to better understand the
+problem:
+
+\small
+\begin{small}
+\begin{verbatim}
+<title>This is a title</title><p>This is a paragraph</p><a
+href="#link">Here is an useful link</a>
+\end{verbatim}
+\end{small}
+\nnormalsize
+
+When the markup is transformed to annotations, it is likely that
+the text from the document's content will be as follows:
+
+{\tt This is a titleThis is a paragraphHere is an useful link}
+
+The annotations created will refer the right parts of the texts
+but for the GATE's processing resources like (tokenizer, gazetteer,
+etc) which work on this text, this will be a major disaster.
+Therefore, in order to prevent this problem from happening, GATE
+checks if it's likely to join words and if this happens then it
+inserts a space between those words. So, the text will look like
+this after loaded in GATE Developer:
+
+{\tt This is a title This is a paragraph Here is an useful link}
+
+There are cases when these words are meant to be joined, but they
+are rare. This is why it's an open problem.
+
+The extensions associate with the XML reader are:
+\begin{itemize}
+\item
+xml
+\item
+xhtm
+\item
+xhtml
+\end{itemize}
+
+The web server content type associate with xml documents is: {\em
+text/xml.}
+
+The magic numbers test searches inside the document for the XML({\tt <?xml
+version="1.0"}) signature. It is also able to detect if the XML document uses the
+semantics described in the GATE document format DTD (see
+\ref{sec:corpora:saveasxml} below) or uses other semantics.
+
+\textbf{Namespace handling}
+
+By default, GATE will retain the namespace prefix and namespace URIs of XML 
+elements when creating annotations and features within the \textbf{Original markups} 
+annotation set. For example, the element 
+\begin{small}
+\begin{verbatim}<dc:title xmlns:dc="http://purl.org/dc/elements/1.1/">Document title</dc:title>\end{verbatim}
+\end{small}
+will create the following annotation
+
+\begin{small}
+\begin{verbatim}dc:title(xmlns:dc=http://purl.org/dc/elements/1.1/)\end{verbatim}
+\end{small}
+
+However, as the colon character '{\tt :}' is a reserved meta-character in JAPE, it is
+not possible to write a JAPE rule that will match the {\tt dc:title} element or its namespace URI.
+
+If you need to match namespace-prefixed elements in the Original markups AS, you can
+alter the default namespace deserialization behaviour to remove the namespace prefix and add it as a feature 
+(along with the namespace URI), by specifying the following attributes in the {\tt<GATECONFIG>}
+element of {\tt gate.xml} or local configuration file:
+
+
+\begin{itemize}
+\item \textbf{addNamespaceFeatures} - set to "true" to deserialize namespace prefix and uri information as features.
+\item \textbf{namespaceURI} - The feature name to use that will hold the namespace URI of the element, e.g. "namespace"
+\item \textbf{namespacePrefix} - The feature name to use that will hold the namespace prefix of the element, e.g. "prefix"
+\end{itemize}
+ 
+i.e.
+
+\begin{small}
+\begin{verbatim}<GATECONFIG 
+	addNamespaceFeatures="true" 
+	namespaceURI="namespace" 
+	namespacePrefix="prefix" />\end{verbatim} 
+\end{small}
+
+For example
+
+\begin{small}
+\begin{verbatim}<dc:title>Document title</dc:title>\end{verbatim}
+\end{small}
+  
+would create in Original markups AS (assuming the {\tt xmlns:dc} URI has defined in the document root or parent element)
+
+\begin{small}
+\begin{verbatim}title(prefix=dc, namespace=http://purl.org/dc/elements/1.1/)\end{verbatim} 
+\end{small}
+
+If a JAPE rule is written to create a new annotation, e.g.
+
+\begin{small}
+\begin{verbatim}description(prefix=foo, namespace=http://www.example.org/)\end{verbatim} 
+\end{small}
+
+then these would be serialized to
+
+\begin{small}
+\begin{verbatim}
+<dc:title xmlns:dc="http://purl.org/dc/elements/1.1/">Document title</dc:title>
+<foo:description xmlns:foo="http://www.example.org/">...</foo:description>
+\end{verbatim}   
+\end{small}
+
+when using the '\textbf{Save preserving document format}' XML output option (see \ref{sec:corpora:saveasxml} below).  
+
+  
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsect[sec:corpora:output]{Output}
+
+GATE is capable of ensuring persistence for its resources.
+% These
+%layers of persistence are various and they span until database
+%persistence. However, for some purposes, a light and simple level of
+%persistence would be highly appreciated. 
+The types of persistent
+storage used for Language Resources are:
+%%%%%%%%%%%%%%%%%%
+\begin{itemize}
+%\item Databases (like Oracle);
+\item Java serialization;
+\item XML serialization.
+\end{itemize}
+%%%%%%%%%%%%%%%%%%
+We describe the latter case here.
+
+XML persistence doesn't necessarily preserve all the objects belonging to the
+annotations, documents or corpora. Their features can be of all kinds of objects,
+with various layers of nesting. For example, {\em lists containing lists
+containing maps, etc}. Serializing these arbitrary data types in XML is not a
+simple task; GATE does the best it can, and supports native Java types such as
+Integers and Booleans, but where complex data types are used, information may be
+lost(the types will be converted into Strings). GATE provides a full
+serialization of certain types of features such as collections, strings and
+numbers. It is possible to serialize only those collections containing strings or
+numbers. The rest of other features are serialized using their string
+representation and when read back, they will be all strings instead of being the
+original objects. Consequences of this might be observed when performing
+evaluations (see \Chapthing~\ref{chap:eval}).
+
+When GATE outputs an XML document it may do so in one of two ways:
+%
+\begin{itemize}
+%
+\item
+When the original document that was imported into GATE was an XML
+document, GATE can dump that document back into XML (possibly with
+additional markup added);
+%
+\item
+For all document formats, GATE can dump its internal
+representation of the document into XML.
+\end{itemize}
+%
+In the former case, the XML output will be close to the original document. In
+the latter case, the format is a GATE-specific one which can be read back by
+the system to recreate all the information that GATE held internally for the
+document.
+
+In order to understand why there are two types of XML
+serialization, one needs to understand the structure of a GATE
+document. GATE allows a graph of annotations that refer to parts
+of the text. Those annotations are grouped under annotation sets.
+Because of this structure, sometimes it is impossible to save a
+document as XML using tags that surround the text referred to by the
+annotation, because tags crossover situations could appear (XML is
+essentially a tree-based model of information, whereas GATE uses
+graphs). Therefore, in order to preserve all annotations in a GATE
+document, a custom type of XML document was developed.
+
+The problem of crossover tags appears with GATE's second option
+(the preserve format one), which is implemented at the cost of
+losing certain annotations. The way it is applied in GATE is that
+it tries to restore the original markup and where it is possible,
+to add in the same manner annotations produced by GATE.
+
+\paragraph{How to Access and Use the Two Forms of XML
+Serialization}
+
+\para[sec:corpora:saveasxml]{Save as XML Option}
+
+This option is available in GATE Developer in the pop-up menu
+associated with each language resource (document or corpus). Saving
+a corpus as XML is done by calling `Save as XML' on each document of
+the corpus. This option saves all the annotations of a document
+together their features(applying the restrictions previously
+discussed), using the GateDocument.dtd :
+
+\small
+\begin{small}
+\begin{verbatim}
+ <!ELEMENT GateDocument (GateDocumentFeatures,
+           TextWithNodes, (AnnotationSet+))>
+ <!ELEMENT GateDocumentFeatures (Feature+)>
+ <!ELEMENT Feature (Name, Value)>
+ <!ELEMENT Name (\#PCDATA)>
+ <!ELEMENT Value (\#PCDATA)>
+ <!ELEMENT TextWithNodes (\#PCDATA | Node)*>
+ <!ELEMENT AnnotationSet (Annotation*)>
+ <!ATTLIST AnnotationSet  Name CDATA \#IMPLIED>
+ <!ELEMENT Annotation (Feature*)>
+ <!ATTLIST Annotation  Type      CDATA \#REQUIRED
+                       StartNode CDATA \#REQUIRED
+                       EndNode   CDATA \#REQUIRED>
+ <!ELEMENT Node EMPTY>
+ <!ATTLIST Node id CDATA \#REQUIRED>
+\end{verbatim}
+\end{small}
+\nnormalsize
+
+The document is saved under a name chosen by the user and it may
+have any extension. However, the recommended extension would be
+`xml'.
+
+Using GATE Embedded, this option is available by calling {\tt
+gate.Document's toXml()} method. This method returns a string
+which is the XML representation of the document on which the
+method was called.
+
+\noindent{\bf Note:} It is recommended that the string
+representation to be saved on the file system using the UTF-8
+encoding, as the first line of the string is : {\tt <?xml
+version="1.0" encoding="UTF-8"?>}
+
+{\em Example of such a GATE format document:}
+
+\small
+\begin{small}
+\begin{verbatim}
+<?xml version="1.0" encoding="UTF-8" ?>
+<GateDocument>
+
+<!-- The document's features-->
+
+<GateDocumentFeatures>
+<Feature>
+  <Name className="java.lang.String">MimeType</Name>
+  <Value className="java.lang.String">text/plain</Value>
+</Feature>
+<Feature>
+  <Name className="java.lang.String">gate.SourceURL</Name>
+  <Value className="java.lang.String">file:/G:/tmp/example.txt</Value>
+</Feature>
+</GateDocumentFeatures>
+
+<!-- The document content area with serialized nodes -->
+
+<TextWithNodes>
+<Node id="0"/>A TEENAGER <Node
+id="11"/>yesterday<Node id="20"/> accused his parents of cruelty
+by feeding him a daily diet of chips which sent his weight
+ballooning to 22st at the age of l2<Node id="146"/>.<Node
+id="147"/>
+</TextWithNodes>
+
+<!-- The default annotation set -->
+
+<AnnotationSet>
+<Annotation Type="Date" StartNode="11"
+EndNode="20">
+<Feature>
+  <Name className="java.lang.String">rule2</Name>
+  <Value className="java.lang.String">DateOnlyFinal</Value>
+</Feature> <Feature>
+  <Name className="java.lang.String">rule1</Name>
+  <Value className="java.lang.String">GazDateWords</Value>
+</Feature> <Feature>
+  <Name className="java.lang.String">kind</Name>
+  <Value className="java.lang.String">date</Value>
+</Feature> </Annotation> <Annotation Type="Sentence" StartNode="0"
+EndNode="147"> </Annotation> <Annotation Type="Split"
+StartNode="146" EndNode="147"> <Feature>
+  <Name className="java.lang.String">kind</Name>
+  <Value className="java.lang.String">internal</Value>
+</Feature> </Annotation> <Annotation Type="Lookup" StartNode="11"
+EndNode="20"> <Feature>
+  <Name className="java.lang.String">majorType</Name>
+  <Value className="java.lang.String">date_key</Value>
+</Feature> </Annotation>
+</AnnotationSet>
+
+<!-- Named annotation set -->
+
+<AnnotationSet Name="Original markups" >
+ <Annotation
+Type="paragraph" StartNode="0" EndNode="147"> </Annotation>
+</AnnotationSet>
+</GateDocument>
+\end{verbatim}
+\end{small}
+\nnormalsize
+
+\noindent{\bf Note:} One must know that all features that are not
+collections containing numbers or strings or that are not numbers
+or strings are discarded. With this option, GATE does not preserve
+those features it cannot restore back.
+
+\paragraph{The Preserve Format Option}
+
+This option is available in GATE Developer from the popup menu of
+the annotations table. If no annotation in this table is selected,
+then the option will restore the document's original markup. If
+certain annotations are selected, then the option will attempt to
+restore the original markup and insert all the selected ones. When
+an annotation violates the crossed over condition, that annotation
+is discarded and a message is issued.
+
+This option makes it possible to generate an XML document with tags
+surrounding the annotation's referenced text and features saved as
+attributes. All features which are collections, strings or numbers
+are saved, and the others are discarded. However, when read back,
+only the attributes under the GATE namespace (see below) are
+reconstructed back differently to the others. That is because GATE
+does not store in the XML document the information about the
+features class and for collections the class of the items. So,
+when read back, all features will become strings, except those
+under the GATE namespace.
+
+One will notice that all generated tags have an attribute called
+`gateId' under the namespace `http://www.gate.ac.uk'. The
+attribute is used when the document is read back in GATE, in order
+to restore the annotation's old ID. This feature is needed because
+it works in close cooperation with another attribute under the
+same namespace, called `matches'. This attribute indicates
+annotations/tags that refer the same entity\footnote{It's not an
+XML entity but a information extraction named entity}. They are
+under this namespace because GATE is sensitive to them and treats
+them differently to all other elements with their attributes
+which fall under the general reading algorithm described at the
+beginning of this section.
+
+The `gateId' under GATE namespace is used to create an
+annotation which has as ID the value indicated by this
+attribute. The `matches' attribute is used to create an
+ArrayList in which the items will be Integers, representing the ID
+of annotations that the current one matches.
+
+{\em Example:}
+
+If the text being processed is as follows:
+
+\small
+\begin{small}
+\begin{verbatim}
+<Person gate:gateId="23">John</Person> and <Person
+gate:gateId="25" gate:matches="23;25;30">John Major</Person> are
+the same person.
+\end{verbatim}
+\end{small}
+\nnormalsize
+
+What GATE does when it parses this text is it creates two
+annotations:
+
+\small
+\begin{small}
+\begin{verbatim}
+a1.type = "Person"
+a1.ID = Integer(23)
+a1.start = <the start offset of
+John>
+a1.end = <the end offset of John>
+a1.featureMap = {}
+
+a2.type = "Person"
+a2.ID = Integer(25)
+a2.start = <the start offset
+of John Major>
+a2.end = <the end offset of John Major>
+a2.featureMap = {matches=[Integer(23); Integer(25); Integer(30)]}
+
+\end{verbatim}
+\end{small}
+\nnormalsize
+
+Under GATE Embedded, this option is available by calling {\tt
+gate.Document's toXml(Set aSetContainingAnnotations)} method. This
+method returns a string which is the XML representation of the
+document on which the method was called. If called with {\bf null}
+as a parameter, then the method will attempt to restore only the
+original markup. If the parameter is a set that contains
+annotations, then each annotation is tested against the crossover
+restriction, and for those found to violate it, a warning will be
+issued and they will be discarded.
+
+In the next subsections we will show how this option applies to
+the other formats supported by GATE.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:corpora:html]{HTML}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsect{Input}
+
+HTML documents are parsed by GATE using the
+\htlink{http://people.apache.org/~andyc/neko/doc/html/}{NekoHTML} parser.
+%The parser used to access HTML documents is the one provided by
+%Java.
+The documents are read and created in GATE the same way as
+the XML documents.
+
+The extensions associate with the HTML reader are:
+\begin{itemize}
+\item
+htm
+\item
+html
+\end{itemize}
+
+The web server content type associate with html documents is: {\em
+text/html}.
+
+The magic numbers test searches inside the document for the
+HTML({\tt <html}) signature.There are certain HTML documents that
+do not contain the HTML tag, so the magical numbers test might not
+hold.
+
+There is a certain degree of customization for HTML documents in
+that GATE introduces new lines into the document's text content in
+order to obtain a readable form. The annotations will refer the
+pieces of text as described in the original document but there
+will be a few extra new line characters inserted.
+
+After reading H1, H2, H3, H4, H5, H6, TR, CENTER, LI, BR and DIV tags, GATE will
+introduce a new line (NL) char into the text. After a TITLE tag it will
+introduce two NLs. With P tags, GATE will introduce one NL at the beginning of the
+paragraph and one at the end of the paragraph. All newly added NLs are not
+considered to be part of the text contained by the tag.
+
+\subsubsect{Output}
+
+The `Save as XML' option works exactly the same for all GATE's
+documents so there is no particular observation to be made for the
+HTML formats.
+
+When attempting to preserve the original markup formatting, GATE
+will generate the document in xhtml. The html document will look
+the same with any browser after processed by GATE but it will be
+in another syntax.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:corpora:sgml]{SGML}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsect{Input}
+
+The SGML support in GATE is fairly light as there is no freely
+available Java SGML parser. GATE uses a light converter attempting
+to transform the input SGML file into a well formed XML. Because
+it does not make use of a DTD, the conversion might not be always
+good. It is advisable to perform a SGML2XML conversion outside the
+system(using some other specialized tools) before using the SGML
+document inside GATE.
+
+The extensions associate with the SGML reader are:
+\begin{itemize}
+\item
+sgm
+\item
+sgml
+\end{itemize}
+
+The web server content type associate with xml documents is : {\em
+text/sgml}.
+
+There is no  magic numbers test for SGML.
+
+\subsubsect{Output}
+
+When attempting to preserve the original markup formatting, GATE
+will generate the document as XML because the real input of a SGML
+document inside GATE is an XML one.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:corpora:plain-text]{Plain text}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsect{Input}
+
+When reading a plain text document, GATE attempts to detect its
+paragraphs and add `paragraph' annotations to the document's
+`Original markups' annotation set. It does that by detecting two
+consecutive NLs. The procedure works for both UNIX like or DOS
+like text files.
+
+{\em Example:}
+
+If the plain text read is as follows:
+
+\small
+\begin{small}
+\begin{verbatim}
+Paragraph 1. This text belongs to the first paragraph.
+
+Paragraph 2. This text belongs to the second paragraph
+\end{verbatim}
+\end{small}
+\nnormalsize
+
+then two `paragraph' type annotation will be created in the
+`Original markups' annotation set (referring the first and
+second paragraphs ) with an empty feature map.
+
+The extensions associate with the plain text reader are:
+\begin{itemize}
+\item
+txt
+\item
+text
+\end{itemize}
+
+The web server content type associate with plain text documents
+is: {\em text/plain.}
+
+There is no magic numbers test for plain text.
+
+\subsubsect{Output}
+
+When attempting to preserve the original markup formatting, GATE
+will dump XML markup that surrounds the text refereed.
+
+The procedure described above applies both for plain text and RTF
+documents.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:corpora:rtf]{RTF}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsect{Input}
+
+Accessing RTF documents is performed by using the Java's RTF
+editor kit. It only extracts the document's text content from the
+RTF document.
+
+The extension associate with the RTF reader is {\em `rtf'}.
+
+The web server content type associate with xml documents is : {\em
+text/rtf}.
+
+The magic numbers test searches for {\tt
+\{$\backslash$$\backslash$rtf1}.
+
+\subsubsect{Output}
+
+Same as the plain tex output.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:corpora:email]{Email}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsect{Input}
+
+GATE is able to read email messages packed in one document (UNIX
+mailbox format). It detects multiple messages inside such
+documents and for each message it creates annotations for all the
+fields composing an e-mail, like date, from, to, subject, etc. The
+message's body is analyzed and a paragraph detection is performed
+(just like in the plain text case) . All annotation created have
+as type the name of the e-mail's fields and they are placed in the
+Original markup annotation set.
+
+{\em Example:}
+
+\small
+\begin{small}
+\begin{verbatim}
+From someone@zzz.zzz.zzz Wed Sep  6 10:35:50 2000
+
+Date: Wed, 6 Sep2000 10:35:49 +0100 (BST)
+
+From: forename1 surname2 <someone1@yyy.yyy.xxx>
+
+To: forename2 surname2 <someone2@ddd.dddd.dd.dd>
+
+Subject: A subject
+
+Message-ID: <Pine.SOL.3.91.1000906103251.26010A-100000@servername>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+This text belongs to the e-mail body....
+
+This is a paragraph in the body of the e-mail
+
+This is another paragraph.
+\end{verbatim}
+\end{small}
+\nnormalsize
+
+GATE attempts to detect lines such as `{\em From someone@zzz.zzz.zzz Wed Sep  6
+10:35:50 2000}' in the e-mail text. Those lines separate e-mail messages
+contained in one file. After that, for each field in the e-mail message
+annotations are created as follows:
+
+The annotation type will be the name of the field, the feature map
+will be empty and the annotation will span from the end of the
+field until the end of the line containing the e-mail field.
+
+{\em Example:}
+
+\small
+\begin{small}
+\begin{verbatim}
+a1.type = "date" a1 spans between the two ^ ^. Date:^ Wed,
+6Sep2000 10:35:49 +0100 (BST)^
+
+a2.type = "from"; a2 spans between the two ^ ^. From:^ forename1
+surname2 <someone1@yyy.yyy.xxx>^
+\end{verbatim}
+\end{small}
+\nnormalsize
+
+The extensions associated with the email reader are:
+\begin{itemize}
+\item
+eml
+\item
+email
+\item
+mail
+\end{itemize}
+
+The web server content type associate with plain text documents
+is: {\em text/email.}
+
+The magic numbers test searches for keywords like {\em
+Subject:},etc.
+
+\subsubsect{Output}
+
+Same as plain text output.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:corpora:tika]{PDF Files and Office Documents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+GATE uses the \htlink{http://tika.apache.org/}{Apache Tika} library to provide
+support for PDF documents and a number of the document formats from both
+Microsoft Office and OpenOffice. In essense Tika converts the document structure
+into HTML which is then used to create a GATE document. This means that whilst
+a PDF or Word document may have been loaded the ``Original markups'' set will
+contain HTML elements. One advantage of this approach is that processing
+resources and JAPE grammars designed for use with HTML files should also
+work well with PDF and Office documents.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:corpora:uima]{UIMA CAS Documents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+GATE can read UIMA CAS documents. The CAS stands for Common Analysis
+Structure. It provides a common representation to the artifact being
+analyzed, here a text.
+
+The subject of analysis (SOFA), here a string, is used as the document
+content. Multiple sofa are concatenated. The analysis results or metadata
+are added as annotations when having begin and end offsets and otherwise are
+added as document features. The views are added as GATE annotation sets.
+The type system (a hierarchical annotation schema) is not currently
+supported.
+
+The web server content type associate with UIMA documents
+is: {\em text/xmi+xml.}
+
+The extensions are: xcas, xmicas, xmi.
+
+The magic numbers are:
+\begin{verbatim}
+<CAS version="2">
+\end{verbatim}
+and
+\begin{verbatim}
+xmlns:cas=
+\end{verbatim}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:corpora:conll]{CoNLL/IOB Documents}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+GATE can read files of text annotated in the traditional CoNLL or BIO/BILOU
+format, typically used to represent POS tags and chunks and best known for
+Conference on Natural Language
+Learning\footnote{\url{http://ifarm.nl/signll/conll/}} tasks.  The following
+example illustrates one sentence with POS and chunk tags (\texttt{B-} and
+\texttt{I-} indicate the beginning and continuation, respectively, of a chunk);
+the columns represent the tokens, the POS tags, and the chunk tags, and
+sentences are separated by blank lines.
+%%
+\begin{small}
+\begin{verbatim}
+My    PRP$  B-NP
+dog   NN    I-NP
+has   VBZ   B-VP
+fleas NNS   B-NP
+.     .     O
+\end{verbatim}
+\end{small}
+
+
+GATE interpets this format quite flexibly: the columns can be separated by any
+whitespace sequence, and the number of columns can vary.  The strings from the
+leftmost column become strings in the document content, with spaces interposed,
+and Token and SpaceToken annotations (with \emph{string} and \emph{length}
+features) are created appropriately in the \emph{Original markups} set).  
+
+Each blank line (empty or containing only whitespace) in the original data
+becomes a newline in the document content.
+
+The tags in subsequent columns are transformed into annotations.  A chunk tag
+(beginning with \texttt{B-} and followed by zero or more matching \texttt{I-}
+tags) produces an annotation whose type is determined by the rest of the tag
+(\texttt{NP} or \texttt{VP} in the above example, but any string with no
+whitespace is acceptable), with a \emph{kind = chunk} feature.  A chunk tag
+beginning with \texttt{L-} (\emph{last}) terminates the chunk, and a \texttt{U-}
+(\emph{unigram}) tag produces a chunk annotation over one token.  Other tags
+produce annotations with the tag name as the type and a \emph{kind = token}
+feature.
+
+Every annotation derived from a tag has a \emph{column} feature whose
+\texttt{int} value indicates the source column in the data (numbered from 0 for
+the string column).  An ``\texttt{O}'' tag closes all open chunk tags at the end
+of the previous token.
+
+This document format is associated with MIME-type \texttt{text/x-conll} and
+filename extensions \texttt{.conll} and \texttt{.iob}.
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:corpora:xmlinout]{XML Input/Output}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Support for input from and output to XML is described in Section
+\ref{sec:corpora:xml}. In short: 
+%
+\begin{itemize}
+%
+\item
+GATE will read any well-formed XML document (it does not attempt to validate
+XML documents). Markup will by default be converted into native GATE format.
+%
+\item
+GATE will write back into XML in one of two ways:
+  \begin{enumerate}
+  \item
+  Preserving the original format and adding selected markup (for example to
+  add the results of some language analysis process to the document).
+  \item
+  In GATE's own XML serialisation format, which encodes all the data in a
+  GATE Document (as far as this is possible within a tree-structured
+  paradigm -- for 100\% non-lossy data storage use GATE's RDBMS or binary
+  serialisation facilities -- see Section~\ref{sec:creole-model:datastores}).
+  \end{enumerate}
+%
+\end{itemize}
+%
+When using GATE Embedded, object representations of XML documents such
+as {\tt DOM} or {\tt jDOM}, or query and transformation languages such
+as {\tt X-Path} or {\tt XSLT}, may be used in parallel with GATE's own
+Document representation ({\tt gate.Document}) without conflicts.
+

@@ -1,0 +1,782 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%   tao_main.tex
+%
+%   hamish, 6/8/1
+%
+%   $Id: tao_main.tex,v 1.61 2006/10/18 10:50:19 ian Exp $
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%% style, packages %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[12pt,a4paper,fleqn,final]{book}
+
+\usepackage[T1]{fontenc}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% GATE version this manual is for.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\gateversion}{8.4.2}
+
+\newif\ifgaterelease
+
+% Is this manual for a real release or for a snapshot?  If it is for a release,
+% set \gatereleasetrue instead of \gatereleasefalse
+\gatereleasefalse
+%\gatereleasetrue
+
+\newif\ifprintedbook
+% Is this a book to be printed?  If it is to be printed,
+% set \printedbooktrue instead of \printedbookfalse
+\printedbookfalse
+%\printedbooktrue
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%PDF detection
+\usepackage{ifpdf}
+
+%tex4ht detection
+\newif\ifhtml
+\ifx\ifHtml\undefined
+  \htmlfalse          % we are not running PDFLaTeX
+\else
+  \htmltrue
+\fi
+%packages
+%hyperref need to be the last one!
+
+%general packages
+\usepackage[english]{babel}
+\usepackage{lscape}
+\usepackage{longtable}
+\usepackage{setspace}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{textcomp}
+
+
+
+%packages with mode detection 
+\ifpdf
+  %PDF specific stuff
+  \usepackage[pdftex]{graphicx}
+  \usepackage{thumbpdf}
+  \usepackage[
+    pdftex,
+    pdfborder=0,                %comment to get boxes around links
+    pdftitle={GATE User Guide},
+    pdfauthor={
+      Hamish Cunningham
+      Diana Maynard
+      Kalina Bontcheva
+      Valentin Tablan
+      Niraj Aswani
+      Ian Roberts
+      Genevieve Gorrell
+      Adam Funk
+      Angus Roberts
+      Danica Damljanovic
+      Thomas Heitz
+      Mark A. Greenwood
+      Horacio Saggion
+      Johann Petrak
+      Yaoyong Li
+      Wim Peters
+      Leon Derczynski
+      et al
+    },
+    pdfsubject={GATE, Language Processing},
+    pdfkeywords={GATE, Language Processing},
+    pdfpagemode=UseNone,
+    bookmarksopen=true
+    ]{hyperref}
+\else
+  \ifhtml
+    %tex4ht specific stuff
+    \usepackage{graphicx}
+    \usepackage[colorlinks=false]{hyperref}
+  \else
+    %Latex specific stuff
+    \usepackage[dvips]{graphicx}
+    \usepackage[hypertex, colorlinks=false]{hyperref}
+  \fi
+\fi
+
+%A switch to help nest the recent changes file correctly whether it is in
+%the appendix or the introduction
+\newif\ifnested
+\nestedfalse
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%% switches %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\textwidth 6.5in
+\textheight 9.1in
+\oddsidemargin 0.0in
+\evensidemargin -0.2in
+\topskip 0.35in
+\footskip 0.2in
+\topmargin -1.1cm
+\setlength{\parskip}{2ex}
+\setlength{\parindent}{0pt}
+\tolerance=5000
+
+
+%%% paragraph break with no indent
+\setlength{\parskip}{2ex}
+\setlength{\parindent}{0pt}
+
+%%% number subsubsections in the TOC
+%\setcounter{tocdepth}{3}
+
+%%% spacing
+\singlespacing
+%\onehalfspacing
+%\doublespacing
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% GATE utilities %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{../utils}
+
+%%% font size - uncomment for standard print
+\renewcommand{\nsmall}{\small}
+\renewcommand{\nnormalsize}{\normalsize}
+\renewcommand{\nlarge}{\large}
+
+%%% font size - uncomment for large print
+%\renewcommand{\nsmall}{\normalsize}
+%\renewcommand{\nnormalsize}{\Large}
+%\renewcommand{\nlarge}{\Large}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% tex4ht support %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\typeout{********* TeX4HT ********}
+
+%%%%% examples:
+%
+% insert arbitrary code:
+% \htcode{<IMG src="../nlpTitle.gif" border="0" align="right">}
+%
+% insert a URL link with anchor text:
+% \htlink{http://gate.ac.uk/}{hi there}
+%
+% insert a URL link with the URL itself as the anchor text:
+% \htlinkplain{http://gate.ac.uk/}
+%
+% insert text that is NOT present when doing HTML
+% \htlatex{Something or other}
+
+
+%%%%% definitions of HTML commands (operative when not using tex4ht)
+% \htlink{target URL}{link text} - hypertext link
+%\newcommand{\htlink}[2]{#2\footnote{{\tt #1}}}
+%\newcommand{\htlinkplain}[1]{{\tt #1}}
+% \htcode{code} - raw HTML code
+%\newcommand{\htcode}[1]{}
+%\newcommand{\htlatex}[1]{#1}
+
+
+%%%%% definitions of HTML commands using the hyperref package 
+%(here for backwards compatibility)
+% \htlink{target URL}{link text} - hypertext link
+\newcommand{\htlink}[2]{\href{#1}{#2}}
+\newcommand{\htlinkplain}[1]{\href{#1}{#1}} 
+% \htcode{code} - raw HTML code
+\newcommand{\htcode}[1]{}
+\newcommand{\htlatex}[1]{#1}
+
+%%%%% if we're tex4ht'ing, redefine the HTML commands to use tex4ht commands
+\ifhtml
+  \renewcommand{\htcode}[1]{\HCode{#1}}
+  \renewcommand{\htlatex}[1]{}
+\fi
+
+
+\typeout{******** END TeX4HT ********}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%% misc commands %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\renewcommand{\fud}[1]{}
+\renewcommand{\fudbook}[1]{}
+\renewcommand{\book}[1]{}
+\renewcommand{\jnle}[1]{}
+\renewcommand{\jnlele}[1]{}
+\renewcommand{\sepaper}[1]{}
+\renewcommand{\jape}[1]{}
+\renewcommand{\hcgate}[1]{}
+\renewcommand{\userguide}[1]{#1}
+
+\newcommand{\Mimir}{M\'{i}mir}
+
+% Define chapter, section, etc. commands with an optional label parameter
+% The label will become a LaTeX \label, and in HTML it will also be added as a
+% named anchor before the start of the section.
+\makeatletter
+
+\ifgaterelease
+  \def\permalinktrailer{?gateVersion=\gateversion}
+\else
+  \def\permalinktrailer{}
+\fi
+
+\ifhtml
+
+  \def\smartpart@label[#1]#2{\htcode{<A NAME="#1"></A>}\part[#2]{#2
+  \htcode{<span style="font-size:x-small">[<A
+  href="https://gate.ac.uk/userguide/#1\permalinktrailer" title="Permanent link
+  to this part">\#</A>]</span>}}\label{#1}}  
+  \def\smartpart@nolabel#1{\part{#1}}  
+  \def\chapt@label[#1]#2{\htcode{<A NAME="#1"></A>}\chapter[#2]{#2 \htcode{<span style="font-size:x-small">[<A href="https://gate.ac.uk/userguide/#1\permalinktrailer" title="Permanent link to this chapter">\#</A>]</span>}}\label{#1}}
+  \def\chapt@nolabel#1{\chapter{#1}}
+  \def\sect@label[#1]#2{\htcode{<A NAME="#1"></A>}\section[#2]{#2 \htcode{<span style="font-size:x-small">[<A href="https://gate.ac.uk/userguide/#1\permalinktrailer" title="Permanent link to this section">\#</A>]</span>}}\label{#1}}
+  \def\sect@nolabel#1{\section{#1}}
+  \def\subsect@label[#1]#2{\htcode{<A NAME="#1"></A>}\subsection[#2]{#2 \htcode{<span style="font-size:x-small">[<A href="https://gate.ac.uk/userguide/#1\permalinktrailer" title="Permanent link to this section">\#</A>]</span>}}\label{#1}}
+  \def\subsect@nolabel#1{\subsection{#1}}
+  \def\subsubsect@label[#1]#2{\htcode{<A NAME="#1"></A>}\subsubsection[#2]{#2 \htcode{<span style="font-size:x-small">[<A href="https://gate.ac.uk/userguide/#1\permalinktrailer" title="Permanent link to this section">\#</A>]</span>}}\label{#1}}
+  \def\subsubsect@nolabel#1{\subsubsection{#1}}
+  \def\para@label[#1]#2{\htcode{<A NAME="#1"></A>}\paragraph[#2]{#2 \htcode{<span style="font-size:x-small">[<A href="https://gate.ac.uk/userguide/#1\permalinktrailer" title="Permanent link to this section">\#</A>]</span>}}\phantomsection\label{#1}}
+  \def\para@nolabel#1{\paragraph{#1}}
+\else
+  \def\smartpart@label[#1]#2{\part{#2}\label{#1}}
+  \def\smartpart@nolabel#1{\part{#1}}
+  \def\chapt@label[#1]#2{\chapter{#2}\label{#1}}
+  \def\chapt@nolabel#1{\chapter{#1}}
+  \def\sect@label[#1]#2{\section{#2}\label{#1}}
+  \def\sect@nolabel#1{\section{#1}}
+  \def\subsect@label[#1]#2{\subsection{#2}\label{#1}}
+  \def\subsect@nolabel#1{\subsection{#1}}
+  \def\subsubsect@label[#1]#2{\subsubsection{#2}\label{#1}}
+  \def\subsubsect@nolabel#1{\subsubsection{#1}}
+  \def\para@label[#1]#2{\paragraph{#2}\label{#1}}
+  \def\para@nolabel#1{\paragraph{#1}}
+\fi
+
+\def\smartpart{\@ifnextchar[{\smartpart@label}{\smartpart@nolabel}}
+\def\chapt{\@ifnextchar[{\chapt@label}{\chapt@nolabel}}
+\def\sect{\@ifnextchar[{\sect@label}{\sect@nolabel}}
+\def\subsect{\@ifnextchar[{\subsect@label}{\subsect@nolabel}}
+\def\subsubsect{\@ifnextchar[{\subsubsect@label}{\subsubsect@nolabel}}
+\def\para{\@ifnextchar[{\para@label}{\para@nolabel}}
+%\renewcommand{\chapt}[1]{\chapter{#1}}
+%\renewcommand{\sect}[1]{\section{#1}}
+%\renewcommand{\subsect}[1]{\subsection{#1}}
+%\renewcommand{\subsubsect}[1]{\subsubsection{#1}}
+% \newcommand{\chapt}[1]{\section{#1}}
+% \newcommand{\sect}[1]{\subsection{#1}}
+% \newcommand{\subsect}[1]{\subsubsection{#1}}
+% \newcommand{\subsubsect}[1]{{\bf #1}}
+
+\makeatother
+
+\renewcommand{\thing}{book}
+
+\renewcommand{\chapthing}{chapter}
+\renewcommand{\Chapthing}{Chapter}
+\renewcommand{\chapthings}{chapters}
+\renewcommand{\Chapthings}{Chapters}
+% \newcommand{\chapthing}{section}
+% \newcommand{\Chapthing}{Section}
+% \newcommand{\chapthings}{sections}
+% \newcommand{\Chapthings}{Sections}
+
+%%% notes - uncomment empty version for final
+\newcommand{\notes}[1]
+{
+  \mbox{ } \\
+  NOTES
+  \begin{verse}
+  {#1}
+  \end{verse}
+  ENDNOTES \\
+}
+%\renewcommand{\notes}[1]{}
+
+\renewcommand{\delete}[1]{}
+\newcommand{\omitted}[1]{{\small \sf =OMITTED=}}
+
+% shorthand for [D], [F], [D,F]
+\newcommand{\dev}{{\bf $[$D$]$}}
+\newcommand{\fram}{{\bf $[$F$]$}}
+\newcommand{\devfram}{{\bf $[$D,F$]$}}
+\newcommand{\emb}{{\bf $[$E$]$}}
+\newcommand{\devemb}{{\bf $[$D,E$]$}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%% Support for including code listings %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\lstset{
+  language=Java,
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color[rgb]{0,0.5,0}\it,
+  stringstyle=\color[rgb]{1,0,1},
+  showstringspaces=false,
+  numbers=left, 
+  numberstyle=\tiny, 
+  stepnumber=1, 
+  numbersep=10pt,
+  xleftmargin=20pt
+}
+
+% only use texcl option in PDF mode, as it screws up badly in HTML
+\ifpdf
+\lstset{texcl}
+\fi
+
+% Additional setting for Groovy
+\lstset{keywordstyle=[3]\bfseries\color[RGB]{6,142,6},}
+\lstdefinelanguage{groovy}[]{java}{
+  % groovy keywords to typeset the same as Java keywords
+  morekeywords={as,def,in,use},
+  % GDK methods to highlight
+  keywords=[3]{each,findAll,eachWithIndex,collect,groupBy,inject},
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%         Commands for easier inclusion of aptconvert generated files %%%
+%%%% (only those that do not mess up the struction, psection etc.        %%%
+%%%%  must be manually converted)                                        %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\ptitle}[1]{\title{#1}}
+\newcommand{\pauthor}[1]{\author{#1}}
+\newcommand{\pdate}[1]{\date{#1}}
+\newenvironment{plist}{\begin{itemize}}{\end{itemize}}
+\newenvironment{pnumberedlist}{\begin{enumerate}}{\end{enumerate}}
+\newcommand{\pdef}[1]{\textbf{#1}\hfill}
+\newenvironment{pdefinitionlist}
+{\begin{list}{}{\settowidth{\labelwidth}{\textbf{999.}}
+                \setlength{\leftmargin}{\labelwidth}
+                \addtolength{\leftmargin}{\labelsep}
+                \renewcommand{\makelabel}{\pdef}}}
+{\end{list}}
+\newenvironment{pfigure}{\begin{center}}{\end{center}}
+\newcommand{\pfigurecaption}[1]{\\* \vspace{\pparskipamount}
+                                \textit{#1}}
+\newenvironment{ptable}{\begin{center}}{\end{center}}
+\newenvironment{ptablerows}[1]{\begin{tabular}{#1}}{\end{tabular}}
+\newenvironment{pcell}[1]{\begin{tabular}[t]{#1}}{\end{tabular}}
+\newcommand{\ptablecaption}[1]{\\* \vspace{\pparskipamount}
+                               \textit{#1}}
+\newenvironment{pverbatim}{\begin{small}}{\end{small}}
+\newsavebox{\pbox}
+\newenvironment{pverbatimbox}
+{\begin{lrbox}{\pbox}\begin{minipage}{\linewidth}\begin{small}}
+{\end{small}\end{minipage}\end{lrbox}\fbox{\usebox{\pbox}}}
+\newcommand{\phorizontalrule}{\begin{center}
+                              \rule[0.5ex]{\linewidth}{1pt}
+                              \end{center}}
+\newcommand{\panchor}[1]{\index{#1}}
+\newcommand{\plink}[1]{#1}
+\newcommand{\pitalic}[1]{\textit{#1}}
+\newcommand{\pbold}[1]{\textbf{#1}}
+\newcommand{\pmonospaced}[1]{\texttt{\small #1}}
+\newcommand{\pfiguregraphics}[1]{\includegraphics{#1.eps}}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%% the document %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%% titles %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\pagenumbering{roman}
+\pagestyle{empty}
+\begin{titlepage}
+
+\begin{center}
+\ifgaterelease\else%
+  \ifhtml
+    \fcolorbox{red}{white}{\begin{minipage}{0.9\textwidth}
+      \begin{center}
+      This documentation is for the latest snapshot of GATE Developer/Embedded.\\
+      If you are using a \emph{release} version you should refer
+      to the documentation for that release instead, which is accessible via
+      the Help menu in GATE Developer.\\
+      The latest release is
+      \htlink{https://gate.ac.uk/userguide?gateVersion=8.4.1}{version 8.4.1}
+      \end{center}
+    \end{minipage}}
+  \fi
+\fi
+{\huge
+\htcode{
+%<H1><IMG src="../talks/nlpTitle.gif" border="0" align="right" alt="NLP">
+%<IMG src="../talks/redline.jpg" border="0" align="right" alt="">
+%<IMG SRC="../../gate/doc/gateHeader.gif" ALT="GATE" HEIGHT=76 WIDTH=356></H1>
+}
+\mbox{ } \\
+
+\ifprintedbook
+  \hspace*{0.75cm} Text Processing with GATE \\
+  \hspace*{0.75cm} (Version 8) \\
+  \vspace*{0.25in} 
+\else
+  \hspace*{0.75cm} Developing Language Processing\\
+  \hspace*{0.75cm} Components with GATE \\
+  \hspace*{0.75cm} Version 8 (a User Guide) \\
+  \vspace*{0.25in}
+  \large
+  \hspace*{0.75cm} For GATE version \gateversion%
+  \ifgaterelease\else%
+    -snapshot (development builds)%
+  \fi%
+  \\
+  \hspace*{0.75cm} \small{(built {\today})} \\
+\fi
+
+} % huge
+\end{center}
+
+% compress author list in HTML version
+\ifhtml
+  \newcommand{\taoAuthorSep}{, }
+\else
+  \newcommand{\taoAuthorSep}{\\ \hspace*{0.75cm}}
+\fi %ifhtml
+
+%\mbox{ }
+{
+\begin{center}
+\hspace*{0.75cm}
+\htlink{http://www.dcs.shef.ac.uk/\string ~hamish/}{Hamish Cunningham}%
+\taoAuthorSep
+\htlink{http://www.dcs.shef.ac.uk/\string ~diana/}{Diana Maynard}%
+\taoAuthorSep
+\htlink{http://www.dcs.shef.ac.uk/\string ~kalina/}{Kalina Bontcheva}%
+\taoAuthorSep
+\htlink{http://www.dcs.shef.ac.uk/\string ~valyt/}{Valentin Tablan}%
+\taoAuthorSep
+\htlink{http://www.dcs.shef.ac.uk/\string ~niraj/}{Niraj Aswani}%
+\taoAuthorSep
+\htlink{http://www.dcs.shef.ac.uk/\string ~ian/}{Ian Roberts}%
+\taoAuthorSep
+\htlink{http://www.dcs.shef.ac.uk/\string ~genevieve/}{Genevieve Gorrell}%
+\taoAuthorSep
+\htlink{http://www.dcs.shef.ac.uk/\string ~adam/}{Adam Funk}%
+\taoAuthorSep
+\htlink{http://www.dcs.shef.ac.uk/\string ~angus/}{Angus Roberts}%
+\taoAuthorSep
+\htlink{http://www.dcs.shef.ac.uk/\string ~danica/}{Danica Damljanovic}%
+\taoAuthorSep
+\htlink{http://thomasheitz.free.fr/text.mining.researcher/}{Thomas Heitz}%
+\taoAuthorSep
+\htlink{http://www.dcs.shef.ac.uk/\string ~mark/}{Mark A. Greenwood}%
+\taoAuthorSep
+\htlink{http://www.dcs.shef.ac.uk/\string ~saggion/}{Horacio Saggion}%
+\taoAuthorSep
+\htlink{http://www.ofai.at/\string ~johann.petrak/}{Johann Petrak}%
+\taoAuthorSep
+\htlink{http://personalpages.manchester.ac.uk/staff/Yaoyong.Li/}{Yaoyong Li}%
+\taoAuthorSep
+\htlink{http://www.dcs.shef.ac.uk/\string ~wim/}{Wim Peters}%
+\taoAuthorSep
+\htlink{http://www.dcs.shef.ac.uk/\string ~leon/}{Leon Derczynski}%
+\taoAuthorSep
+\textit{et al} \\
+\hspace*{1cm}
+\mbox{ } \\
+\hspace*{0.75cm} \copyright The University of Sheffield, Department of Computer Science 2001-2017 \\
+\mbox{ } \\
+\hspace*{0.75cm} \htlink{https://gate.ac.uk/}{\tt https://gate.ac.uk/} \\
+\vspace*{0.2in}
+\htlatex{
+  \hspace*{0.75cm}
+  \ifprintedbook \else%only print this link if this is not the book
+    {\normalsize \bf This user manual is free, but please consider making a \htlink{https://onlinepayments.shef.ac.uk/donations/}{donation}.} \\
+    \hspace*{0.75cm} \\
+    {\normalsize \bf HTML version: \htlink{https://gate.ac.uk/userguide\ifgaterelease?gateVersion=\gateversion\fi}{\tt https://gate.ac.uk/userguide}}
+  \fi
+  \vspace*{0.1in}
+}
+\htcode{<P ALIGN="CENTER"><A HREF="how-to-cite.html">How to cite this guide</A></P>
+<P ALIGN="CENTER"><A HREF="tao.pdf">PDF version</A></P>
+<P ALIGN="CENTER"><A HREF="index.html">Single HTML page</A></P>
+<P ALIGN="CENTER"><A HREF="split.html">Multiple HTML pages</A></P>
+}\\
+
+\end{center}
+}
+%\mbox{ } \\
+%\hspace*{0.75cm} {\normalsize
+%his work has been supported by the Engineering and} \\
+%\mbox{ }
+%\hspace*{0.75cm} {\normalsize
+%Physical Sciences Research Council (EPSRC) under grants} \\
+%\mbox{ }
+%\hspace*{0.75cm} {\normalsize
+%GR/K25267 and GR/M31699, and by several smaller grants.}
+%\vspace*{0.5in}
+%\end{center}
+
+
+\begin{small}
+\begin{center}
+%
+Work on GATE has been partly supported by EPSRC grants GR/K25267
+(Large-Scale Information Extraction), GR/M31699 (GATE 2), RA007940 (EMILLE),
+GR/N15764/01 (AKT) and GR/R85150/01 (MIAKT), AHRB grant APN16396
+(ETCSL/GATE),
+\htlink{http://www.ontotext.com/}{Ontotext}
+Matrixware,
+the Information Retrieval Facility
+and several EU-funded projects: 
+(\htlink{http://www.trendminer-project.eu/}{TrendMiner},
+\htlink{http://www.ucomp.eu/}{uComp},
+\htlink{http://www.arcomem.eu/}{Arcomem},
+\htlink{http://www.sekt-project.com}{SEKT},
+\htlink{http://www.tao-project.eu}{TAO},
+\htlink{http://www.neon-project.org}{NeOn},
+\htlink{http://www.media-campaign.eu}{MediaCampaign},
+\htlink{http://cordis.europa.eu/ist/kct/musing_synopsis.htm}{Musing},
+\htlink{http://gate.ac.uk/projects/knowledge-web/}{KnowledgeWeb},
+\htlink{http://www.prestospace.org}{PrestoSpace},
+\htlink{http://gate.ac.uk/projects/htechsight/}{h-TechSight}, 
+and enIRaF).
+%
+\end{center}
+\end{small}
+
+\end{titlepage}
+
+\newcommand{\taoVerso}{
+%Title verso
+
+\mbox{}
+\mbox{}
+\begin{small}
+
+\ifprintedbook
+  \textbf{Text Processing with GATE (Version 8)}  
+\else 
+  \textbf{Developing Language Processing Components with GATE Version 8}
+\fi
+
+\textbf{\copyright 2017 The University of Sheffield, Department of Computer Science}
+
+The University of Sheffield, Department of Computer Science\\
+Regent Court\\
+211 Portobello\\
+Sheffield\\
+S1 4DP\\
+United Kingdom\\
+\\
+https://gate.ac.uk
+
+
+This work is licenced under the Creative Commons Attribution-No Derivative
+Licence. You are free to copy, distribute, display, and perform the work under
+the following conditions:
+
+\begin{itemize}
+  \item \textbf{Attribution} --- You must give the original author credit.
+  \item \textbf{No Derivative Works} --- You may not alter, transform, or build
+  upon this work.
+\end{itemize}
+
+With the understanding that:
+
+\begin{itemize}
+  \item \textbf{Waiver} --- Any of the above conditions can be waived if you get
+  permission from the copyright holder.
+  \item \textbf{Other Rights} --- In no way are any of the following rights
+  affected by the license: your fair dealing or fair use rights; the author's
+  moral rights; rights other persons may have either in the work itself or in
+  how the work is used, such as publicity or privacy rights.
+  \item \textbf{Notice} --- For any reuse or distribution, you must make clear
+  to others the licence terms of this work.
+\end{itemize}
+
+For more information about the Creative Commons Attribution-No Derivative
+License, please visit this web address:
+http://creativecommons.org/licenses/by-nd/2.0/uk/
+
+\mbox{}
+\mbox{}
+
+%Only print an ISBN if this is a book, no need otherwise, as it also violates the ISBN rules
+\ifprintedbook
+  ISBN: \input{isbn.txt}
+\fi
+
+\end{small}
+} %newcommand{taoVerso}
+
+% don't include the verso here in HTML mode
+\ifhtml\else
+  \newpage
+  \mbox{}
+  \taoVerso
+\fi
+
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%% TOCs %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\pagestyle{myheadings}
+\ifprintedbook
+  \markboth{Text Processing with GATE}
+           {Text Processing with GATE}
+\else
+  \markboth{Developing Language Processing Components with GATE}
+           {Developing Language Processing Components with GATE}
+\fi
+
+%%% add brief contents (unless we're doing HTML or book) and contents
+\parskip=0pt
+
+\ifhtml
+\else
+  \ifprintedbook
+  \else
+    \section*{Brief Contents}
+    \input{shortc}
+  \fi
+\fi
+
+\markboth{Contents}{Contents}
+\tableofcontents
+\resetparskip
+
+\ifprintedbook
+  \bibliographystyle{alpha}
+\else
+  \bibliographystyle{kthesis}
+\fi
+\pagenumbering{arabic}
+\pagestyle{myheadings}
+%\markboth{Developing Language Processing Components with GATE}
+%         {Developing Language Processing Components with GATE}
+
+\ifprintedbook
+  \renewcommand{\htlink}[2]{{#2}\footnote{{\tt #1}}}
+  \renewcommand{\htlinkplain}[1]{\protect{\begin{small}\tt #1 \end{small}}} 
+\fi
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%% chapters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\smartpart[part:intro-to-gate]{GATE Basics}
+\input{intro} %final for book
+%\input{howto}
+\input{gettingstarted}  %final for book
+\input{developer} %final for book
+\input{creole-model} %final for book
+\input{corpora} %final for book
+\input{annie} %final for book
+
+\smartpart[part:advanced-gate]{GATE for Advanced Users}
+\input{api} %final for book
+\input{jape} %final for book
+\input{annic} %final for book
+\input{evaluation} %final for book
+\input{profiling}  %final for book
+\input{gate_development} %final for book
+%\input{security}
+
+\smartpart[part:plugins]{CREOLE Plugins}
+\input{gazetteers} %final for book
+\input{ontologies} %final for book (a couple of small overfulls in listings, but not bad)
+\input{language-creole} %final for book
+\input{domain-creole}
+\input{social-media}
+\input{parsers} %final for book
+\input{machine-learning} %final for book
+\input{alignment} %final for book
+\input{crowdsourcing}
+\input{uima} %final for book
+\input{misc-creole} %final for book
+
+
+\smartpart[part:family]{The GATE Family: Cloud, MIMIR, Teamware}
+\input{cloud} %final for book
+\input{teamware} %final for book
+\input{mimir} %final for book
+
+
+
+%\part*{Appendices}
+\cleardoublepage
+\addcontentsline{toc}{part}{Appendices}
+\appendix
+
+\ifprintedbook
+\else
+  \input{changes} %final for book
+\fi
+
+\input{plugin-name-map} %final for book
+
+% should this be included in the book or not?
+\input{obsolete-plugins}
+
+\ifprintedbook
+\else
+  \input{design} %final for book
+\fi
+
+\input{ant-tasks}
+
+\ifprintedbook
+\else
+  \input{negram}
+\fi
+
+\input{postag}
+%\input{mlconfig}
+%\input{iaa-kappa}
+%\input{shortcuts}
+%\input{oracle-postgre}
+
+% include the "verso" copyright statement in an appendix for HTML
+\ifhtml
+\chapt[chap:copyright]{Copyright and Licence}
+\markboth{Copyright and Licence Information}{Copyright and Licence Information}
+\taoVerso
+\fi
+
+\renewcommand{\bibname}{References}
+\cleardoublepage
+\markboth{References}{References}
+% In tex4ht the bibliography is included in the table of contents
+% automatically.  In pdflatex it isn't, so we need an explicit addcontentsline
+% in that case, but this needs to come after the start of the "chapter" in
+% order to get the TOC entry to link to the correct page.  To achieve this we
+% redefine the thebibliography environment (in non-HTML mode only) to include
+% the addcontentsline at the right place.
+\ifhtml\else
+  % save the old definition of the environment
+  \let\oldThebib\thebibliography
+  \let\oldEndthebib\endthebibliography
+  % and reuse it in the new definition
+  \renewenvironment{thebibliography}[1]%
+    {\oldThebib{#1}\addcontentsline{toc}{chapter}{References}}%
+    {\oldEndthebib}
+\fi
+{\small \bibliography{../big}}
+
+\ifprintedbook
+\else
+\input{colophon}
+\fi
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%% THE END %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\end{document}
+

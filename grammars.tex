@@ -1,0 +1,4270 @@
+\section{Appendix - Default Grammars}
+\subsection{main.jape}
+\begin{verbatim}
+
+/*
+*  main.jape
+*
+* Copyright (c) 1998-2001, The University of Sheffield.
+*
+*  This file is part of GATE (see http://gate.ac.uk/), and is free
+*  software, licenced under the GNU Library General Public License,
+*  Version 2, June 1991 (in the distribution as file licence.html,
+*  and also available at http://gate.ac.uk/gate/licence.html).
+*
+*  Diana Maynard, 02 Aug 2001
+*
+*  $Id: grammars.tex,v 1.2 2001/11/29 18:07:27 diana Exp $
+*/
+
+MultiPhase:	TestTheGrammars
+Phases: 
+first
+firstname
+name
+name_post
+date_pre
+date
+reldate
+number
+address
+url
+identifier
+jobtitle
+final
+unknown
+name_context
+org_context
+loc_context
+clean/*
+
+*  first.jape
+*
+* Copyright (c) 1998-2001, The University of Sheffield.
+*
+*  This file is part of GATE (see http://gate.ac.uk/), and is free
+*  software, licenced under the GNU Library General Public License,
+*  Version 2, June 1991 (in the distribution as file licence.html,
+*  and also available at http://gate.ac.uk/gate/licence.html).
+*
+*  Diana Maynard, 10 Sep 2001
+* 
+*  $Id: grammars.tex,v 1.2 2001/11/29 18:07:27 diana Exp $
+*/
+
+Phase:	First
+Input: Token Lookup
+Options: control = appelt
+
+// this has to be run first of all 
+// contains any macros etc needed only for standard grammars
+
+//////////////////////////////////////////////////////////////
+Macro: SPACE
+// space
+// control
+// space control
+// control space
+
+( 
+ ({SpaceToken.kind == space}
+  ({SpaceToken.kind == control})?
+  ({SpaceToken.kind == control})?
+ )
+|
+ ({SpaceToken.kind == control}
+  ({SpaceToken.kind == control})?
+  ({SpaceToken.kind == space})?
+ )
+)
+
+
+///////////////////////////////////////////////////////////////
+
+Rule: Silly
+// we have to have a rule here, so we'll just have something silly
+
+(
+ {Token.string == "afguahughaegarth"}
+)
+:silly
+-->
+ {}
+
+/*
+*  firstname.jape
+*
+* Copyright (c) 1998-2001, The University of Sheffield.
+*
+*  This file is part of GATE (see http://gate.ac.uk/), and is free
+*  software, licenced under the GNU Library General Public License,
+*  Version 2, June 1991 (in the distribution as file licence.html,
+*  and also available at http://gate.ac.uk/gate/licence.html).
+*
+*  Diana Maynard, 02 Aug 2001
+* 
+*  $Id: grammars.tex,v 1.2 2001/11/29 18:07:27 diana Exp $
+*/
+
+Phase:	FirstName
+Input: Token Lookup
+Options: control = appelt
+
+Rule: FirstName
+// Fred
+
+(
+ {Lookup.majorType == person_first}
+):person
+-->
+{
+gate.AnnotationSet person = (gate.AnnotationSet)bindings.get("person");
+gate.Annotation personAnn = (gate.Annotation)person.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("gender", personAnn.getFeatures().get("minorType"));
+features.put("rule", "FirstName");
+annotations.add(person.firstNode(), person.lastNode(), "FirstPerson",
+features);
+}
+
+Rule: TitleGender
+Priority: 50
+// Mr
+
+(
+ {Lookup.majorType == title, Lookup.minorType == male}|
+ {Lookup.majorType == title, Lookup.minorType == female}
+):person
+-->
+{
+gate.AnnotationSet person = (gate.AnnotationSet)bindings.get("person");
+gate.Annotation personAnn = (gate.Annotation)person.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("gender", personAnn.getFeatures().get("minorType"));
+features.put("rule", "TitleGender");
+annotations.add(person.firstNode(), person.lastNode(), "Title",
+features);
+}
+
+Rule: Title
+// Dr
+
+(
+ {Lookup.majorType == title}
+):person
+-->
+ :person.Title = {rule = "Title"}
+
+
+
+/*
+*  name.jape
+*
+* Copyright (c) 1998-2001, The University of Sheffield.
+*
+*  This file is part of GATE (see http://gate.ac.uk/), and is free
+*  software, licenced under the GNU Library General Public License,
+*  Version 2, June 1991 (in the distribution as file licence.html,
+*  and also available at http://gate.ac.uk/gate/licence.html).
+*
+*  Diana Maynard, 10 Sep 2001
+* 
+*  $Id: grammars.tex,v 1.2 2001/11/29 18:07:27 diana Exp $
+*/
+
+
+Phase:	Name
+Input: Token Lookup Title FirstPerson
+Options: control = appelt
+
+///////////////////////////////////////////////////////////////
+
+// Person Rules
+
+/////////////////////////////////////////////////////////////////
+Macro: TITLE
+(
+ {Title}
+ ({Token.string == "."})?
+)
+Macro: INITIALS
+(
+  ({Token.orth == upperInitial, Token.length =="1"}
+  ({Token.string == "."})?
+  )+
+)
+
+Macro: INITIALS2
+
+(
+ {Token.orth == allCaps, Token.length == "2"} |
+ {Token.orth == allCaps, Token.length == "3"}
+)
+
+
+Macro: FIRSTNAME
+(
+ ({FirstPerson.gender == male} |
+  {FirstPerson.gender == female})
+ |
+ (INITIALS)
+)
+
+Macro: FIRSTNAMEAMBIG
+(
+ {Lookup.majorType == person_first, Lookup.minorType == ambig}
+)
+
+
+
+Macro: UPPER
+(
+ ({Token.category == NNP}| 
+ {Token.orth == upperInitial}|
+ {Token.orth == mixedCaps} 
+)
+ ({Token.string == "-"}
+  {Token.category == NNP}
+ )?
+)
+
+Macro: PERSONENDING
+(
+ {Lookup.majorType == person_ending}
+)
+
+Macro: PREFIX
+(
+ ({Lookup.majorType == surname, Lookup.minorType == prefix}
+ )|
+ (({Token.string == "O"}|{Token.string == "D"})
+  {Token.string == "'"}
+ )
+)
+
+
+
+
+///////////////////////////////////////////////////////////
+
+
+// Person Rules
+
+Rule: Pronoun
+Priority: 1000
+//stops personal pronouns being recognised as Initials
+(
+ {Token.category == PP}|
+ {Token.category == PRP}|
+ {Token.category == RB}
+):pro
+-->
+{}
+
+ 
+
+Rule:	GazPerson
+Priority: 50
+(
+ {Lookup.majorType == person_full, Lookup.minorType == normal}
+)
+:person -->
+{
+gate.AnnotationSet person = (gate.AnnotationSet)bindings.get("person");
+gate.Annotation personAnn = (gate.Annotation)person.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("kind", "personName");
+features.put("rule", "GazPerson");
+annotations.add(person.firstNode(), person.lastNode(), "TempPerson",
+features);
+}
+
+Rule:	TheGazPersonFirst
+Priority: 200
+(
+ {Token.category == DT}|
+ {Token.category == PRP}|
+ {Token.category == RB}
+)
+(
+ {FirstPerson}
+)
+:person 
+( 
+ {Token.orth == upperInitial, Token.length == "1"}
+)?
+-->
+{
+gate.AnnotationSet person = (gate.AnnotationSet)bindings.get("person");
+gate.Annotation personAnn = (gate.Annotation)person.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("gender", personAnn.getFeatures().get("gender"));
+features.put("kind", "personName");
+features.put("rule", "GazPersonFirst");
+annotations.add(person.firstNode(), person.lastNode(), "TempPerson",
+features);
+//annotations.removeAll(person);
+}
+
+
+Rule:	GazPersonFirst
+Priority: 20
+(
+ {FirstPerson}
+)
+:person 
+( 
+ {Token.orth == upperInitial, Token.length == "1"}
+)?
+-->
+{
+gate.AnnotationSet person = (gate.AnnotationSet)bindings.get("person");
+gate.Annotation personAnn = (gate.Annotation)person.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("gender", personAnn.getFeatures().get("gender"));
+features.put("kind", "personName");
+features.put("rule", "GazPersonFirst");
+annotations.add(person.firstNode(), person.lastNode(), "TempPerson",
+features);
+//annotations.removeAll(person);
+}
+
+
+
+
+
+Rule: PersonFirstContext
+Priority: 30
+// Anne and Kenton
+
+(
+ {FirstPerson}
+):person1
+(
+ {Token.string == "and"}
+)
+({Token.orth == upperInitial})
+:person2
+ -->
+{
+//first deal with person1
+ gate.FeatureMap features1 = Factory.newFeatureMap();
+gate.AnnotationSet person1Set = (gate.AnnotationSet)bindings.get("person1");
+gate.AnnotationSet firstPerson = (gate.AnnotationSet)person1Set.get("FirstPerson");
+if (firstPerson != null && firstPerson.size()>0)
+{
+  gate.Annotation personAnn = (gate.Annotation)firstPerson.iterator().next();
+  features1.put("gender", personAnn.getFeatures().get("gender"));
+}
+  features1.put("kind", "personName");
+  features1.put("rule", "PersonFirstContext");
+annotations.add(person1Set.firstNode(), person1Set.lastNode(), "TempPerson",
+features1);
+//now deal with person2
+gate.FeatureMap features2 = Factory.newFeatureMap();
+gate.AnnotationSet person2Set = (gate.AnnotationSet)bindings.get("person2");
+  features2.put("kind", "personName");
+  features2.put("rule", "PersonFirstContext");
+annotations.add(person2Set.firstNode(), person2Set.lastNode(), "TempPerson",
+features2);
+}
+
+
+Rule: PersonFirstContext2
+Priority: 40
+// Anne and I
+
+(
+ {FirstPerson}
+):person
+(
+ {Token.string == "and"}
+ {Token.length == "1"}
+)
+ -->
+{
+ gate.FeatureMap features = Factory.newFeatureMap();
+gate.AnnotationSet personSet = (gate.AnnotationSet)bindings.get("person");
+gate.AnnotationSet firstPerson = (gate.AnnotationSet)personSet.get("FirstPerson");
+if (firstPerson != null && firstPerson.size()>0)
+{
+  gate.Annotation personAnn = (gate.Annotation)firstPerson.iterator().next();
+  features.put("gender", personAnn.getFeatures().get("gender"));
+}
+  features.put("kind", "personName");
+  features.put("rule", "PersonFirstContext2");
+annotations.add(personSet.firstNode(), personSet.lastNode(), "TempPerson",
+features);
+}
+
+
+Rule:	PersonTitle
+Priority: 35
+// Mr. Jones
+// Mr Fred Jones
+// note we only allow one first and surname, 
+// but we can add more in a final phase if we find adjacent unknowns
+ 
+(
+ (TITLE)+
+ ((FIRSTNAME | FIRSTNAMEAMBIG | INITIALS2)
+ )?
+  (PREFIX)* 
+  (UPPER)
+ (PERSONENDING)?
+)
+:person -->
+{
+ gate.FeatureMap features = Factory.newFeatureMap();
+gate.AnnotationSet personSet = (gate.AnnotationSet)bindings.get("person");
+  
+ // get all Title annotations that have a gender feature
+ HashSet fNames = new HashSet();
+    fNames.add("gender");
+    gate.AnnotationSet personTitle = personSet.get("Title", fNames);
+
+// if the gender feature exists
+ if (personTitle != null && personTitle.size()>0)
+{
+  //Out.prln("Titles found " +  personTitle);
+  gate.Annotation personAnn = (gate.Annotation)personTitle.iterator().next();
+  features.put("gender", personAnn.getFeatures().get("gender"));
+}
+else
+{
+  //get all firstPerson annotations that have a gender feature
+  //  HashSet fNames = new HashSet();
+   // fNames.add("gender");
+    gate.AnnotationSet firstPerson = personSet.get("FirstPerson", fNames);
+
+  if (firstPerson != null && firstPerson.size()>0)
+ {
+    //Out.prln("First persons found " +  firstPerson);
+  gate.Annotation personAnn = (gate.Annotation)firstPerson.iterator().next();
+  features.put("gender", personAnn.getFeatures().get("gender"));
+ }
+}
+  features.put("kind", "personName");
+  features.put("rule", "PersonTitle");
+annotations.add(personSet.firstNode(), personSet.lastNode(), "TempPerson",
+features);
+}
+
+
+Rule:	PersonFirstTitleGender
+Priority: 55
+// use this rule when we know what gender the title indicates
+// Mr Fred
+
+(
+ ({Title.gender == male} | {Title.gender == female})
+ ((FIRSTNAME | FIRSTNAMEAMBIG | INITIALS2)
+ )
+)
+:person -->
+{
+ gate.FeatureMap features = Factory.newFeatureMap();
+gate.AnnotationSet personSet = (gate.AnnotationSet)bindings.get("person");
+gate.AnnotationSet title = (gate.AnnotationSet)personSet.get("Title");
+if (title != null && title.size()>0)
+{
+  gate.Annotation personAnn = (gate.Annotation)title.iterator().next();
+  features.put("gender", personAnn.getFeatures().get("gender"));
+}
+  features.put("kind", "personName");
+  features.put("rule", "PersonFirstTitleGender");
+annotations.add(personSet.firstNode(), personSet.lastNode(), "TempPerson",
+features);
+}
+
+
+Rule: PersonTitleGender
+Priority: 18
+// use this rule if the title has a feature gender
+// Miss F Smith
+(
+ ({Title.gender == male}|
+  {Title.gender == female}
+ ) 
+ ((FIRSTNAME | FIRSTNAMEAMBIG | INITIALS2)
+ )*
+ (UPPER)
+ (PERSONENDING)?
+)
+:person -->
+{
+ gate.FeatureMap features = Factory.newFeatureMap();
+gate.AnnotationSet personSet = (gate.AnnotationSet)bindings.get("person");
+gate.AnnotationSet title = (gate.AnnotationSet)personSet.get("Title");
+// if the annotation type title doesn't exist, do nothing
+if (title != null && title.size()>0)
+{
+// if it does exist, take the first element in the set
+  gate.Annotation personAnn = (gate.Annotation)title.iterator().next();
+//propagate gender feature (and value) from title
+  features.put("gender", personAnn.getFeatures().get("gender"));
+}
+// create some new features
+  features.put("kind", "personName");
+  features.put("rule", "PersonTitleGender");
+// create a TempPerson annotation and add the features we've created
+annotations.add(personSet.firstNode(), personSet.lastNode(), "TempPerson",
+features);
+}
+
+
+Rule: PersonJobTitle
+Priority: 20
+// note we include titles but not jobtitles in markup
+
+(
+ {Lookup.majorType == jobtitle}
+):jobtitle
+(
+ (TITLE)?
+ ((FIRSTNAME | FIRSTNAMEAMBIG | INITIALS2)
+ )
+ (PREFIX)* 
+ (UPPER)
+ (PERSONENDING)?
+)
+:person 
+-->
+    :person.TempPerson = {kind = "personName", rule = "PersonJobTitle"},
+   :jobtitle.JobTitle = {rule = "PersonJobTitle"} 
+
+
+
+
+Rule: NotFirstPersonStop
+Priority: 50
+// ambig first name and surname is stop word
+// e.g. Will And
+
+(
+ ((FIRSTNAMEAMBIG)+ | 
+  {Token.category == PRP}|
+  {Token.category == DT}
+ )
+ ({Lookup.majorType == stop}
+ )
+)
+:person -->
+  {}
+
+
+Rule: NotPersonFull
+Priority: 50
+// Det + Surname
+(
+ {Token.category == DT}|
+ {Token.category == PRP}|
+ {Token.category == RB}
+)
+(
+ (PREFIX)* 
+ (UPPER)
+ (PERSONENDING)?
+):foo
+-->
+{}
+
+
+Rule: LocPersonAmbig
+Priority: 50
+// Location + Surname
+(
+ {Lookup.majorType == location}
+):loc
+(
+ (PREFIX)* 
+ (UPPER)
+ (PERSONENDING)?
+):foo
+-->
+:loc.TempLocation = {kind = "locName", rule = LocPersonAmbig}
+
+
+Rule: 	PersonFull
+Priority: 10
+// F.W. Jones
+// Fred Jones
+(
+ {Token.category == DT}
+)?
+(
+ ((FIRSTNAME | FIRSTNAMEAMBIG) )+
+ (PREFIX)*
+ (UPPER)
+ (PERSONENDING)?
+)
+:person -->
+{
+ gate.FeatureMap features = Factory.newFeatureMap();
+gate.AnnotationSet personSet = (gate.AnnotationSet)bindings.get("person");
+  
+  //get all firstPerson annotations that have a gender feature
+    HashSet fNames = new HashSet();
+    fNames.add("gender");
+    gate.AnnotationSet firstPerson = personSet.get("FirstPerson", fNames);
+
+  if (firstPerson != null && firstPerson.size()>0)
+ {
+    //Out.prln("First persons found " +  firstPerson);
+  gate.Annotation personAnn = (gate.Annotation)firstPerson.iterator().next();
+  features.put("gender", personAnn.getFeatures().get("gender"));
+}
+  features.put("kind", "personName");
+  features.put("rule", "PersonFull");
+annotations.add(personSet.firstNode(), personSet.lastNode(), "TempPerson",
+features);
+}
+
+Rule: PersonFullStop
+Priority: 50
+// G.Wilson Fri
+
+(
+ ((FIRSTNAME | FIRSTNAMEAMBIG) )
+ (PREFIX)* 
+ (UPPER)
+):person
+(
+ {Lookup.majorType == date}
+)
+-->
+ :person.TempPerson = {kind = "personName", rule = "PersonFullStop"}
+
+
+Rule: NotPersonFullReverse
+Priority: 20
+// XYZ, I
+(
+ (UPPER)
+ {Token.string == ","}
+ {Token.category == PRP}
+ (PERSONENDING)?
+)
+:unknown 
+-->
+{}
+
+Rule: 	PersonFullReverse
+Priority: 5
+// Jones, F.W.
+// don't allow Jones, Fred because too ambiguous
+// Smith, TF
+
+(
+ {Token.category ==NNP}
+ {Token.string == ","}
+ (INITIALS )+ 
+ (PERSONENDING)?
+)
+:person -->
+{
+ gate.FeatureMap features = Factory.newFeatureMap();
+gate.AnnotationSet personSet = (gate.AnnotationSet)bindings.get("person");
+gate.AnnotationSet firstPerson = (gate.AnnotationSet)personSet.get("FirstPerson");
+if (firstPerson != null && firstPerson.size()>0)
+{
+  gate.Annotation personAnn = (gate.Annotation)firstPerson.iterator().next();
+  features.put("gender", personAnn.getFeatures().get("gender"));
+}
+  features.put("kind", "personName");
+  features.put("rule", "PersonFullReverse");
+annotations.add(personSet.firstNode(), personSet.lastNode(), "TempPerson",
+features);
+}
+
+
+Rule:  PersonSaint
+Priority: 50
+// Note: ensure that it's not a Saints Day first
+(
+ ({Token.string == "St"} ({Token.string == "."})? |
+ {Token.string == "Saint"})
+ (FIRSTNAME)
+ )
+:person -->
+{
+ gate.FeatureMap features = Factory.newFeatureMap();
+gate.AnnotationSet personSet = (gate.AnnotationSet)bindings.get("person");
+gate.AnnotationSet firstPerson = (gate.AnnotationSet)personSet.get("FirstPerson");
+if (firstPerson != null && firstPerson.size()>0)
+{
+  gate.Annotation personAnn = (gate.Annotation)firstPerson.iterator().next();
+  features.put("gender", personAnn.getFeatures().get("gender"));
+}
+  features.put("kind", "personName");
+  features.put("rule", "PersonSaint");
+annotations.add(personSet.firstNode(), personSet.lastNode(), "TempPerson",
+features);
+}
+
+
+Rule: PersonLocAmbig
+Priority: 40
+// Ken London
+// Susan Hampshire
+
+// Christian name + Location --> Person's Name
+(
+ ({Lookup.majorType == person_first} |
+  (INITIALS
+   {Token.string == "."})
+ )
+  {Lookup.majorType == location}
+)
+:person -->
+{
+ gate.FeatureMap features = Factory.newFeatureMap();
+gate.AnnotationSet personSet = (gate.AnnotationSet)bindings.get("person");
+gate.AnnotationSet firstPerson = (gate.AnnotationSet)personSet.get("FirstPerson");
+if (firstPerson != null && firstPerson.size()>0)
+{
+  gate.Annotation personAnn = (gate.Annotation)firstPerson.iterator().next();
+  features.put("gender", personAnn.getFeatures().get("gender"));
+}
+  features.put("kind", "personName");
+  features.put("rule", "PersonLocAmbig");
+annotations.add(personSet.firstNode(), personSet.lastNode(), "TempPerson",
+features);
+}
+
+///////////////////////////////////////////////////////////////////
+// Organisation Rules
+
+Macro:  CDG
+// cdg is something like "Ltd."
+ (
+  ({Lookup.majorType == cdg})|
+  ({Token.string == ","} 
+  {Lookup.majorType == cdg})
+ )
+
+
+Macro: SAINT
+(
+ ({Token.string == "St"} ({Token.string == "."})? |
+ {Token.string == "Saint"})
+)
+
+Macro: CHURCH
+(
+{Token.string == "Church"}|{Token.string == "church"}|
+{Token.string == "Cathedral"}|{Token.string == "cathedral"}|
+{Token.string == "Chapel"}|{Token.string == "chapel"}
+)
+
+/////////////////////////////////////////////////////////////
+Rule:	TheGazOrganization
+Priority: 245
+(
+ {Token.category == DT}
+)
+(
+{Lookup.majorType == organization}
+)
+:orgName -->  
+ {
+ gate.FeatureMap features = Factory.newFeatureMap();
+// create an annotation set consisting of all the annotations for org 
+gate.AnnotationSet orgSet = (gate.AnnotationSet)bindings.get("orgName");
+// create an annotation set consisting of the annotation matching Lookup
+gate.AnnotationSet org = (gate.AnnotationSet)orgSet.get("Lookup");
+// if the annotation type Lookup doesn't exist, do nothing
+if (org != null && org.size()>0)
+{
+// if it does exist, take the first element in the set
+  gate.Annotation orgAnn = (gate.Annotation)org.iterator().next();
+//propagate minorType feature (and value) from org
+  features.put("orgType", orgAnn.getFeatures().get("minorType"));
+}
+// create some new features
+  features.put("rule", "GazOrganization");
+// create a TempOrg annotation and add the features we've created
+annotations.add(orgSet.firstNode(), orgSet.lastNode(), "TempOrganization",
+features);
+}
+
+
+Rule:	GazOrganization
+Priority: 145
+
+(
+{Lookup.majorType == organization}
+)
+:orgName -->  
+ {
+ gate.FeatureMap features = Factory.newFeatureMap();
+// create an annotation set consisting of all the annotations for org 
+gate.AnnotationSet orgSet = (gate.AnnotationSet)bindings.get("orgName");
+// create an annotation set consisting of the annotation matching Lookup
+gate.AnnotationSet org = (gate.AnnotationSet)orgSet.get("Lookup");
+// if the annotation type Lookup doesn't exist, do nothing
+if (org != null && org.size()>0)
+{
+// if it does exist, take the first element in the set
+  gate.Annotation orgAnn = (gate.Annotation)org.iterator().next();
+//propagate minorType feature (and value) from org
+  features.put("orgType", orgAnn.getFeatures().get("minorType"));
+}
+// create some new features
+  features.put("rule", "GazOrganization");
+// create a TempOrg annotation and add the features we've created
+annotations.add(orgSet.firstNode(), orgSet.lastNode(), "TempOrganization",
+features);
+}
+
+Rule:	LocOrganization
+Priority: 50
+// Ealing Police
+(
+ ({Lookup.majorType == location} |
+  {Lookup.majorType == country_adj})
+{Lookup.majorType == organization}
+({Lookup.majorType == organization})?
+)
+:orgName -->  
+  :orgName.TempOrganization = {kind = "orgName", rule=LocOrganization}
+
+
+Rule:	INOrgXandY
+Priority: 200
+
+// Bradford & Bingley
+// Bradford & Bingley Ltd
+(
+ {Token.category == IN}
+)
+
+(
+ ({Token.category == NNP}
+  )+
+
+ {Token.string == "&"}
+
+ (
+  {Token.orth == upperInitial}
+ )+
+
+ (CDG)?
+
+)
+:orgName -->
+  :orgName.TempOrganization = {kind = "unknown", rule = "OrgXandY"}
+
+Rule:	OrgXandY
+Priority: 20
+
+// Bradford & Bingley
+// Bradford & Bingley Ltd
+
+
+(
+ ({Token.category == NNP}
+  )+
+
+ {Token.string == "&"}
+
+ (
+  {Token.orth == upperInitial}
+ )+
+
+ (CDG)?
+
+)
+:orgName -->
+  :orgName.TempOrganization = {kind = "unknown", rule = "OrgXandY"}
+
+
+Rule:OrgUni
+Priority: 25
+// University of Sheffield
+// Sheffield University
+// A Sheffield University
+(
+ {Token.string == "University"}
+ {Token.string == "of"}
+ (
+ {Token.category == NNP})+
+)
+:orgName -->
+  :orgName.TempOrganization = {kind = "org", rule = "OrgDept"}
+
+
+
+Rule: OrgDept
+Priority: 25
+// Department of Pure Mathematics and Physics
+
+(
+ {Token.string == "Department"}
+ 
+ {Token.string == "of"}
+ (
+ {Token.orth == upperInitial})+
+ (
+  {Token.string == "and"}
+  ( 
+   {Token.orth == upperInitial})+
+ )?
+)
+:orgName -->
+  :orgName.TempOrganization = {kind = "department", rule = "OrgDept"}
+
+Rule:	TheOrgXKey
+Priority: 500
+
+// The Aaaa Ltd.
+(
+ {Token.category == DT}
+)
+(
+  (UPPER)
+  (UPPER)?
+  (UPPER)?
+  (UPPER)?
+  (UPPER)?
+ {Lookup.majorType == org_key}
+ ({Lookup.majorType == org_ending})?
+)
+:org
+-->
+:org.TempOrganization = {kind = "unknown", rule = "TheOrgXKey"}
+
+Rule:	OrgXKey
+Priority: 125
+
+// Aaaa Ltd.
+(
+  (UPPER)
+  (UPPER)?
+  (UPPER)?
+  (UPPER)?
+  (UPPER)?
+ {Lookup.majorType == org_key}
+ ({Lookup.majorType == org_ending})?
+)
+:org
+-->
+:org.TempOrganization = {kind = "unknown", rule = "TheOrgXKey"}
+
+
+Rule: NotOrgXEnding
+Priority: 500
+// Very Limited
+
+(
+ {Token.category == DT}
+)?
+(
+ {Token.category == RB}
+ {Lookup.majorType == cdg}
+)
+:label
+-->
+{}
+ 
+ Rule:	NotOrgXEnding2
+Priority: 500
+
+// The Coca Cola Co.
+
+(
+ {Token.category == DT}
+)
+(
+  (UPPER)
+  (UPPER)?
+ {Lookup.majorType == cdg}
+)
+:orgName -->
+  :orgName.TempOrganization = {kind = "unknown", rule = "OrgXEnding"}
+
+
+
+Rule:	OrgXEnding
+Priority: 120
+
+// Coca Cola Co.
+
+(
+  (UPPER)
+  (UPPER)?
+ {Lookup.majorType == cdg}
+)
+:orgName -->
+  :orgName.TempOrganization = {kind = "unknown", rule = "OrgXEnding"}
+
+Rule:	TheOrgXandYKey
+Priority: 220
+
+(
+ {Token.category == DT}
+)
+(
+ (UPPER)
+ (UPPER)?
+  (({Token.string == "and"} | 
+    {Token.string == "&"})
+   (UPPER)?
+   (UPPER)?
+   (UPPER)?
+  )
+ {Lookup.majorType == org_key}
+ ({Lookup.majorType == org_ending})?
+)
+:orgName -->
+  :orgName.TempOrganization = {kind = "unknown", rule = "OrgXandYKey"}
+
+
+
+Rule:	OrgXandYKey
+Priority: 120
+
+// Aaaa Ltd.
+// Xxx Services Ltd. 
+// AA and BB Services Ltd.
+// but NOT A XXX Services Ltd.
+
+(
+ (UPPER)
+ (UPPER)?
+  (({Token.string == "and"} | 
+    {Token.string == "&"})
+   (UPPER)?
+   (UPPER)?
+   (UPPER)?
+  )
+ {Lookup.majorType == org_key}
+ ({Lookup.majorType == org_ending})?
+)
+:orgName -->
+  :orgName.TempOrganization = {kind = "unknown", rule = "OrgXandYKey"}
+
+
+Rule:	OrgXsKeyBase
+Priority: 120
+ 
+// Gandy's Circus
+// Queen's Ware
+
+(
+  (UPPER)?
+  (UPPER)?
+  ({Token.orth == upperInitial}
+   {Token.string == "'"}
+   ({Token.string == "s"})?
+  )
+ ({Lookup.majorType == org_key}|
+  {Lookup.majorType == org_base})
+)
+:orgName -->
+  :orgName.TempOrganization = {kind = "org", rule = "OrgXsKeybase"}
+
+
+
+Rule: NotOrgXBase
+Priority: 1000
+// not things like British National
+// or The University
+
+
+(
+ ({Token.category == DT} 
+ )?
+)
+(
+ ({Lookup.majorType == country_adj}|
+  {Token.orth == lowercase})
+ ({Lookup.majorType == org_base}|
+  {Lookup.majorType == govern_key})
+)
+:orgName -->
+  :orgName.Temp = {kind = "notorgName", rule = "NotOrgXBase"}
+
+
+Rule:	TheOrgXBase
+Priority: 230
+
+(
+ ({Token.category == DT}
+ )
+)
+(
+ (
+  (UPPER)|
+  {Lookup.majorType == organization}
+ )
+ (UPPER)?
+ (UPPER)?
+ ({Lookup.majorType == org_base}|
+  {Lookup.majorType == govern_key}
+ )
+ (
+  {Token.string == "of"}
+  (UPPER)
+  (UPPER)?
+  (UPPER)?
+ )?
+)
+:orgName -->
+  :orgName.TempOrganization = {kind = "unknown", rule = "OrgXBase"}
+
+
+Rule:	OrgXBase
+Priority: 130
+
+// same as OrgXKey but uses base instead of key
+// includes govern_key e.g. academy
+// Barclays Bank
+// Royal Academy of Art
+
+(
+ (
+  (UPPER)|
+  {Lookup.majorType == organization}
+ )
+ (UPPER)?
+ (UPPER)?
+ ({Lookup.majorType == org_base}|
+  {Lookup.majorType == govern_key}
+ )
+ (
+  {Token.string == "of"}
+  (UPPER)
+  (UPPER)?
+  (UPPER)?
+ )?
+)
+:orgName -->
+  :orgName.TempOrganization = {kind = "unknown", rule = "OrgXBase"}
+
+Rule:	TheBaseofOrg
+Priority: 230
+
+(
+ {Token.category == DT}
+)
+(
+ ({Lookup.majorType == org_base}|
+  {Lookup.majorType == govern_key}
+ )
+ 
+ {Token.string == "of"}
+ ( 
+  {Token.category == DT}
+ )?
+ (UPPER)
+ (UPPER)?
+)
+:orgName -->
+  :orgName.TempOrganization = {kind = "unknown", rule = "BaseofOrg"}
+
+
+
+
+Rule:	BaseofOrg
+Priority: 130
+
+(
+ ({Lookup.majorType == org_base}|
+  {Lookup.majorType == govern_key}
+ )
+ 
+ {Token.string == "of"}
+ ( 
+  {Token.category == DT}
+ )?
+ (UPPER)
+ (UPPER)?
+)
+:orgName -->
+  :orgName.TempOrganization = {kind = "unknown", rule = "BaseofOrg"}
+
+
+
+Rule:	OrgPreX
+Priority: 130
+
+// Royal Tuscan
+
+(
+ {Lookup.majorType == org_pre}
+ (
+  {Token.orth == upperInitial})+
+ ({Lookup.majorType == org_ending})?
+)
+:orgName -->
+  :orgName.TempOrganization = {kind = "unknown", rule = "OrgPreX"}
+
+
+
+
+Rule: OrgChurch
+Priority: 150
+// St. Andrew's Church
+
+(
+  (SAINT)
+  {Token.orth == upperInitial}
+  {Token.string == "'"}({Token.string == "s"})?
+  (CHURCH)
+)
+:orgName -->
+  :orgName.TempOrganization = {kind = "org", rule = "OrgChurch"}
+
+
+Rule:OrgPersonAmbig
+Priority: 130
+// Alexandra Pottery should be org not person
+// overrides PersonFull
+
+(
+ (FIRSTNAME)
+ ({Lookup.majorType == org_key}|
+  {Lookup.majorType == org_base})
+ ({Lookup.majorType == org_ending})?
+)
+:org 
+-->
+ :org.TempOrganization= {kind = "unknown", rule = "OrgPersonAmbig"}
+
+ 
+
+/////////////////////////////////////////////////////////////////
+// Location rules
+
+
+Rule: 	Location1
+Priority: 75
+// Lookup = city, country, province, region, water
+
+// Western Europe
+// South China sea
+
+(
+ {Token.category == DT}
+)?
+(
+ ({Lookup.majorType == loc_key, Lookup.minorType == pre}
+ )?
+ {Lookup.majorType == location}
+ (
+  {Lookup.majorType == loc_key, Lookup.minorType == post})?
+)
+:locName -->
+{
+ gate.FeatureMap features = Factory.newFeatureMap();
+// create an annotation set consisting of all the annotations for org 
+gate.AnnotationSet locSet = (gate.AnnotationSet)bindings.get("locName");
+// create an annotation set consisting of the annotation matching Lookup
+gate.AnnotationSet loc = (gate.AnnotationSet)locSet.get("Lookup");
+// if the annotation type Lookup doesn't exist, do nothing
+if (loc != null && loc.size()>0)
+{
+// if it does exist, take the first element in the set
+  gate.Annotation locAnn = (gate.Annotation)loc.iterator().next();
+//propagate minorType feature (and value) from loc
+  features.put("locType", locAnn.getFeatures().get("minorType"));
+}
+// create some new features
+  features.put("rule", "Location1");
+// create a TempLoc annotation and add the features we've created
+annotations.add(locSet.firstNode(), locSet.lastNode(), "TempLocation",
+features);
+}
+
+Rule:	GazLocation
+Priority: 70
+(
+ {Token.category == DT}
+)?  
+(
+ {Lookup.majorType == location}
+)
+:locName
+ --> 	
+{
+ gate.FeatureMap features = Factory.newFeatureMap();
+// create an annotation set consisting of all the annotations for org 
+gate.AnnotationSet locSet = (gate.AnnotationSet)bindings.get("locName");
+// create an annotation set consisting of the annotation matching Lookup
+gate.AnnotationSet loc = (gate.AnnotationSet)locSet.get("Lookup");
+// if the annotation type Lookup doesn't exist, do nothing
+if (loc != null && loc.size()>0)
+{
+// if it does exist, take the first element in the set
+  gate.Annotation locAnn = (gate.Annotation)loc.iterator().next();
+//propagate minorType feature (and value) from loc
+  features.put("locType", locAnn.getFeatures().get("minorType"));
+}
+// create some new features
+  features.put("rule", "GazLocation");
+// create a TempLoc annotation and add the features we've created
+annotations.add(locSet.firstNode(), locSet.lastNode(), "TempLocation",
+features);
+}
+
+
+
+
+Rule: LocationPost
+Priority: 50
+(
+ {Token.category == DT}
+)?
+(
+ {Token.category == NNP}
+ {Lookup.majorType == loc_key, Lookup.minorType == post}
+)
+:locName
+-->
+ :locName.TempLocation = {kind = "locName", rule = LocationPost}
+
+Rule:LocKey
+(
+ {Token.category == DT}
+)?
+(
+ ({Lookup.majorType == loc_key, Lookup.minorType == pre}
+ )
+ (UPPER)
+ (
+  {Lookup.majorType == loc_key, Lookup.minorType == post})?
+)
+:locName -->
+:locName.TempLocation = {kind = "locName", rule = LocKey}
+/////////////////////////////////////////////////////////////////
+
+// Context-based Rules
+
+
+Rule:InLoc1
+(
+ {Token.string == "in"}
+)
+(
+ {Lookup.majorType == location}
+)
+:locName
+-->
+ :locName.TempLocation = {kind = "locName", rule = InLoc1}
+
+Rule:LocGeneralKey
+Priority: 30
+(
+ {Lookup.majorType == loc_general_key}
+ {Token.string == "of"}
+)
+(
+ (UPPER)
+)
+:loc
+-->
+ :loc.TempLocation = {kind = "locName", rule = LocGeneralKey}
+
+
+Rule:OrgContext1
+Priority: 1
+// company X
+
+(
+ {Token.string == "company"}
+)
+(
+ (UPPER)
+ (UPPER)?
+ (UPPER)? 
+)
+:org
+-->
+ :org.TempOrganization= {kind = "orgName", rule = "OrgContext1"}
+
+Rule: OrgContext2
+Priority: 5
+
+// Telstar laboratory
+// Medici offices
+
+(
+ (UPPER)
+ (UPPER)?
+ (UPPER)? 
+)
+: org
+(
+ ({Token.string == "offices"} |
+ {Token.string == "Offices"} |
+ {Token.string == "laboratory"} | 
+ {Token.string == "Laboratory"} |
+ {Token.string == "laboratories"} |
+ {Token.string == "Laboratories"})
+)
+-->
+ :org.TempOrganization= {kind = "orgName", rule = "OrgContext2"}
+
+
+
+Rule:JoinOrg
+Priority: 50
+// Smith joined Energis
+
+(
+ ({Token.string == "joined"}|
+  {Token.string == "joining"}|
+  {Token.string == "joins"}|
+  {Token.string == "join"}
+ )
+)
+(
+ (UPPER)
+ (UPPER)?
+ (UPPER)?
+)
+:org
+-->
+ :org.TempOrganization= {kind = "orgName", rule = "joinOrg"}
+
+
+/*
+*  name_post.jape
+*
+* Copyright (c) 1998-2001, The University of Sheffield.
+*
+*  This file is part of GATE (see http://gate.ac.uk/), and is free
+*  software, licenced under the GNU Library General Public License,
+*  Version 2, June 1991 (in the distribution as file licence.html,
+*  and also available at http://gate.ac.uk/gate/licence.html).
+*
+*  Diana Maynard, 10 Sep 2001
+* 
+*  $Id: grammars.tex,v 1.2 2001/11/29 18:07:27 diana Exp $
+*/
+
+Phase:	NamePost
+Input: Token Lookup FirstPerson
+Options: control = appelt
+
+// this runs after name.jape to fix some problems that may have been caused
+
+Rule: 	FirstPersonStop
+Priority: 20
+/* if the surname contains stop words e.g. "Mary And" we don't want it to be a Person
+However, it might be that the firstname is actually an Organization (and has been tagged with TempOrganization already), e.g. "U.N." If this is the case, then leave it as it is. Otherwise, just tag the first name as a person
+*/
+
+(
+ (FIRSTNAME)+
+):person
+(
+ (
+  ({Lookup.majorType == stop}|
+   {Token.category == DT})
+ )
+)
+-->
+{
+ gate.FeatureMap features = Factory.newFeatureMap();
+gate.AnnotationSet personSet = (gate.AnnotationSet)bindings.get("person");
+gate.AnnotationSet firstPerson = (gate.AnnotationSet)personSet.get("FirstPerson");
+
+// get the TempOrganization annotation (previously assigned)
+gate.AnnotationSet orgSet =
+annotations.get("TempOrganization",personSet.firstNode().getOffset(),
+personSet.lastNode().getOffset());
+// and if it's empty
+if (orgSet.size()==0)
+{
+// then if the firstPerson annotation exists
+if (firstPerson != null && firstPerson.size()>0)
+{
+  gate.Annotation personAnn = (gate.Annotation)firstPerson.iterator().next();
+  features.put("gender", personAnn.getFeatures().get("gender"));
+}
+  features.put("kind", "personName");
+  features.put("rule", "FirstPersonStop");
+annotations.add(personSet.firstNode(), personSet.lastNode(), "TempPerson",
+features);
+}}
+
+
+
+/*
+*  date_pre.jape
+*
+* Copyright (c) 1998-2001, The University of Sheffield.
+*
+*  This file is part of GATE (see http://gate.ac.uk/), and is free
+*  software, licenced under the GNU Library General Public License,
+*  Version 2, June 1991 (in the distribution as file licence.html,
+*  and also available at http://gate.ac.uk/gate/licence.html).
+*
+*  Diana Maynard, 10 Sep 2001
+* 
+*  $Id: grammars.tex,v 1.2 2001/11/29 18:07:27 diana Exp $
+*/
+
+
+Phase:	DatePre
+Options: control = appelt
+
+///////
+// Note: this muse come before the date phase,  because it includes extra context
+// to prevent dates being recognised erroneously in the middle of longer things
+//////
+
+
+Macro: ORDINAL
+(
+   ({Token.kind == number}
+    ({Token.string == "th"}|
+     {Token.string == "rd"}|
+     {Token.string == "nd"}|
+     {Token.string == "st"})
+    |
+   {Lookup.minorType == ordinal})
+   (SPACE
+    {Token.string == "of"})?
+)
+
+/////////////////////////////////////////////////
+
+
+Rule: GazDate
+(SPACE | {Token.kind == punctuation})
+(
+ ({Lookup.minorType == day}) |
+ ({Lookup.minorType == month}) |
+ ({Lookup.minorType == festival})
+)
+:date
+(SPACE | {Token.kind == punctuation})
+-->
+ :date.TempDate = {rule = "GazDate"}
+
+
+Rule: PersonDateAmbig
+Priority: 100
+(
+ (ORDINAL)
+)
+:date
+
+(SPACE)
+(
+ {TempPerson.kind == personName, TempPerson.rule == PersonFull}
+):person
+-->
+:date.Date = {kind = date, rule = "PersonDateAmbig"},
+{
+//removes  TempPerson annotation, gets the rule feature and adds a new Person annotation
+gate.AnnotationSet person = (gate.AnnotationSet)bindings.get("person");
+gate.Annotation personAnn = (gate.Annotation)person.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule1", personAnn.getFeatures().get("rule"));
+features.put("rule2", "PersonDateAmbig");
+annotations.add(person.firstNode(), person.lastNode(), "Person",
+features);
+annotations.removeAll(person);
+}
+
+
+/*
+*  date.jape
+*
+* Copyright (c) 1998-2001, The University of Sheffield.
+*
+*  This file is part of GATE (see http://gate.ac.uk/), and is free
+*  software, licenced under the GNU Library General Public License,
+*  Version 2, June 1991 (in the distribution as file licence.html,
+*  and also available at http://gate.ac.uk/gate/licence.html).
+*
+*  Diana Maynard, 10 Sep 2001
+* 
+*  $Id: grammars.tex,v 1.2 2001/11/29 18:07:27 diana Exp $
+*/
+
+
+Phase:	Date
+Input: Token Lookup
+Options: control = appelt
+
+
+/////////////////////////////////////////////////
+
+Macro: DAY_NAME 
+({Lookup.minorType == day })
+
+Macro: ONE_DIGIT
+({Token.kind == number, Token.length == "1"})
+
+Macro: TWO_DIGIT
+({Token.kind == number, Token.length == "2"})
+
+Macro: FOUR_DIGIT
+({Token.kind == number, Token.length == "4"})
+
+Macro: DAY_MONTH_NUM
+(ONE_DIGIT | TWO_DIGIT)
+
+Macro: DATE_PRE
+// possible modifiers of dates, eg. "early October"
+({Token.string == "early"}|
+ {Token.string == "late"}|
+ {Token.string == "mid"}|
+ {Token.string == "mid-"}|
+ {Token.string == "end"}
+)
+
+Macro: DAY 
+(((DATE_PRE)?
+  DAY_NAME) |
+ DAY_MONTH_NUM)
+
+Macro: MONTH_NAME
+( (DATE_PRE)?
+  {Lookup.minorType == month})
+
+Macro: MONTH 
+(MONTH_NAME | DAY_MONTH_NUM)
+
+Macro: SLASH
+  ({Token.string == "/"})
+  
+Macro: DASH
+  {Token.string == "-"}
+
+Macro: OF
+  {Token.string == "of"}
+
+Macro: AD_BC
+	(  {Token.string == "ad"} | {Token.string == "AD"}
+	|
+	  ({Token.string == "a"} {Token.string == "."}
+	   {Token.string == "d"} {Token.string == "."})
+	|
+	  ({Token.string == "A"} {Token.string == "."}
+	   {Token.string == "D"} {Token.string == "."})
+	|
+
+	  {Token.string == "bc"} | {Token.string == "BC"}
+	|
+	  ({Token.string == "b"} {Token.string == "."}
+	   {Token.string == "c"} {Token.string == "."})
+	 
+	|
+ 	  ({Token.string == "B"} {Token.string == "."}
+	   {Token.string == "C"} {Token.string == "."})
+	)
+
+Macro: YEAR
+(        
+ {Lookup.majorType == year}|
+ TWO_DIGIT | FOUR_DIGIT | 
+ {Token.string == "'"}
+ (TWO_DIGIT)
+)
+
+
+Macro:	XDAY
+(
+ ({Token.orth == upperInitial} |
+  {Token.orth == allCaps})
+ {Token.string == "Day"}
+)
+
+
+Macro: ORDINAL
+(
+   ({Token.kind == number}
+    ({Token.string == "th"}|
+     {Token.string == "rd"}|
+     {Token.string == "nd"}|
+     {Token.string == "st"})
+    |
+   {Lookup.minorType == ordinal})
+   (
+    {Token.string == "of"})?
+)
+
+Macro: NUM_OR_ORDINAL
+  (ORDINAL | DAY_MONTH_NUM)
+
+
+Macro: COMMA
+({Token.string == ","})
+
+
+Macro:  TIME_ZONE
+(({Lookup.minorType == zone})|
+ ({Token.string == "("}
+  {Lookup.minorType == zone}
+  {Token.string == ")"})
+)
+
+Macro: TIME_DIFF
+(
+ ({Token.string == "+"}|{Token.string == "-"})
+ (FOUR_DIGIT)
+)
+
+Macro: TIME_AMPM
+(
+ {Lookup.minorType == ampm}
+)
+
+
+
+
+///////////////////////////////////////////////////////////////
+// Time Rules 
+
+Rule: TimeDigital1
+// 20:14:25
+(
+ (ONE_DIGIT|TWO_DIGIT){Token.string == ":"} TWO_DIGIT 
+({Token.string == ":"} TWO_DIGIT)?
+(TIME_AMPM)?	
+(TIME_DIFF)?
+(TIME_ZONE)? 
+)
+:time
+-->
+:time.TempTime = {kind = "positive", rule = "TimeDigital1"}
+
+
+Rule:	TimeDigital2
+
+// 8:14 am
+// 4.34 pm
+// 6am
+
+(
+ (ONE_DIGIT|TWO_DIGIT) 
+ (({Token.string == ":"}|{Token.string == "."} |{Token.string == "-"} )
+  TWO_DIGIT)?
+ (TIME_AMPM)
+ (TIME_ZONE)?
+)
+:time
+-->
+:time.TempTime = {kind = "positive", rule = "TimeDigital"}
+
+
+Rule: TimeOClock
+// ten o'clock
+
+(
+ {Lookup.minorType == hour}
+ {Token.string == "o"}
+ {Token.string == "'"}
+ {Token.string == "clock"}
+)
+:time 
+-->
+ :time.TempTime = {kind = "positive", rule = "TimeOClock"}
+
+ 
+Rule: TimeAnalogue
+// half past ten
+// ten to twelve
+// twenty six minutes to twelve
+
+(
+ (((({Lookup.majorType == number})?
+    {Lookup.majorType == number}
+   )
+   {Token.string == "minutes"}
+  ) |
+  ({Token.string == "half"} | 
+   {Token.string == "quarter"}) 
+ )
+ ({Token.string == "past"}|
+  {Token.string == "to"})
+ {Lookup.minorType == hour}
+)
+:time 
+-->
+ :time.TempTime = {kind = "positive", rule = "TimeAnalogue"}
+
+
+Rule: TimeWordsContext
+Priority: 50
+// seven thirty tomorrow
+
+(
+ {Lookup.majorType == number}
+ (
+  {Lookup.majorType == number}
+ )?
+):time1
+(
+ {Lookup.minorType == time_key}
+) 
+-->
+:time1.TempTime = {kind = "positive", rule = "TimeWordsContext"}
+
+
+Rule: TimeWords
+
+(
+ {Lookup.majorType == number}
+ (
+  {Lookup.majorType == number}
+ )?
+)
+:time
+-->
+  :time.TempTime = {kind = "timeWords", rule = "TimeWords"}
+
+  
+
+
+Rule: TimeDigitalContext1
+
+(
+(FOUR_DIGIT)
+):time
+{Lookup.minorType == time_key}
+ -->
+ :time.TempTime = {kind = "positive", rule = "TimeDigitalContext"}
+
+Rule: NotTimeDigitalContext2
+Priority: 100
+// prevent things like "at 0.61 km/h"
+
+(
+ {Token.string == "at"}
+)
+({Token.string == "0"}
+  ({Token.string == ":"}|{Token.string == "-"}|{Token.string == "."}) TWO_DIGIT
+ (TIME_AMPM)?
+ (TIME_ZONE)?
+)
+:time
+ -->
+ :time.Temp = {rule = "NotTimeDigitalContext2"}
+
+
+Rule: TimeDigitalContext2
+
+(
+ {Token.string == "at"}
+)
+(
+ FOUR_DIGIT | 
+ ((ONE_DIGIT|TWO_DIGIT)
+  ({Token.string == ":"}|{Token.string == "-"}|{Token.string == "."}) TWO_DIGIT
+ )
+ (TIME_AMPM)?
+ (TIME_ZONE)?
+)
+:time
+ -->
+ :time.TempTime = {kind = "positive", rule = "TimeDigitalContext2"}
+
+Rule: TimeDigitalTemp1
+
+(
+ FOUR_DIGIT | 
+ ((ONE_DIGIT|TWO_DIGIT)
+  ({Token.string == ":"}|{Token.string == "-"}|{Token.string == "."}) TWO_DIGIT
+ )
+)
+:time
+ -->
+ :time.TempTime = {kind = "temp", rule = "TimeDigitalTemp"}
+
+Rule: TimeDigitalContext1
+(
+ {Token.string == "in"}
+)?
+((ONE_DIGIT|TWO_DIGIT)
+ ({Token.string == ":"}|{Token.string == "."})
+ TWO_DIGIT
+ ({Token.string == "seconds"}|
+  {Token.string == "minutes"}|
+  {Token.string == "hours"}
+ )
+):time
+-->
+:time.TempTime = {kind = "positive", rule = "TimeDigitalContext1"}
+
+
+
+Rule: TimeDigitalContextConj
+
+(
+ {Token.string == "at"}
+)
+(
+ FOUR_DIGIT | 
+ ((ONE_DIGIT|TWO_DIGIT)
+  ({Token.string == ":"}|{Token.string == "-"}|{Token.string == "."}) TWO_DIGIT
+ )
+)
+:time1
+(
+ {Token.string == "and"}
+)
+(
+ FOUR_DIGIT | 
+ ((ONE_DIGIT|TWO_DIGIT)
+  ({Token.string == ":"}|{Token.string == "-"}|{Token.string == "."}) TWO_DIGIT
+ )
+):time2
+ -->
+ :time1.TempTime = {kind = "positive", rule = "TimeDigitalContextConj"},
+
+:time2.TempTime = {kind = "positive", rule = "TimeDigitalContextConj"}
+
+
+
+
+//////////////////////////////////////////////////////////////////
+
+// Date Rules
+
+Rule: IgnoreDatePerson
+Priority: 500
+(
+ {Date}
+ {Person}
+)
+:date
+-->
+{}
+
+
+
+Rule:	DateSlash           // UK only
+// Wed, 10/July/00
+// 10/July
+// July/99
+
+(
+ ((DAY_NAME (COMMA)? )?
+ NUM_OR_ORDINAL SLASH MONTH_NAME (SLASH YEAR)? )|
+ (MONTH_NAME SLASH YEAR) 
+)
+:date
+-->
+ :date.TempDate = {rule = "DateSlash"}
+
+
+
+Rule:	DateDash
+// Wed 10-July-00
+// 10-July 00
+// 10-July
+
+(  
+ ((DAY_NAME (COMMA)?)?
+  (NUM_OR_ORDINAL DASH MONTH_NAME (DASH)? YEAR)) |
+
+ ((DAY_NAME (COMMA)?)?
+  NUM_OR_ORDINAL DASH MONTH_NAME)
+)
+:date
+-->
+ :date.TempDate = {rule = "DateDash"}
+
+
+
+Rule: 	DateName
+Priority: 20
+// Wed 10 July
+// Wed 10 July, 2000
+// Sun, 21 May 2000
+// 10th of July, 2000
+// 10 July
+// 10th of July
+// July, 2000
+
+(
+ (DAY_NAME NUM_OR_ORDINAL MONTH_NAME)|
+
+ (DAY_NAME (COMMA)? 
+  NUM_OR_ORDINAL MONTH_NAME ((COMMA)? YEAR)?) 
+|
+
+ ((DAY_NAME (COMMA)? )?
+ NUM_OR_ORDINAL MONTH_NAME 
+ ((COMMA)? YEAR)?)
+|
+
+ (NUM_OR_ORDINAL MONTH_NAME) 
+| 
+(MONTH_NAME (COMMA)? YEAR)
+)
+:date
+-->
+ :date.TempDate = {rule = "DateName"}
+
+
+Rule: DateNameSpan1
+// 5-20 Jan
+
+(
+ NUM_OR_ORDINAL
+ {Token.string == "-"}
+ (NUM_OR_ORDINAL MONTH_NAME ((COMMA)?  YEAR)?)
+)
+:date
+-->
+ :date.TempDate = {rule = "DateNameSpan1"}
+
+Rule: DateNameSpan2
+// Jan 5-20
+
+(MONTH_NAME
+
+ NUM_OR_ORDINAL 
+ {Token.string == "-"}
+ (NUM_OR_ORDINAL ((COMMA)?  YEAR)?)
+)
+:date
+-->
+ :date.TempDate = {rule = "DateNameSpan2"}
+
+Rule: DateNameRev
+// Wed. July 1st, 2000
+// Wed, July 1, 2000
+// Wed, July 1st, 2000
+(         
+ ((DAY_NAME (COMMA)? )?
+  MONTH_NAME  
+  ({Token.string == "the"})?
+ NUM_OR_ORDINAL 
+ ((COMMA)? YEAR)?) |
+         
+ (MONTH_NAME (COMMA)? YEAR)
+)
+:date
+-->
+ :date.TempDate = {rule = "DateNameRev"}
+
+
+Rule:	DateNumDash
+// 01-07-00
+// Note: not 07-00
+  
+(
+ (DAY_MONTH_NUM DASH DAY_MONTH_NUM DASH YEAR)
+)
+:date
+-->
+ :date.TempDate = {rule = "DateNumDash"}
+
+Rule:	DateNumDashRev
+// 00-07-01
+// 2000-07
+
+(
+ (YEAR DASH DAY_MONTH_NUM DASH DAY_MONTH_NUM)|
+ (FOUR_DIGIT DASH DAY_MONTH_NUM)
+)
+:date
+-->
+ :date.TempDate = {rule = "DateNumDashRev"}
+
+
+Rule:	DateNumSlash
+// 01/07/00
+// Note: not 07/00
+
+( 
+DAY_MONTH_NUM SLASH DAY_MONTH_NUM SLASH YEAR
+)
+:date
+-->
+ :date.TempDate = {rule = "DateNumSlash"}
+
+
+Rule: ModifierMonth
+//early October
+
+( DATE_PRE 
+  {Lookup.minorType == month}
+)
+:date -->
+ :date.TempDate = {rule = "ModifierMonth"}
+
+
+Rule: YearAdBc
+
+// 1900 AD
+(
+ (YEAR 
+  AD_BC)
+)
+:year -->
+ :year.YearTemp = {kind = "positive", rule = "YearAdBc"}
+
+Rule: YearSpan1
+// the early 90s
+// the late 80s
+(
+ {Token.string == "the"}
+ (DATE_PRE)?
+ (YEAR)
+ ({Token.string == "'"})?
+ ({Token.string == "s"})
+)
+:date -->
+ :date.TempDate = {rule = "YearSpan1"}
+
+Rule: YearSpan2
+// 1980/81
+
+(
+ (FOUR_DIGIT)
+ ({Token.string == "/"}|
+  {Token.string == "-"})
+ (FOUR_DIGIT|TWO_DIGIT | ONE_DIGIT)
+)
+:date -->
+ :date.TempDate = {rule = "YearSpan2"}
+
+Rule: YearSpan3
+Priority: 80
+
+// from 1980 to 1981
+// between 1980 and 1981
+(
+ (({Token.string == "from"}| {Token.string == "From"})
+  (FOUR_DIGIT)
+  {Token.string == "to"}
+  (FOUR_DIGIT)
+ ) |
+  (({Token.string == "between"}|{Token.string == "Between"}) 
+  (FOUR_DIGIT)
+  {Token.string == "and"}
+  (FOUR_DIGIT)
+ )
+)
+:date -->
+ :date.TempDate = {rule = "YearSpan3"}
+
+
+Rule: YearContext1
+Priority: 40
+({Token.string == "in"}|
+ {Token.string == "by"}
+)
+(YEAR)
+:date -->
+ :date.TempDate = {rule = "YearContext1"}
+
+
+// Currently, temp1, temp2 and temp3 look good; temp4 is not to be counted
+// but this may change according to the text
+// only positives will be used in final grammar, not negatives
+
+Rule: YearTemp1
+Priority: 30
+// (1987)
+
+({Token.position == startpunct})
+(FOUR_DIGIT)
+:date
+({Token.position == endpunct})
+ -->
+ :date.TempYear = {kind = "positive", rule = "TempYear1"}
+
+
+Rule: TempYear2
+Priority: 20
+// 1987
+
+(
+ {Lookup.majorType == year}
+)
+:date -->
+ :date.TempYear = {kind = "positive", rule = "TempYear2"}
+
+
+Rule: TempYear3
+Priority: 10
+// 1922
+
+(FOUR_DIGIT)
+:date -->
+ :date.TempYear = {kind = "positive", rule = "TempYear3"}
+
+
+Rule: YearWords
+// nineteen twenty three
+// nineteen ten
+
+(
+ {Token.string == "nineteen"}
+ ({Lookup.majorType == number}
+ )?
+ {Lookup.majorType == number}
+)
+ :date -->
+ :date.TempYear = {kind = "positive", rule = "YearWords"}
+
+
+
+Rule: TimeZone
+// +0400
+(
+ (TIME_DIFF)
+ (TIME_ZONE)?
+)
+:date
+-->
+ :date.TempZone = {rule = "TimeZone"}
+
+
+/*
+*  reldate.jape
+*
+* Copyright (c) 1998-2001, The University of Sheffield.
+*
+*  This file is part of GATE (see http://gate.ac.uk/), and is free
+*  software, licenced under the GNU Library General Public License,
+*  Version 2, June 1991 (in the distribution as file licence.html,
+*  and also available at http://gate.ac.uk/gate/licence.html).
+*
+*  Diana Maynard, 10 Sep 2001
+* 
+*  $Id: grammars.tex,v 1.2 2001/11/29 18:07:27 diana Exp $
+*/
+
+// this file must follow date.jape
+// handles relative date and time sequences
+
+Phase:	Name
+Input: Token Lookup TempDate
+Options: control = appelt
+
+Rule: GazDateWords
+Priority: 10
+// yesterday evening
+
+(
+ {Lookup.majorType == date_key}
+ (
+  {Lookup.majorType == time_unit}
+ )?
+)
+:date -->
+  :date.TempDate = {rule = "GazDateWords"}
+
+
+Rule: TimeAgo
+Priority:30
+// 2 hours ago
+
+(
+ {Token.kind == number}
+ ({Lookup.majorType == time_unit})
+ {Token.string == "ago"}
+)
+:date -->
+ :date.TempDate = {rule = "TimeAgo"}
+
+
+Rule: DateAgo
+Priority:30
+// 2 weeks ago
+
+(
+ {Token.kind == number}
+ ({Lookup.majorType == date_unit})
+ {Token.string == "ago"}
+)
+:date -->
+ :date.TempDate = {rule = "TimeAgo"}
+
+
+Rule: ModifierDate
+Priority: 30
+// last year
+// next 10 years
+
+(
+ {Lookup.majorType == time_modifier} 
+ (
+  ({Lookup.majorType == number}|
+   {Token.kind == number}
+  )
+ )?
+ {Lookup.majorType == date_unit}
+)
+:date -->
+ :date.TempDate = {rule = "ModifierDate"}
+
+Rule: EarlyDate
+// early in 2002
+// in early 2002
+
+(
+ ({Token.string == early}|
+  {Token.string == late}
+ )
+ ({Token.string == "in"}
+ )?
+ ({TempDate}|
+  (
+   {Lookup.majorType == time_modifier} 
+   {Lookup.majorType == date_unit}
+  )
+ )
+)
+:date
+-->
+ {
+//removes TempDate annotation, gets the rule feature and adds a new TempDate annotation
+gate.AnnotationSet date = (gate.AnnotationSet)bindings.get("date");
+gate.Annotation dateAnn = (gate.Annotation)date.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule1", dateAnn.getFeatures().get("rule"));
+features.put("rule2", "EarlyDate");
+annotations.add(date.firstNode(), date.lastNode(), "TempDate",
+features);
+annotations.removeAll(date);
+}
+ 
+Rule:FiscalDate
+// first half of next year
+// first nine months of the financial year 
+
+(
+ {Lookup.minorType == ordinal}
+ (
+  ({Lookup.majorType == number}|
+   {Token.kind == number}
+  )
+ )?
+ {Lookup.majorType == date_unit}
+ 
+ ({Token.string == "of"}
+ )?
+ ((
+   {Token.category == DT}|
+   {Token.category == "PRP$"}
+  )
+ )?
+ ({Lookup.majorType == time_modifier} 
+ )?
+ {Lookup.majorType == date_unit}
+)
+:date -->
+  :date.TempDate = {rule = FiscalDate}
+
+
+
+/*
+*  number.jape
+*
+* Copyright (c) 1998-2001, The University of Sheffield.
+*
+*  This file is part of GATE (see http://gate.ac.uk/), and is free
+*  software, licenced under the GNU Library General Public License,
+*  Version 2, June 1991 (in the distribution as file licence.html,
+*  and also available at http://gate.ac.uk/gate/licence.html).
+*
+*  Diana Maynard, 02 Aug 2001
+* 
+*  $Id: grammars.tex,v 1.2 2001/11/29 18:07:27 diana Exp $
+*/
+
+
+Phase:	Number
+Input: Token Lookup
+Options: control = appelt
+
+///////////////////////////////////////////////////////////////
+//Money Rules
+
+
+Macro: MILLION_BILLION
+({Token.string == "m"}|
+{Token.string == "million"}|
+{Token.string == "b"}|
+{Token.string == "billion"}|
+{Token.string == "bn"}|
+{Token.string == "k"}|
+{Token.string == "K"}
+)
+
+Macro: NUMBER_WORDS
+// two hundred and thirty five
+// twenty five
+
+(
+ (({Lookup.majorType == number} 
+   ({Token.string == "-"})?
+  )*
+   {Lookup.majorType == number}
+   {Token.string == "and"}
+ )*
+ ({Lookup.majorType == number} 
+  ({Token.string == "-"})?
+ )*
+   {Lookup.majorType == number}
+)
+
+
+Macro: AMOUNT_NUMBER
+// enables commas, decimal points and million/billion
+// to be included in a number
+ 
+(({Token.kind == number}
+  (({Token.string == ","}|
+    {Token.string == "."}
+   )
+   {Token.kind == number}
+  )*
+  |
+  (NUMBER_WORDS)
+ )
+ (MILLION_BILLION)?
+)
+
+
+Rule:	MoneyCurrencyUnit
+// 30 pounds
+  (        
+      (AMOUNT_NUMBER)
+      ({Lookup.majorType == currency_unit})
+  )
+:number -->
+  :number.Money = {kind = "number", rule = "MoneyCurrencyUnit"}
+
+
+Rule:	MoneySymbolUnit
+
+// $30 
+// $30 US
+// not $1$21
+// $20US
+
+
+(   
+ ({Token.symbolkind == currency}|
+  {Lookup.majorType == currency_unit})
+ (AMOUNT_NUMBER)
+ (
+  {Lookup.majorType == currency_unit}
+ )?
+) 
+:number 
+
+ -->
+  :number.Money = {kind = "number", rule = "MoneySymbolUnit"}
+
+//////////////////////////////////////////////////////////////
+
+// Percentage Rules
+
+Macro: PERCENT
+({Token.string == "%"} | 
+ {Token.string == "percent"}|
+ ({Token.string == "per"}
+ {Token.string == "cent"})
+)
+
+
+Rule: PercentBasic
+// +20%
+// minus 10 percent
+// two point four percent
+
+(
+ ({Token.string == "+"}|
+  {Token.string == "-"}|
+  {Token.string == "minus"}  
+ )?
+  ((AMOUNT_NUMBER|NUMBER_WORDS)
+  {Token.string == "point"}
+ )? 
+ (AMOUNT_NUMBER|NUMBER_WORDS)
+ (PERCENT)
+)
+:number -->
+  :number.Percent = {rule = "PercentBasic"}
+
+Rule: PercentSpan
+// 20-30%
+// two to four percent
+
+(
+ (AMOUNT_NUMBER|NUMBER_WORDS)
+ ({Token.string == "-"} |
+  {Token.string == "to"})
+ (AMOUNT_NUMBER|NUMBER_WORDS)
+ (PERCENT)
+)
+:number -->
+  :number.Percent = {rule = "PercentSpan"}
+
+
+/*
+*  address.jape
+*
+* Copyright (c) 1998-2001, The University of Sheffield.
+*
+*  This file is part of GATE (see http://gate.ac.uk/), and is free
+*  software, licenced under the GNU Library General Public License,
+*  Version 2, June 1991 (in the distribution as file licence.html,
+*  and also available at http://gate.ac.uk/gate/licence.html).
+*
+*  Diana Maynard, 02 Aug 2001
+* 
+*  $Id: grammars.tex,v 1.2 2001/11/29 18:07:27 diana Exp $
+*/
+
+
+Phase:	Address
+Input:  Token Lookup
+Options: control = appelt
+
+/////////////////////////////////////////////////////////
+
+
+///////////////////////////////////////////////////////////////////
+//Phone Rules
+
+
+Macro: PHONE_COUNTRYCODE
+// +44
+
+({Token.string == "+"}
+ {Token.kind == number,Token.length == "2"}
+)	
+
+Macro: PHONE_AREACODE
+// 081 (for the old style codes)
+// 01234
+// (0123)
+
+(
+ ({Token.kind == number,Token.length == "3"} |
+  {Token.kind == number,Token.length == "4"} |
+  {Token.kind == number,Token.length == "5"}) 
+|
+ ({Token.string == "("} 
+  ({Token.kind == number,Token.length == "3"} |
+   {Token.kind == number,Token.length == "4"} |
+   {Token.kind == number,Token.length == "5"}) 
+  ({Token.string == ")"})
+ )
+)
+
+Macro: PHONE_REG
+// 222 1481
+// 781932
+
+(
+  ({Token.kind == number,Token.length == "3"}
+
+  ({Token.kind == number,Token.length == "3"} |
+   {Token.kind == number,Token.length == "4"}) 
+  )
+                                              |
+
+  ({Token.kind == number,Token.length == "5"}|
+   {Token.kind == number,Token.length == "6"})
+)
+ 
+Macro: PHONE_EXT
+// x1234
+// ext. 1234/5
+
+(
+ (({Token.string == "x"})		|
+  ({Token.string == "x"}{Token.string == "."}) |
+  ({Token.string == "ext"})	|
+  ({Token.string == "ext"}{Token.string == "."})
+ )  
+ ({Token.kind == number, Token.length == "4"}|
+  {Token.kind == number, Token.length == "5"}|
+  {Token.kind == number, Token.length == "6"})
+ ({Token.string == "/"}{Token.kind == number})?
+)
+	
+Macro: PHONE_PREFIX
+//Tel:
+
+(
+ {Lookup.majorType == phone_prefix}
+ ({Lookup.majorType == phone_prefix})?
+ ({Token.string == ":"})?
+)
+  
+//////////////////////////////////////////////////
+Rule:PhoneReg
+Priority: 20
+// regular types of number
+// 01234 123 456
+// (01234) 123456
+
+
+(
+
+ (PHONE_AREACODE)
+ (PHONE_REG)
+)
+:phoneNumber -->
+ :phoneNumber.Phone = {kind = "phoneNumber", rule = "PhoneReg"}
+
+Rule: PhoneRegContext
+Priority: 100
+// tel: 0114 222 1929
+(
+ (PHONE_PREFIX)
+)
+(
+ (PHONE_AREACODE)
+ (PHONE_REG)
+)
+:phoneNumber -->
+ :phoneNumber.Phone = {kind = "phoneNumber", rule = "PhoneRegContext"}
+
+
+Rule:PhoneFull
+Priority: 50
+// +44 161 222 1234
+// +44 (0)161 222 1234
+(
+ (PHONE_PREFIX)?
+)
+(
+ ((PHONE_COUNTRYCODE) |
+  ({Token.string == "("} 
+   (PHONE_COUNTRYCODE)
+   {Token.string == ")"})
+ )
+
+ ({Token.string == "("} 
+   {Token.string == "0"} 
+   {Token.string == ")"})?
+
+ ({Token.kind == number,Token.length == "3"}|
+  {Token.kind == number,Token.length == "4"})
+      
+ (PHONE_REG)
+)
+:phoneNumber -->
+ :phoneNumber.Phone = {kind = "phoneNumber", rule = "PhoneFull"}
+
+
+
+Rule:PhoneExt
+Priority: 20
+
+// extension number only
+// ext. 1234
+(
+ (PHONE_EXT)
+)
+:phoneNumber --> 
+ :phoneNumber.Phone = {kind = "phoneNumber", rule = "PhoneExt"}
+
+Rule:PhoneRegExt
+Priority: 40
+
+// 01234 12345 ext. 1234
+// 01234 12345 x1234/5
+
+(
+
+ (PHONE_AREACODE)?
+ (PHONE_REG)
+ (PHONE_EXT)
+)
+:phoneNumber -->
+ :phoneNumber.Phone = {kind = "phoneNumber", rule = "PhoneRegExt"}
+
+
+Rule:PhoneRegExtContext
+Priority: 40
+// tel: 12345 ext. 1234
+(
+ (PHONE_PREFIX)
+)
+(
+ (PHONE_AREACODE)?
+ (PHONE_REG)
+ (PHONE_EXT)
+)
+:phoneNumber -->
+ :phoneNumber.Phone = {kind = "phoneNumber", rule = "PhoneRegExtContext"}
+
+Rule:PhoneNumberOnly
+Priority: 20
+// Phone 123456
+// Fax: 123 456
+// Tel. No. 123456
+// only recognise numbers like this when preceded by clear context.
+
+(PHONE_PREFIX)
+(
+ (PHONE_REG)
+)
+:phoneNumber -->
+ :phoneNumber.Phone = {kind = "phoneNumber", rule = "PhoneNumberOnly"}
+
+
+Rule: PhoneOtherContext
+// sometimes they're unusual
+// tel: 0124 1963
+
+(
+ (PHONE_PREFIX)
+)
+(
+ {Token.kind == number}
+ ({Token.kind == number})*
+)
+:phoneNumber 
+-->
+ :phoneNumber.Phone = {kind = "phoneNumber", rule = "PhoneOtherContext"}
+
+///////////////////////////////////////////////////////////////
+// Postcode Rules
+
+
+// S1 4DP, S10 4DP, SO1 10DP, etc.
+// UK postocdes only
+
+Rule: Postcode1
+Priority: 50
+(
+ ({Token.orth == allCaps,Token.length == "2"}|
+  {Token.orth == upperInitial,Token.length == "1"}			
+ )	
+ ({Token.kind == number,Token.length == "1"}|
+  {Token.kind == number,Token.length == "2"}
+ )
+ ({Token.kind == number,Token.length == "1"}|
+  {Token.kind == number,Token.length == "2"}
+ )
+ ({Token.orth == allCaps,Token.length == "2"}|
+  {Token.orth == upperInitial,Token.length == "1"}		
+ )	
+):postcode -->
+:postcode.Postcode = {kind = "postcode", rule = Postcode1}
+
+//////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////
+
+// IP Address Rules
+
+Rule: IPaddress1
+(	{Token.kind == number}
+	{Token.string == "."}
+	{Token.kind == number}
+	{Token.string == "."}
+	{Token.kind == number}	
+	{Token.string == "."}
+	{Token.kind == number}
+):ipAddress -->
+:ipAddress.Ip = {kind = "ipAddress", rule = "IPaddress1"}
+
+/////////////////////////////////////////////////////////////
+// Street Rules
+
+
+Rule: StreetName1
+(
+ ({Token.kind == number}
+  ({Token.string == ","})? 
+  )?
+ {Token.orth == upperInitial}
+ {Lookup.minorType == "street"}
+)
+:streetAddress -->
+ :streetAddress.Street = {kind = "streetAddress", rule = StreetName1}
+
+
+Rule: POBoxAddress
+(
+ (({Token.string == "P"}
+   ({Token.string == "."})? 
+   {Token.string == "O"}
+   ({Token.string == "."})?
+  ) |
+  ({Token.string == "PO"})
+ )
+ {Token.string == "Box"}
+ {Token.kind == number}
+)
+:address -->
+ :address.Street = {kind = "poBox", rule = POBoxAddress}
+
+
+/*
+*  url.jape
+*
+* Copyright (c) 1998-2001, The University of Sheffield.
+*
+*  This file is part of GATE (see http://gate.ac.uk/), and is free
+*  software, licenced under the GNU Library General Public License,
+*  Version 2, June 1991 (in the distribution as file licence.html,
+*  and also available at http://gate.ac.uk/gate/licence.html).
+*
+*  Diana Maynard, 02 Aug 2001
+* 
+*  $Id: grammars.tex,v 1.2 2001/11/29 18:07:27 diana Exp $
+*/
+
+Phase:	Url
+Input:  Token Lookup SpaceToken
+Options: control = appelt
+
+
+// Email rules
+
+Rule:Emailaddress1
+Priority: 50
+(
+ (
+  {Token.kind == word}|
+  {Token.kind == number}|
+  {Token.string == "_"}
+ )
+ ({Token.string == "."}
+  ({Token.kind == word}|
+   {Token.kind == number}|
+   {Token.string == "_"}
+  )
+ )?
+ {Token.string == "@"}		
+ (
+  {Token.kind == word}|
+  {Token.kind == symbol}|
+  {Token.kind == punctuation}|
+  {Token.kind == number}
+ )
+ ({Token.string == "."})?
+ (
+  {Token.kind == word}|
+  {Token.kind == symbol}|
+  {Token.kind == punctuation}|
+  {Token.kind == number}
+ )?
+ ({Token.string == "."})?
+(
+  {Token.kind == word}|
+  {Token.kind == symbol}|
+  {Token.kind == punctuation}|
+  {Token.kind == number}
+ )?
+({Token.string == "."})?
+ (
+  {Token.string == "."}		
+  (
+   {Token.kind == word}|
+   {Token.kind == number}	
+  )
+  ({Token.string == "."})?
+  (
+   {Token.kind == word}|
+   {Token.kind == number}	
+  )?
+  ({Token.string == "."})?
+  (
+   {Token.kind == word}|
+   {Token.kind == number}	
+  )?
+ )
+)
+:emailAddress -->
+  :emailAddress.Email= {kind = "emailAddress", rule = "Emailaddress1"}
+
+
+
+
+// Url Rules
+
+// http://www.amazon.com
+// ftp://amazon.com
+// www.amazon.com
+
+Rule: Url1
+Priority: 50
+
+(	((({Token.string == "http"}	|
+	   {Token.string == "ftp"})
+	   {Token.string == ":"}
+	   {Token.string == "/"}
+           {Token.string == "/"})	|
+	 ({Token.string == "www"}
+          {Token.string == "."})	
+	)			
+	
+	({Token.orth == lowercase}	|
+        {Token.orth == upperInitial}	|
+        {Token.kind == number}		|
+        {Token.kind == punctuation}	|
+        {Token.kind == symbol}		|
+	{Token.string == "."})+ 
+	
+	({Token.orth == lowercase}	|
+        {Token.orth == upperInitial}	|
+        {Token.kind == number}		|
+        {Token.kind == punctuation}	|
+        {Token.kind == symbol}		|
+	{Token.string == "/"}		|
+        {Token.string == "."})*
+):urlAddress -->
+:urlAddress.Url = {kind = "urlAddress", rule = "Url1"}
+
+Rule: UrlContext
+Priority: 20
+
+(
+ {Token.string == "at"}
+ {Token.string == ":"}
+)
+(
+ ({Token.orth == lowercase}	|
+        {Token.orth == upperInitial}	|
+        {Token.kind == number}		|
+        {Token.kind == punctuation}	|
+        {Token.kind == symbol}		|
+	{Token.string == "."})+ 
+	
+        {Token.string == "."}
+	
+  	({Token.orth == lowercase}	|
+        {Token.orth == upperInitial}	|
+        {Token.kind == number}		|
+        {Token.kind == punctuation}	|
+        {Token.kind == symbol}		|
+	{Token.string == "/"}		|
+        {Token.string == "."})*
+)
+:urlAddress 
+-->
+ :urlAddress.Url = {kind = "urlAddress", rule = "UrlContext"}
+
+
+/*
+*  identifier.jape
+*
+* Copyright (c) 1998-2001, The University of Sheffield.
+*
+*  This file is part of GATE (see http://gate.ac.uk/), and is free
+*  software, licenced under the GNU Library General Public License,
+*  Version 2, June 1991 (in the distribution as file licence.html,
+*  and also available at http://gate.ac.uk/gate/licence.html).
+*
+*  Diana Maynard, 10 Sep 2001
+* 
+*  $Id: grammars.tex,v 1.2 2001/11/29 18:07:27 diana Exp $
+*/
+
+
+Phase:	Identifier
+Options: control = appelt
+
+
+
+Macro: IDENT
+
+({Lookup.majorType == ident_key, Lookup.minorType == pre}
+ ({Token.string == "."}|{Token.string == ":"})?
+)
+
+
+Rule: GazNotIdentifier
+Priority: 100
+(
+ {Lookup.majorType == spur_ident}
+)
+:ident -->
+ :ident.Temp = {rule = "GazNotIdentifier"}  
+
+
+Rule: Identifier1
+(	(({Token.kind == number}	
+	  {Token.orth == allCaps}) |
+	 ({Token.orth == allCaps}
+	  {Token.kind == number})
+        )
+	({Token.orth == allCaps}|
+         {Token.orth == upperInitial, Token.length == "1"}| 
+         {Token.string == "."}|
+	 {Token.kind == number})*
+):ident 
+-->
+ :ident.TempIdentifier = {rule = "Identifier1"}
+
+
+
+Rule: NotContextIdentifier
+Priority: 100
+// prevents things like "reference list"
+
+(IDENT)
+(
+{Token.orth == lowercase}
+):ident 
+(SPACE|{Token.kind == punctuation})
+-->
+:ident.Temp = {rule = "NotContextIdentifier"}
+
+
+Rule: ContextIdentifier
+(IDENT)
+(	(({Token.kind == number}	
+	 {Token.orth == allCaps}) |
+	({Token.orth == allCaps}
+	 {Token.kind == number})|
+        ({Token.orth == upperInitial, Token.length == "1"}))
+	({Token.orth == allCaps}|
+         {Token.orth == upperInitial, Token.length == "1"}| 
+         {Token.string == "."}|
+	 {Token.kind == number})*
+)
+:ident 
+-->
+ :ident.TempIdentifier = {rule = "ContextIdentifier"}
+
+
+/*
+*  jobtitle.jape
+*
+* Copyright (c) 1998-2001, The University of Sheffield.
+*
+*  This file is part of GATE (see http://gate.ac.uk/), and is free
+*  software, licenced under the GNU Library General Public License,
+*  Version 2, June 1991 (in the distribution as file licence.html,
+*  and also available at http://gate.ac.uk/gate/licence.html).
+*
+*  Diana Maynard, 10 Sep 2001
+* 
+*  $Id: grammars.tex,v 1.2 2001/11/29 18:07:27 diana Exp $
+*/
+
+
+Phase:	Jobtitle
+Input: Lookup
+Options: control = appelt
+
+Rule: Jobtitle1
+(
+ {Lookup.majorType == jobtitle} 
+ (
+  {Lookup.majorType == jobtitle} 
+ )?
+)
+:jobtitle
+-->
+ :jobtitle.JobTitle = {rule = "JobTitle1"}
+
+
+
+/*
+*  final.jape
+*
+* Copyright (c) 1998-2001, The University of Sheffield.
+*
+*  This file is part of GATE (see http://gate.ac.uk/), and is free
+*  software, licenced under the GNU Library General Public License,
+*  Version 2, June 1991 (in the distribution as file licence.html,
+*  and also available at http://gate.ac.uk/gate/licence.html).
+*
+*  Diana Maynard, 10 Sep 2001
+* 
+*  $Id: grammars.tex,v 1.2 2001/11/29 18:07:27 diana Exp $
+*/
+
+//note: organization should be included as part of the address ??
+
+Phase:	Final
+Input: Token Lookup Jobtitle TempPerson TempLocation TempOrganization TempDate TempTime TempYear TempZone Street Postcode Email Url Phone Ip TempIdentifier TempSpecs
+Options: control = appelt
+
+
+///////////////////////////////////////////////////////////////
+
+Rule: PersonFinal
+Priority: 30
+({JobTitle}
+)?
+(
+ {TempPerson.kind == personName}
+)
+:person
+--> 
+{
+ gate.FeatureMap features = Factory.newFeatureMap();
+gate.AnnotationSet personSet = (gate.AnnotationSet)bindings.get("person");
+gate.Annotation person1Ann = (gate.Annotation)personSet.iterator().next();
+
+gate.AnnotationSet firstPerson = (gate.AnnotationSet)personSet.get("TempPerson");
+if (firstPerson != null && firstPerson.size()>0)
+{
+  gate.Annotation personAnn = (gate.Annotation)firstPerson.iterator().next();
+  features.put("gender", personAnn.getFeatures().get("gender"));
+}
+  features.put("rule1", person1Ann.getFeatures().get("rule"));
+  features.put("rule", "PersonFinal");
+annotations.add(personSet.firstNode(), personSet.lastNode(), "Person",
+features);
+annotations.removeAll(personSet);
+}
+
+
+Rule:	OrgCountryFinal
+Priority: 50
+// G M B Scotland
+// Scottish Electricity Board
+
+(
+ ({TempOrganization})?
+
+ (({Lookup.majorType == country_adj}|
+   {Lookup.majorType == location}) 
+  {TempOrganization}
+ )|
+ ({TempOrganization}
+  ({Token.position == startpunct})?
+  ({Lookup.majorType == country_adj}|
+   {Lookup.majorType == location})
+  ({Token.position == endpunct})?
+ )
+ ({TempOrganization})?
+ ({Lookup.majorType == org_ending})?
+)
+:org
+-->
+{
+//removes TempOrg annotation, gets the rule feature and adds a new Org annotation
+gate.AnnotationSet org = (gate.AnnotationSet)bindings.get("org");
+gate.Annotation orgAnn = (gate.Annotation)org.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("orgType", orgAnn.getFeatures().get("orgType"));
+features.put("rule1", orgAnn.getFeatures().get("rule"));
+features.put("rule2", "OrgCountryFinal");
+annotations.add(org.firstNode(), org.lastNode(), "Organization",
+features);
+annotations.removeAll(org);
+}
+ 
+
+
+//note - move this rule to after final
+
+Rule: OrgFinal
+Priority: 10
+(
+ {TempOrganization}
+)
+:org
+--> 
+{
+//removes TempOrg annotation, gets the rule feature and adds a new Org annotation
+gate.AnnotationSet org = (gate.AnnotationSet)bindings.get("org");
+gate.Annotation orgAnn = (gate.Annotation)org.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("orgType", orgAnn.getFeatures().get("orgType"));
+features.put("rule1", orgAnn.getFeatures().get("rule"));
+features.put("rule2", "OrgFinal");
+annotations.add(org.firstNode(), org.lastNode(), "Organization",
+features);
+annotations.removeAll(org);
+}
+
+
+Rule: PersonLocFinal
+Priority: 100
+// George Airport
+// later we might change this to any facility, rather than just airports
+
+(
+ {TempPerson}
+ ({Token.string == "airport"} |
+  {Token.string == "Airport"})
+)
+:loc
+-->
+ {
+//removes TempLoc annotation, gets the rule feature and adds a new Loc annotation
+gate.AnnotationSet loc = (gate.AnnotationSet)bindings.get("loc");
+gate.Annotation locAnn = (gate.Annotation)loc.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule1", locAnn.getFeatures().get("rule"));
+features.put("rule2", "PersonLocFinal");
+annotations.add(loc.firstNode(), loc.lastNode(), "Location",
+features);
+annotations.removeAll(loc);
+}
+
+
+ 
+Rule: LocFinal
+Priority: 10
+(
+ {TempLocation}
+)
+:loc
+--> 
+ {
+//removes TempLoc annotation, gets the rule feature and adds a new Loc annotation
+gate.AnnotationSet loc = (gate.AnnotationSet)bindings.get("loc");
+gate.Annotation locAnn = (gate.Annotation)loc.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("locType",locAnn.getFeatures().get("locType"));
+features.put("rule1", locAnn.getFeatures().get("rule"));
+features.put("rule2", "LocFinal");
+annotations.add(loc.firstNode(), loc.lastNode(), "Location",
+features);
+annotations.removeAll(loc);
+}
+
+
+//////////////////////////////////////////////////////////////
+// Rules from Timex
+
+
+Rule: DateTimeFinal
+Priority: 20
+// Friday 10 January 2000 2pm
+
+(
+ {TempDate}
+ (
+  ({Token.string == ","})?
+  {TempDate})?
+ ({Token.string == ":"})?
+ {TempTime}
+ ({TempYear})?
+ ({TempZone})?
+)
+:date
+-->
+ {
+//removes TempDate annotation, gets the rule feature and adds a new Date annotation
+gate.AnnotationSet date = (gate.AnnotationSet)bindings.get("date");
+gate.Annotation dateAnn = (gate.Annotation)date.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+//features.put("rule1", dateAnn.getFeatures().get("rule"));
+features.put("rule2", "DateTimeFinal");
+features.put("kind", "dateTime");
+annotations.add(date.firstNode(), date.lastNode(), "Date",
+features);
+annotations.removeAll(date);
+}
+
+
+Rule: SeasonYearFinal
+Priority: 15
+(
+ ({Token.string == "spring"} |
+  {Token.string == "Spring"})
+ {TempYear.kind == positive}
+)
+:date
+-->
+ {
+//removes TempDate annotation, gets the rule feature and adds a new Date annotation
+gate.AnnotationSet date = (gate.AnnotationSet)bindings.get("date");
+gate.Annotation dateAnn = (gate.Annotation)date.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule1", dateAnn.getFeatures().get("rule"));
+features.put("rule2", "SeasonYearFinal");
+features.put("kind", "date");
+annotations.add(date.firstNode(), date.lastNode(), "Date",
+features);
+annotations.removeAll(date);
+}
+
+
+Rule: DateYearFinal
+Priority: 10
+(
+ {TempDate}
+ (
+ ({Token.string == ","})?
+ {TempDate})?
+ {TempYear}
+ ({TempDate})?
+)
+:date
+-->
+ {
+//removes TempDate annotation, gets the rule feature and adds a new Date annotation
+gate.AnnotationSet date = (gate.AnnotationSet)bindings.get("date");
+gate.Annotation dateAnn = (gate.Annotation)date.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule1", dateAnn.getFeatures().get("rule"));
+features.put("rule2", "DateYearFinal");
+features.put("kind", "date");
+annotations.add(date.firstNode(), date.lastNode(), "Date",
+features);
+annotations.removeAll(date);
+}
+
+
+Rule: TimeDateFinal
+Priority: 10
+// 2pm 10 January 2000
+// 2pm 10 January 2000 +0400
+(
+ {TempTime}
+ ({Token.string == ":"})?
+ {TempDate} 
+ ({TempYear})?
+ ({TempZone})?
+)
+:date
+-->
+ {
+//removes TempDate annotation, gets the rule feature and adds a new Date annotation
+gate.AnnotationSet date = (gate.AnnotationSet)bindings.get("date");
+gate.Annotation dateAnn = (gate.Annotation)date.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+//features.put("rule1", dateAnn.getFeatures().get("rule"));
+features.put("rule2", "TimeDateFinal");
+features.put("kind", "dateTime");
+annotations.add(date.firstNode(), date.lastNode(), "Date",
+features);
+annotations.removeAll(date);
+}
+
+
+Rule: TimeYearFinal
+Priority: 10
+// 21:00:00 2000 +0400
+
+(
+ {TempTime}
+ ({Token.string == ":"})? 
+ ({TempYear})
+ ({TempZone})?
+)
+:date
+-->
+  {
+//removes TempDate annotation, gets the rule feature and adds a new Date annotation
+gate.AnnotationSet date = (gate.AnnotationSet)bindings.get("date");
+gate.Annotation dateAnn = (gate.Annotation)date.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+//features.put("rule1", dateAnn.getFeatures().get("rule"));
+features.put("rule2", "TimeYearFinal");
+features.put("kind", "dateTime");
+annotations.add(date.firstNode(), date.lastNode(), "Date",
+features);
+annotations.removeAll(date);
+}
+
+
+//Date Only Rules
+
+
+Rule: DateOnlyFinal
+Priority: 10
+(
+ {TempDate}
+)
+:date 
+-->
+ {
+//removes TempDate annotation, gets the rule feature and adds a new Date annotation
+gate.AnnotationSet date = (gate.AnnotationSet)bindings.get("date");
+gate.Annotation dateAnn = (gate.Annotation)date.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule1", dateAnn.getFeatures().get("rule"));
+features.put("rule2", "DateOnlyFinal");
+features.put("kind", "date");
+annotations.add(date.firstNode(), date.lastNode(), "Date",
+features);
+annotations.removeAll(date);
+}
+
+//fix this later
+Rule: TimeContextFinal
+Priority: 10
+// Wednesday [mdash ] 8-15
+
+(
+ ({TempTime}|{TempDate}):date
+ {Token.string == "["}
+ {Token.string == "mdash"}
+ {Token.string == "]"}
+)
+( {TempTime.kind == temp}
+):time
+-->
+  {
+//removes TempDate annotation, gets the rule feature and adds a new Date annotation
+gate.AnnotationSet date = (gate.AnnotationSet)bindings.get("date");
+gate.Annotation dateAnn = (gate.Annotation)date.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule1", dateAnn.getFeatures().get("rule"));
+features.put("rule", "TimeContextFinal");
+features.put("kind", "date");
+annotations.add(date.firstNode(), date.lastNode(), "Date",
+features);
+annotations.removeAll(date);
+//removes TempTime annotation, gets the rule feature and adds a new Date annotation
+gate.AnnotationSet time = (gate.AnnotationSet)bindings.get("time");
+gate.Annotation timeAnn = (gate.Annotation)time.iterator().next();
+gate.FeatureMap features2 = Factory.newFeatureMap();
+features2.put("rule1", timeAnn.getFeatures().get("rule"));
+features2.put("rule", "TimeContextFinal");
+features2.put("kind", "time");
+annotations.add(time.firstNode(), date.lastNode(), "Date",
+features2);
+annotations.removeAll(time);
+}
+
+
+Rule: TimeWordsContextFinal
+Priority: 50
+
+//seven to nine o'clock
+(
+ {TempTime.kind == timeWords}
+ {Token.string == "to"}
+ {TempTime.kind == positive}
+)
+:date
+-->
+ {
+//removes TempTime annotation, gets the rule feature and adds a new Date annotation
+gate.AnnotationSet date = (gate.AnnotationSet)bindings.get("date");
+gate.Annotation dateAnn = (gate.Annotation)date.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule1", dateAnn.getFeatures().get("rule"));
+features.put("rule2", "TimeWordsContextFinal");
+features.put("kind", "time");
+annotations.add(date.firstNode(), date.lastNode(), "Date",
+features);
+annotations.removeAll(date);
+}
+
+
+Rule: YearOnlyFinal
+Priority: 10
+(
+ {TempYear.kind == positive}
+)
+:date
+--> 
+{
+//removes TempDate annotation, gets the rule feature and adds a new Date annotation
+gate.AnnotationSet date = (gate.AnnotationSet)bindings.get("date");
+gate.Annotation dateAnn = (gate.Annotation)date.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule1", dateAnn.getFeatures().get("rule"));
+features.put("rule2", "YearOnlyFinal");
+features.put("kind", "date");
+annotations.add(date.firstNode(), date.lastNode(), "Date",
+features);
+annotations.removeAll(date);
+}
+
+
+
+Rule: TimeOnlyFinal
+Priority: 10
+(
+ {TempTime.kind == positive}
+)
+:date
+-->
+{
+//removes TempDate annotation, gets the rule feature and adds a new Date annotation
+gate.AnnotationSet date = (gate.AnnotationSet)bindings.get("date");
+gate.Annotation dateAnn = (gate.Annotation)date.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule1", dateAnn.getFeatures().get("rule"));
+features.put("rule2", "TimeOnlyFinal");
+features.put("kind", "time");
+annotations.add(date.firstNode(), date.lastNode(), "Date",
+features);
+annotations.removeAll(date);
+}
+
+
+////////////////////////////////////////////////////////////
+Rule: AddressFull
+Priority: 100
+(
+ ({Street}
+  {Token.string == ","})?
+ ({TempLocation} 
+ ({Token.string == ","})?
+ )+
+ ({Postcode})
+ ({Token.string == ","})?
+ ({TempLocation})*
+)
+:address
+-->
+{
+//removes TempAddress annotation, gets the rule feature and adds a new Address annotation
+gate.AnnotationSet address = (gate.AnnotationSet)bindings.get("address");
+gate.Annotation addressAnn = (gate.Annotation)address.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule1", addressAnn.getFeatures().get("rule"));
+features.put("rule2", "AddressFull");
+features.put("kind", "complete");
+annotations.add(address.firstNode(), address.lastNode(), "Address",
+features);
+annotations.removeAll(address);
+}
+
+
+Rule: EmailFinal
+Priority: 50
+(
+{Email}
+)
+:address
+-->
+{
+//removes Email annotation, gets the rule feature and adds a new Address annotation
+gate.AnnotationSet address = (gate.AnnotationSet)bindings.get("address");
+gate.Annotation addressAnn = (gate.Annotation)address.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule1", addressAnn.getFeatures().get("rule"));
+features.put("rule2", "EmailFinal");
+features.put("kind", "email");
+annotations.add(address.firstNode(), address.lastNode(), "Address",
+features);
+annotations.removeAll(address);
+}
+
+
+Rule: PhoneFinal
+Priority: 50
+(
+{Phone}
+)
+:address
+-->
+{
+//removes TempAddress annotation, gets the rule feature and adds a new Address annotation
+gate.AnnotationSet address = (gate.AnnotationSet)bindings.get("address");
+gate.Annotation addressAnn = (gate.Annotation)address.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule1", addressAnn.getFeatures().get("rule"));
+features.put("rule2", "PhoneFinal");
+features.put("kind", "phone");
+annotations.add(address.firstNode(), address.lastNode(), "Address",
+features);
+annotations.removeAll(address);
+}
+
+
+Rule: PostcodeFinal
+Priority: 50
+(
+{Postcode}
+)
+:address
+-->
+{
+//removes TempAddress annotation, gets the rule feature and adds a new Address annotation
+gate.AnnotationSet address = (gate.AnnotationSet)bindings.get("address");
+gate.Annotation addressAnn = (gate.Annotation)address.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule1", addressAnn.getFeatures().get("rule"));
+features.put("rule2", "PostcodeFinal");
+features.put("kind", "postcode");
+annotations.add(address.firstNode(), address.lastNode(), "Address",
+features);
+annotations.removeAll(address);
+}
+
+
+Rule: IpFinal
+Priority: 50
+(
+{Ip}
+)
+:address
+-->
+{
+//removes TempAddress annotation, gets the rule feature and adds a new Address annotation
+gate.AnnotationSet address = (gate.AnnotationSet)bindings.get("address");
+gate.Annotation addressAnn = (gate.Annotation)address.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule1", addressAnn.getFeatures().get("rule"));
+features.put("rule2", "IpFinal");
+features.put("kind", "ip");
+annotations.add(address.firstNode(), address.lastNode(), "Address",
+features);
+annotations.removeAll(address);
+}
+
+
+Rule: UrlFinal
+Priority: 50
+(
+{Url}
+)
+:address
+-->
+{
+//removes TempAddress annotation, gets the rule feature and adds a new Address annotation
+gate.AnnotationSet address = (gate.AnnotationSet)bindings.get("address");
+gate.Annotation addressAnn = (gate.Annotation)address.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule1", addressAnn.getFeatures().get("rule"));
+features.put("rule2", "UrlFinal");
+features.put("kind", "url");
+annotations.add(address.firstNode(), address.lastNode(), "Address",
+features);
+annotations.removeAll(address);
+}
+
+
+Rule: StreetFinal
+//make streets locations
+Priority: 50
+(
+{Street}
+)
+:address
+-->
+{
+//removes TempAddress annotation, gets the rule feature and adds a new Address annotation
+gate.AnnotationSet address = (gate.AnnotationSet)bindings.get("address");
+gate.Annotation addressAnn = (gate.Annotation)address.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule1", addressAnn.getFeatures().get("rule"));
+features.put("rule2", "StreetFinal");
+annotations.add(address.firstNode(), address.lastNode(), "Location",
+features);
+annotations.removeAll(address);
+}
+
+////////////////////////////////////////////////////////////
+
+
+Rule: IdentifierFinal
+Priority: 10
+
+(
+ {TempIdentifier}
+)
+:ident
+-->
+{
+//removes TempIdent annotation, gets the rule feature and adds a new Identifier annotation
+gate.AnnotationSet ident = (gate.AnnotationSet)bindings.get("ident");
+gate.Annotation identAnn = (gate.Annotation)ident.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule1", identAnn.getFeatures().get("rule"));
+features.put("rule2", "IdentifierFinal");
+annotations.add(ident.firstNode(), ident.lastNode(), "Identifier",
+features);
+annotations.removeAll(ident);
+}
+
+
+
+// this gets used when specs rule for emails is fired (in eml-final.jape) 
+
+Rule: SpecsFinal
+Priority: 1000
+
+(
+ {TempSpecs}
+):spec
+-->
+{
+//removes TempSpecs annotation
+gate.AnnotationSet spec = (gate.AnnotationSet)bindings.get("spec");
+//gate.FeatureMap features = Factory.newFeatureMap();
+annotations.removeAll(spec);
+}
+
+//////////////////////////////////////////////////////
+
+Rule: UnknownPerson
+Priority: 5
+( 
+ {Token.category == NNP}
+ ((SPACE|{Token.string == "-"})
+  {Token.category == NNP})?
+ (SPACE {Token.category == NNP})?
+ (SPACE {Token.category == NNP})?
+):unknown
+ (SPACE)
+(
+ {TempPerson}
+):person
+-->
+:unknown.Unknown = {kind = "PN", rule = UnknownTempPerson},
+{
+//removes TempPerson annotation, gets the rule feature and adds a new Person annotation
+gate.AnnotationSet person = (gate.AnnotationSet)bindings.get("person");
+gate.Annotation personAnn = (gate.Annotation)person.iterator().next();
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("gender", personAnn.getFeatures().get("gender"));
+features.put("rule1", personAnn.getFeatures().get("rule"));
+features.put("rule2", "UnknownPerson");
+annotations.add(person.firstNode(), person.lastNode(), "Person",
+features);
+annotations.removeAll(person);
+}
+
+/*
+*  unknown.jape
+*
+* Copyright (c) 1998-2001, The University of Sheffield.
+*
+*  This file is part of GATE (see http://gate.ac.uk/), and is free
+*  software, licenced under the GNU Library General Public License,
+*  Version 2, June 1991 (in the distribution as file licence.html,
+*  and also available at http://gate.ac.uk/gate/licence.html).
+*
+*  Diana Maynard, 10 Sep 2001
+* 
+*  $Id: grammars.tex,v 1.2 2001/11/29 18:07:27 diana Exp $
+*/
+
+Phase:	Unknown
+Input: Location Person Date Organization Address Money Percent Token Jobtitle Lookup
+Options: control = appelt
+
+
+Rule: Known
+Priority: 100
+(
+ {Location}| 
+ {Person}|
+ {Date}|
+ {Organization}|
+ {Address}|
+ {Money} |
+ {Percent}|
+ {Token.string == "Dear"}|
+ {JobTitle}|
+ {Lookup}
+):known
+-->
+{}
+ 
+
+Rule:Unknown
+Priority: 50
+( 
+ {Token.category == NNP}
+) 
+:unknown
+-->
+ :unknown.Unknown = {kind = "PN", rule = Unknown}
+
+
+
+/*
+*  name_context.jape
+*
+* Copyright (c) 1998-2001, The University of Sheffield.
+*
+*  This file is part of GATE (see http://gate.ac.uk/), and is free
+*  software, licenced under the GNU Library General Public License,
+*  Version 2, June 1991 (in the distribution as file licence.html,
+*  and also available at http://gate.ac.uk/gate/licence.html).
+*
+*  Diana Maynard, 10 Sep 2001
+* 
+*  $Id: grammars.tex,v 1.2 2001/11/29 18:07:27 diana Exp $
+*/
+
+Phase:	NameContext
+Input: Lookup Unknown Person Token Organization
+Options: control = appelt
+
+Rule: Jobtitle1
+Priority: 50
+(
+ {Lookup.majorType == jobtitle}
+)
+(
+ {Unknown}
+ ({Unknown})?
+)
+:person
+-->
+{
+//removes old "Unknown" annotation and adds a "Person" one
+gate.AnnotationSet person = (gate.AnnotationSet) bindings.get("person");
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule", "JobTitle1");
+annotations.add(person.firstNode(), person.lastNode(), "Person",
+features);
+annotations.removeAll(person);
+}
+
+
+Rule:PersonTitle1
+Priority: 40
+(
+ {Person.rule1 == PersonTitle}
+ {Unknown}
+):person
+-->
+{
+//removes old "Person" and "Unknown" annotations and adds a new "Person" one
+gate.AnnotationSet person = (gate.AnnotationSet) bindings.get("person");
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule", "PersonTitle1");
+annotations.add(person.firstNode(), person.lastNode(), "Person",
+features);
+annotations.removeAll(person);
+}
+
+
+
+Rule: PersonContext1
+Priority: 10
+//note: this should really move to grammar following co-ref
+
+(
+ {Token.orth == upperInitial}
+):person
+
+(
+ {Token.string == "from"}
+ ({Organization} | {Location})
+)
+-->
+  :person.Person = {rule = "PersonContext1"}
+
+
+Rule: NotPersonContext1
+Priority: 20
+//if the unknown thing is already an org or person, don't change it
+
+
+(
+ ({Organization}|{Person})
+):label
+
+(
+ {Token.string == "from"}
+ ({Organization} | {Location})
+)
+-->
+  {}
+
+/*  org_context.jape
+*
+* Copyright (c) 1998-2001, The University of Sheffield.
+*
+*  This file is part of GATE (see http://gate.ac.uk/), and is free
+*  software, licenced under the GNU Library General Public License,
+*  Version 2, June 1991 (in the distribution as file licence.html,
+*  and also available at http://gate.ac.uk/gate/licence.html).
+*
+*  Diana Maynard, 10 Sep 2001
+* 
+*  $Id: grammars.tex,v 1.2 2001/11/29 18:07:27 diana Exp $
+*/
+
+
+Phase:	Org_Context
+Input: Token Lookup Organization Unknown Location
+Options: control = appelt
+
+
+
+Rule:OrgContext1
+Priority: 1
+// company X
+// company called X
+
+(
+ {Token.string == "company"}
+ (({Token.string == "called"}|
+   {Token.string == "dubbed"}|
+   {Token.string == "named"}
+  )
+ )?
+)
+(
+ {Unknown.kind == PN}
+)
+:org
+-->
+{
+gate.AnnotationSet org = (gate.AnnotationSet) bindings.get("org");
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule ", "OrgContext1");
+annotations.add(org.firstNode(), org.lastNode(), "Organization",
+features);
+annotations.removeAll(org);
+}
+
+Rule: OrgContext2
+Priority: 5
+
+// Telstar laboratory
+// Medici offices
+(
+ {Unknown.kind == PN}
+): org
+(
+ ({Token.string == "offices"} |
+ {Token.string == "Offices"} |
+ {Token.string == "laboratory"} | 
+ {Token.string == "Laboratory"} |
+ {Token.string == "laboratories"} |
+ {Token.string == "Laboratories"})
+)
+-->
+{
+gate.AnnotationSet org = (gate.AnnotationSet) bindings.get("org");
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule ", "OrgContext2");
+annotations.add(org.firstNode(), org.lastNode(), "Organization",
+features);
+annotations.removeAll(org);
+}
+
+Rule:OrgContext3
+Priority: 5
+// X shares
+
+(
+ {Unknown.kind == PN}
+):org
+( 
+ {Token.string == "shares"}
+)
+-->
+{
+gate.AnnotationSet org = (gate.AnnotationSet) bindings.get("org");
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule ", "OrgContext3");
+annotations.add(org.firstNode(), org.lastNode(), "Organization",
+features);
+annotations.removeAll(org);
+}
+
+Rule:OrgContext4
+Priority: 10
+// shares in X
+
+( 
+ {Token.string == "shares"}
+ {Token.string == "in"}
+)
+(
+ {Unknown.kind == PN}
+):org
+-->
+{
+gate.AnnotationSet org = (gate.AnnotationSet) bindings.get("org");
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule ", "OrgContext4");
+annotations.add(org.firstNode(), org.lastNode(), "Organization",
+features);
+annotations.removeAll(org);
+}
+
+
+Rule: OrgContext5
+Priority: 10
+// officials at X
+
+(
+ ({Token.string == "officials"}|
+  {Token.string == "Officials"})
+ {Token.string == "at"}
+)
+(
+ {Unknown.kind == PN}
+):org
+-->
+ {
+gate.AnnotationSet org = (gate.AnnotationSet) bindings.get("org");
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule ", "OrgContext5");
+annotations.add(org.firstNode(), org.lastNode(), "Organization",
+features);
+annotations.removeAll(org);
+}
+
+
+Rule:JoinOrg
+Priority: 50
+// Smith joined Energis
+// later we should use the morph PR to prevent having to list morphological variants
+
+(
+ ({Token.string == "joined"}|
+  {Token.string == "joining"}|
+  {Token.string == "joins"}|
+  {Token.string == "join"}
+ )
+ SPACE
+)
+( 
+ {Unknown.kind ==PN}
+)
+:org
+-->
+ {
+gate.AnnotationSet org = (gate.AnnotationSet) bindings.get("org");
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule ", "JoinOrg");
+annotations.add(org.firstNode(), org.lastNode(), "Organization",
+features);
+annotations.removeAll(org);
+}
+
+
+Rule:OrgPerson
+Priority: 20
+// Nokia Vice-President William Plummer
+
+(
+ {Unknown.kind == PN}
+):org 
+(
+ ({Token.string == "'"}
+  ({Token.string == "s"})?
+ )?
+ SPACE
+ {Person.rule1 == PersonTitle}
+)
+--> 
+ {
+//get the matched annotation(s)
+gate.AnnotationSet org = (gate.AnnotationSet) bindings.get("org");
+
+//create the new annotation
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule ", "OrgPerson");
+annotations.add(org.firstNode(), org.lastNode(), "Organization",
+features);
+
+//delete the old annotation(s)
+annotations.removeAll(org);
+}
+
+
+Rule: OrgConjOrg1 
+Priority: 10
+
+(
+{Unknown.kind == PN}
+):org
+(
+(SPACE)
+{Token.category == CC}
+(SPACE)
+{Organization}
+)
+-->
+{
+gate.AnnotationSet org = (gate.AnnotationSet) bindings.get("org");
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule ", "OrgConjOrg1");
+annotations.add(org.firstNode(), org.lastNode(), "Organization",
+features);
+annotations.removeAll(org);
+}
+
+
+Rule: OrgConjOrg2
+Priority: 10
+
+(
+ {Organization}
+ (SPACE)
+ {Token.category == CC}
+ (SPACE)
+)
+(
+ {Unknown.kind == PN}
+):org
+-->
+ {
+gate.AnnotationSet org = (gate.AnnotationSet) bindings.get("org");
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule ", "OrgConjOrg2");
+annotations.add(org.firstNode(), org.lastNode(), "Organization",
+features);
+annotations.removeAll(org);
+}
+
+
+
+Rule: OrgJobtitle
+Priority: 30
+(
+ {Unknown.kind == PN}
+):org
+( 
+ SPACE
+ {Lookup.majorType == jobtitle}
+)
+-->
+  {
+gate.AnnotationSet org = (gate.AnnotationSet) bindings.get("org");
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule ", "OrgJobTitle");
+annotations.add(org.firstNode(), org.lastNode(), "Organization",
+features);
+annotations.removeAll(org);
+}
+
+
+
+Rule:LocOrg
+Priority: 20
+// guess that Unknown preceded by Loc is an Org
+
+(
+ {Location}
+ {Unknown.kind == PN}
+):org
+-->
+{
+//removes Unknown annotation, adds a new Org annotation
+gate.AnnotationSet org = (gate.AnnotationSet) bindings.get("org");
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule", "LocOrg");
+annotations.add(org.firstNode(), org.lastNode(), "Organization",
+features);
+annotations.removeAll(org);
+}
+/*
+*  loc_context.jape
+*
+* Copyright (c) 1998-2001, The University of Sheffield.
+*
+*  This file is part of GATE (see http://gate.ac.uk/), and is free
+*  software, licenced under the GNU Library General Public License,
+*  Version 2, June 1991 (in the distribution as file licence.html,
+*  and also available at http://gate.ac.uk/gate/licence.html).
+*
+*  Diana Maynard, 02 Aug 2001
+* 
+*  $Id: grammars.tex,v 1.2 2001/11/29 18:07:27 diana Exp $
+*/
+
+Phase:	Loc_Context
+Input: Unknown Token Location
+Options: control = appelt
+
+
+Rule: LocConjLoc1 
+Priority: 10
+
+(
+{Unknown.kind == PN}
+):loc
+(
+{Token.category == CC}
+({Token.category == DT}
+)?
+{Location}
+)
+-->
+{
+gate.AnnotationSet loc = (gate.AnnotationSet) bindings.get("loc");
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule ", "LocConjLoc1");
+annotations.add(loc.firstNode(), loc.lastNode(), "Location",
+features);
+annotations.removeAll(loc);
+}
+
+
+Rule: LocConjLoc2
+Priority: 10
+
+(
+ {Location}
+ {Token.category == CC}
+ ({Token.category == DT}
+ )?
+)
+(
+ {Unknown.kind == PN}
+):loc
+-->
+ {
+gate.AnnotationSet loc = (gate.AnnotationSet) bindings.get("loc");
+gate.FeatureMap features = Factory.newFeatureMap();
+features.put("rule ", "LocConjLoc2");
+annotations.add(loc.firstNode(), loc.lastNode(), "Location",
+features);
+annotations.removeAll(loc);
+}
+
+
+Rule: UnknownLocRegion
+Priority: 50
+(
+ ({Token.string == "at"}|
+  {Token.string == "in"}
+ )
+)
+( 
+ {Unknown}
+):loc
+(
+ {Token.string == ","}
+ {Location.kind == region}
+)
+-->
+ :loc.Location = {rule = "UnknownLocRegion"}
+
+
+/*
+*  clean.jape
+*
+* Copyright (c) 1998-2001, The University of Sheffield.
+*
+*  This file is part of GATE (see http://gate.ac.uk/), and is free
+*  software, licenced under the GNU Library General Public License,
+*  Version 2, June 1991 (in the distribution as file licence.html,
+*  and also available at http://gate.ac.uk/gate/licence.html).
+*
+*  Diana Maynard, 10 Sep 2001
+* 
+*  $Id: grammars.tex,v 1.2 2001/11/29 18:07:27 diana Exp $
+*/
+
+Phase:	Clean
+Input: TempPerson TempLocation TempOrganization TempDate TempTime TempYear TempZone Street Postcode Email Url Phone Ip TempIdentifier TempSpecs
+Options: control = appelt
+
+Rule:CleanTempAnnotations
+(
+ {TempPerson}|
+ {TempLocation}|
+ {TempOrganization}|
+ {TempDate}|
+ {TempTime}|
+ {TempYear}|
+ {TempZone}|
+ {Street}|
+ {Postcode}|
+ {Email}|
+ {Url}|
+ {Phone}|
+ {Ip}|
+ {TempIdentifier}|
+ {TempSpecs}
+):temp
+-->
+{
+ gate.AnnotationSet temp = (gate.AnnotationSet)bindings.get("temp");
+ annotations.removeAll(temp);
+}
+
+\end{verbatim}

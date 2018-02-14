@@ -1,0 +1,338 @@
+
+\section{IAA computation}
+When we evaluate the performance of a processing resource such as tokeniser, 
+POS tagger, or a whole application, we usually have a human-authored gold 
+Standard against which to compare our software. However, it is not always 
+easy or obvious what this gold standard should be, as different people may 
+have different opinions about what is correct. Typically, we solve this 
+problem by using more than one human annotator, and comparing their annotations. 
+We do this by calculating inter-annotator agreement (IAA), also known as 
+inter-rater reliability. 
+
+IAA can be used to assess how difficult a task is. This is based on the argument 
+that if two humans cannot come to agreement on some annotation, it is unlikely 
+that a computer could ever do the same annotation correctly. Thus, IAA can 
+be used to find the ceiling for computer performance. IAA is also very useful 
+for human annotating text, e.g. quality control.
+
+\subsection{IAA measures for classification tasks}
+
+IAA has been used mainly in the classification tasks, where two or more annotators 
+are given a set of instances and are asked to classify those instances into some 
+pre-defined categories. IAA measures the agreements among the annotators on the
+class labels assigned to the instances by the annotators. Text classification 
+tasks include document classification, sentence classification(e.g. opinionated 
+sentence recognition), and token classification (e.g. POS tagging).
+
+The three commonly used IAA measures are {\em observed agreement}, {\em specific agreement}, 
+and {\em Kappa ($\kappa$)} \cite{Hripcsak02}. Those measures can be 
+calculated from a contingency table, which lists the numbers of instances of 
+agreement and disagreement between two annotators on each category. To explain the 
+IAA measures, a general contingency table for two categories {\em cat1} and {\em cat2}
+ is showed in Table \ref{table-contingency}.
+
+\begin{table}[hbt]
+\caption{Contingency table for two-category problem
+ \label{table-contingency}} \vspace{0.4cm} 
+{\centering
+\begin{tabular}{l|cc|c} 
+\hline
+   & Annotator-2 & & \\
+\hline
+Annotator-1  & cat1 & cat2 & marginal sum\\
+\hline
+ cat1& a & b & a+b\\ 
+cat2 & c & d & c+d\\
+\hline
+marginal sum & a+c & b+d &a+b+c+d\\
+ \hline
+\end{tabular}\par}
+\end{table}
+
+
+{\bf Observed agreement} is the portion of the instances on which the 
+annotators agree. For the two annotators and two categories as shown in
+ Table \ref{table-contingency}, it is defined as
+\begin{equation}
+A_{o} = \frac{a+d}{a+b+c+d}
+\end{equation}
+The extension of the above formula to more than two categories is in 
+straight way. The extension to more than two annotators is usually taken 
+as the mean of the pair-wise agreements \cite{Fleiss75}, which is the average agreement 
+across all possible pairs of annotators. 
+An alternative compares each annotator to the majority opinion of the others 
+\cite{Fleiss75}.
+
+However, the observed agreement has two shortcomings. One is that certain 
+amount of agreement is expected by chance. The Kappa measure is a chance-corrected 
+agreement. Another is that it sums up the agreement on all the categories but 
+the agreements on each category may differ. Hence the category specific agreement 
+is needed.
+
+{\bf Specific agreement} quantifies the degree of agreement for each of the categories 
+separately. For example, the specific agreement for the two categories list in 
+Table \ref{table-contingency} is the following, respectively,
+\begin{equation}
+A_{cat1} = \frac{2a}{2a+b+c}; \ \ \
+A_{cat2} = \frac{2d}{b+c+2d}
+\end{equation}
+
+{\bf Kappa} is defined as the observed agreements $A_{o}$ subtracted by the agreement 
+expected by chance $A_{e}$ and is normalized as a number between -1 and 1.
+\begin{equation}
+\kappa =\frac{A_{o}-A_{e}}{1-A_{e}}
+\end{equation}
+
+$\kappa=1$ means perfect agreements, $\kappa=0$ means the agreement is equal to 
+chance, $\kappa=-1$ means `perfect' disagreement.
+
+There are two different ways of computing the chance agreement $A_{e}$
+(for a detailed explanations about it see
+\cite{Eugenio04}). The Cohen's Kappa is based on the individual distribution of 
+each annotator, while the Siegel \& Castellan's Kappa is based on the assumption that all 
+the annotators have the same distribution. The former is more informative than the 
+latter and has been used widely. 
+
+The Kappa suffers from the prevalence problem which arises because imbalanced 
+distribution of categories in the data increases $A_{e}$. The prevalence problem can be 
+alleviated by reporting the positive and negative specified  agreement on each category 
+besides the Kappa \cite{ Hripcsak02, Eugenio04}. In addition, the so-called bias 
+problem effects the Cohen's Kappa, but not S\&C's. The bias problem arises as one 
+annotator prefers to one particular category more than another annotator.
+\cite{ Eugenio04} advised to compute the S\&C's Kappa and the specific agreements along
+with the Cohen's Kappa in order to handle the problems.
+
+Despite the problem mentioned above, the Cohen's Kappa remains a popular IAA measure. 
+Kappa can be used for more than two annotators based on pair-wise figures, e.g. the mean
+of all the pair-wise Kappa as an overall Kappa measure. The Cohen's Kappa can also be
+extended to the case of more than two annotators by using the following single 
+formula  \cite{Davies82}
+\begin{equation}
+\kappa = 1-\frac{IJ^{2}-\sum_{i}\sum_{c}Y_{ic}^{2}}
+{I(J(J-1)\sum_{c}(p_{c}(1-p_{c}))+ \sum_{c}\sum_{j}(p_{cj}-p_{c})^2)}
+\end{equation}
+Where $I$ and $J$ are the number of instances and annotators, respectively; $Y_{ic}$ 
+is the number of annotators who assigns the category $c$ to the instance $I$; $p_{cj}$ 
+is the probability of the annotator $j$ assigning category $c$; $p_{c}$ is the 
+probability of assigning category by all annotators (i.e. averaging $p_{cj}$  
+over all annotators).
+
+S\&C's Kappa is applicable for any number of annotators. S\&C's Kappa
+for two annotators is also known as Scott's Pi (see \cite{Lombard02}). The Krippendorff's 
+alpha, another variant of Kappa, differs only slightly from the S\&C's Kappa 
+on nominal category problem (see \cite{Carletta96, Eugenio04}).
+
+However, note that the Kappa (and the observed agreement) is not applicable to some
+tasks. Named entity annotation is  one of such tasks
+\cite{Hripcsak05}. In named entity annotation task, annotators are given 
+some text and are asked to annotate some named entities (and possible their 
+categories) in the text. Different annotators may annotate different instances
+of named entity. So, if one annotator annotates one named entity in the text but
+another annotator does not annotate it, then that named entity is a non-entity
+for the latter. However, generally the non-entity in text is not a well-defined 
+term, e.g. we don't know how many words should be contained in non-entity. On the 
+other hand, if we want to compute Kappa for named entity annotation, we need
+the non-entities. That's why people doesn't compute Kappa for named entity task.
+
+\subsection{F-measure as IAA}
+
+The commonly used IAA measures such as Kappa and other statistical measures have 
+not been used in the text mark-up tasks such as named entity recognition and 
+information extraction, due to the reason explained above (also see \cite{Hripcsak05}). 
+Instead, the F-measures such as Precision, Recall, and F1 have been widely used 
+in information extraction evaluations such as MUC, ACE and TERN for measuring IAA. 
+That's because the computation of the F-measures does not need the number of 
+non-entity examples. Another reason is that F-measures are commonly used for 
+evaluating information extraction systems. Hence IAA F-measures can be directly 
+compared with system's results.
+
+For computing F-measure between two annotation sets, one can use one annotation 
+set as golden standard and another set as system's output and compute the 
+F-measures such as Precision, Recall and F1. One can switch the roles of the 
+two annotation sets. The Precision and 
+Recall in the former case become Recall and Precision in the latter, respectively. But 
+the F1 remains the same in both cases.
+
+For more than two annotators, one can first compute F-measures between any two annotators and 
+the mean of the pair-wise F-measures can be used as an overall measure. 
+Another option is first to merge the annotations from all the annotators and then to
+ regard the merged annotations as reference set and compute F-measures for each 
+annotator by comparing his annotation set against the reference set.
+
+The computation of the F-measures (e.g. Precision, Recall and F1) are shown in 
+last section.
+As noted in \cite{Hripcsak05}, the F1 computed for two annotators for one specific 
+category is equivalent to the positive specific agreement of the category.
+
+\subsection{Implementations of IAA measures}
+
+The implementation includes the calculations of the commonly used IAA discussed above, 
+namely the observed agreement, category specific agreements, several variants of 
+the Kappa, and the F-measures. 
+It computes these measures on the basis of the pair-wise and also computes
+the mean of all the pair-wise figures as overall measure. It also computes
+the observed agreement and the Kappa directly for more than two annotators.
+
+In addition, the implementation provides a few methods to facilitate the IAA calculations.
+One is to merge the annotations from different annotators for one documents into a single
+annotation set. Given a parameter $k$, it puts an annotation into the merged annotation set
+if at least $k$ annotators agree on the annotation. Another method checks if or not the 
+annotations from all the annotators for one document correspond to the same 
+annotation instances (based on annotation's span). It is a necessary condition for 
+computing the Kappa measures that all the annotators use the same instances for 
+annotating. The third method collects all category labels from the annotation sets and
+put them into a list. The label list is needed for computing the label-specific 
+measures.
+
+The main input of the IAA computation are the annotation sets from several annotators
+for one or more documents. We use a 2-dimensional array to store those annotation sets.
+Each row of the array corresponds to one document with the annotation sets from different
+annotators. Each column corresponds to one annotator with his annotation sets for
+all the documents. It assumes that each annotation set is from one annotation type with
+the same type name in one document. It also assumes that the category label information 
+is recorded as one annotation feature, if there is any category information.
+
+The main class is {\em IaaCalculation.java}. It has two constructors and several methods
+for computing and displaying different IAA measures, as described in the follows.
+\begin{itemize}
+\item One constructor,
+{\em IaaCalculation(String nameAnnT, String nameF, String[] labels,
+    AnnotationSet[][] annsA2)}
+is for the
+tasks with category information. The input parameters of the constructor are name of 
+annotation type containing the annotation set, name of the annotation feature containing
+the category labels, a list of category labels\footnote{User may provide the label list. 
+If not, a static method of the class IaaCalculation.java, 
+{\em public static ArrayList<String> collectLabels(AnnotationSet[][] annsA2, String nameF)}
+can be used to collect the label list from the annotations.} used in the annotations, 
+and a 2-dimensional array containing the annotation sets.
+\item Another constructor, {\em IaaCalculation(String nameAnnT, AnnotationSet[][] annsA2)}
+is used for the tasks without category label information. It just has two input parameters,
+the name of annotation type containing the annotations and the 2-dimensional array containing
+the annotation sets.
+\item Method {\em public void pairwiseIaaKappa()} computes and outputs the 
+observed agreement, the
+ Cohen's Kappa and the S\&C's Kappa (namely the Scott's Pi) for each pair of annotators and
+the means over all the pairs' results. It also outputs the confusion matrix and the 
+positive and negative specific agreement for each pair
+of annotators and each label.
+\item Method {\em public void allwayIaaKappa()} computes and outputs the 
+observed agreement, Cohen's  Kappa and S\&C Kappa for any number of annotators directly.
+\item Method {\em public void pairwiseIaaFmeasure()} computes and outputs 
+the F-measures (Precision, 
+Recall, and F1) for each pair of annotators and for each label (if there is label 
+information) and for all the labels. It also computes and outputs the mean of all 
+annotator pairs as overall result.
+\item Method {\em public void allwayIaaFmeasure(AnnotationSet[] refAnns)} computes and outputs the
+F-measures for each annotator's annotations against the reference annotations provided. Again it
+can output the F-measures for each label and for all labels and the overall result for all the
+annotators.
+\item The method {\em public static ArrayList$<$String$>$ collectLabels(AnnotationSet[][] annsA2,
+    String nameF)} collects the labels from the annotation feature {\em nameF} in the 
+   annotations stored in the 2-dimensional array {\em annsA2}. It returns a label list.
+\item The method {\em public boolean isSameInstancesForAnnotators(AnnotationSet[] annsA)} checks
+if or not the annotation sets stored in the array {\em annsA} contain the same 
+annotation instances based on annotation's span.
+\end{itemize}
+
+It also has a parameter {\em verbosity} determining what kind of measure results will
+be outputted. No measure result would be displayed if setting it as $0$. The overall results 
+would be outputted if setting the parameter as $1$.  The overall results and the results per
+category will be outputted if setting it as $2$.
+
+Note that the Kappa measures may be inappropriate if the annotators do not judge the same
+instances. The last method in the above list gives a necessary condition for it. In other word,
+if the method returns a false, the annotators certainly doesn't judge the same instances. 
+Alternatively the user could do such a check by himself.
+
+\section{Annotation Merging}
+
+If we got annotations about the same subject on the same document from different
+annotators, we need to merge those annotations to form a unified annotations. We 
+implemented two approaches for annotation merging.
+The first method takes a parameter {\em numMinK} and selects the annotation
+on which at least {\em numMinK} annotators agree. If two or more merged annotations have the
+same span, then the annotation with the most supporters is kept and other 
+annotations with the same span are discarded.
+The second method selects one annotation from those annotations with the same span, 
+which the majority of the annotators support. Note that if one annotator did not create
+the annotation with the particular span, we count it as one non-support of the annotation 
+with the span. If it turns out that the majority of the annotators did not support the
+ annotation with that span, then no annotation with the span would be put into the
+merged annotations.
+
+The following two static methods in the class {\bf gate.util.AnnotationMerging} are for
+ the methods. The two methods have very similar input and output parameters. 
+Each of the methods takes an array of annotation sets, which should be the same
+annotation type on the same document from different annotators, as input. If there is
+one annotation feature indicating the annotation label, the name of the annotation
+feature is another input. Otherwise, set the input parameter for the annotation 
+feature as {\em null}. The output is a map the key of which is one merged annotation 
+and the value of which represents the annotators (in terms of the indices of the array 
+of annotation sets) who support the annotation. The method also has a boolean 
+input parameter to indicate if or not the annotations from different annotators 
+are based on the same set of instances, which can be determined by the static method 
+{\em public boolean isSameInstancesForAnnotators(AnnotationSet[] annsA)} in the class
+{\bf gate.util.IaaCalculation}. One instance corresponds to all the annotations with the same span.
+If the annotation sets are based on the same set of instances, the merging methods
+will ensure that the merged annotations are on the same set of instances. 
+
+\begin{itemize}
+\item The Method {\em public static void mergeAnnogation(AnnotationSet[] annsArr,
+    String nameFeat,\\  HashMap$<$Annotation,String$>$mergeAnns, int numMinK, 
+boolean isTheSameInstances)} merges the annotations
+stored in the array {\em annsArr}. The merged annotation is put into the map {\em mergeAnns},
+which key is the merged annotation and which value is a string containing the indices of
+elements in the annotation set array  {\em annsArr} which contain that annotation.
+{\em NumMinK} specifies the minimal number of the annotators supporting one
+merged annotation. The boolean parameter {\em isTheSameInstances} indicate if or not
+those annotation sets for merging are based on the same instances.
+\item Method {\em public static void mergeAnnogationMajority(AnnotationSet[] annsArr, String nameFeat,
+    HashMap$<$Annotation, String$>$mergeAnns, boolean isTheSameInstances)} selects the annotations
+which the majority of the annotators agree on. The meanings of parameters are the 
+same as those in the above method.
+\end{itemize}
+
+\section{Annotation Merging Plugin}
+The annotation merging methods are wrapped in the plugin such that they can be used
+in a PR in the GATE GUI. The plugin can be used as a PR in an application of
+pipeline or corpus pipeline. To use the PR, each document in the pipeline 
+or the corpus pipeline should have the annotation sets for merging. The annotation
+merging PR has no loading parameter but has several run-time parameters specifying the
+annotation merging task, explained in the following.
+\begin{itemize}
+\item {\em annSetOutput}: the annotation set in the current document for storing the
+merged annotations. For the sake of clearance, it had better not be an existing 
+annotation set.
+\item {\em annSetsForMerging}: the annotation sets in the document for merging.
+It is an optional parameter.  If it is not assigned with any value, the annotation sets for
+merging would be all the annotation sets in the document except the default annotation set.
+If specified, it is a sequence of the names of the annotation sets for merging,
+separated by `;'. For example, the value `a-1;a-2;a-3' represents
+three annotation set, `a-1', `a-2' and `a-3'. 
+\item {\em annTypeAndFeats}: the annotation types in the annotation set for merging.
+It is an optional parameter. It specifies the annotation types in the annotation sets
+for merging. For each type specified, it may also specify an annotation feature
+of the type and the values of the feature define the labels of the
+annotation type. If the parameter is not set a value, the annotation types
+for merging are all the types in the annotation sets for merging, and no annotation
+feature for each type is specified. If the parameter is specified, it is a sequence of names of 
+annotation types, separated by `;'. If one annotation type has one particular
+annotation feature to indicate the label of the annotation, the annotation feature
+will immediately follow the annotation type's name and is separated by `-$>$' in
+the sequence. For example, the value `SENT-$>$senRel;OPINION\_OPR;OPINION\_SRC-$>$type'
+specifies three annotation types, `SENT', `OPINION\_OPR' and `OPINION\_SRC' and
+specifies the annotation feature `senRel' and `type' for the two types SENT and 
+OPINION\_SRC, respectively but does not specify any feature for the type OPINION\_OPR.
+\item {\em mergingMethod} specifies the method used for merging. Currently it has two 
+values {\em MajorityVoting} and {\em MergingByAnnotatorNum}, referring to the two merging
+methods described above, respectively.
+\item {\em minimalAnnNum} specifies the minimal number of annotators who agree 
+on one annotation in order to put the annotation into merged set, which is needed by
+ the merging method {\em MergingByAnnotatorNum}. If the value of the parameter is smaller than 1,
+set the parameter as 1. If the value is bigger than total number of annotation sets
+for merging, set the parameter as the total number of annotation sets. If not assigning 
+anything to the parameter in the GUI, it use the default value 1. Note that the parameter
+does not have any effect on another merging method {\em MajorityVoting}.
+\end{itemize}
+

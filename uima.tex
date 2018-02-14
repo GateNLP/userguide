@@ -1,0 +1,547 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %
+% uima.tex
+%
+% Ian Roberts, November 2005
+%
+% $Id: uima.tex,v 1.3 2006/10/21 11:44:47 ian Exp $
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapt[chap:uima]{Combining GATE and UIMA}
+\markboth{Combining GATE and UIMA}{Combining GATE and UIMA}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\nnormalsize
+
+\htlink{http://incubator.apache.org/uima/}{UIMA} (Unstructured Information
+Management Architecture) is a platform for natural language processing,
+originally developed by IBM but now maintained by the Apache Software
+Foundation.  It has many similarities to the GATE architecture -- it represents
+documents as text plus annotations, and allows users to define pipelines of
+\emph{analysis engines} that manipulate the document (or \emph{Common Analysis
+Structure} in UIMA terminology) in much the same way as processing resources do
+in GATE.  The Apache UIMA SDK provides support for building analysis components
+in Java and C++ and running them either locally on one machine, or deploying
+them as services that can be accessed remotely.  The SDK is available for
+download from \htlinkplain{http://incubator.apache.org/uima/}.
+
+Clearly, it would be useful to be able to include UIMA components in GATE
+applications and vice-versa, letting GATE users take advantage of UIMA's
+flexible deployment options and UIMA users access JAPE and the many useful
+plugins already available in GATE.  This \chapthing\ describes the
+interoperability layer provided as part of GATE to support this.
+The UIMA-GATE interoperability layer is based on Apache UIMA 2.2.2.  GATE 5.0
+and earlier included an implementation based on version 1.2.3 of the pre-Apache
+IBM UIMA SDK.
+
+The rest of this \chapthing\ assumes that you have at least a basic
+understanding of core UIMA concepts, such as \emph{type systems},
+\emph{primitive} and \emph{aggregate analysis engines} (AEs),
+\emph{feature structures}, the format of AE XML descriptors, etc.  It will
+probably be helpful to refer to the relevant sections of the UIMA SDK User's
+Guide and Reference (supplied with the SDK) alongside this document.
+
+There are two main parts to the interoperability layer:
+%
+\begin{enumerate}
+\item A wrapper to allow a UIMA Analysis Engine (AE), whether primitive
+or aggregate, to be used within GATE as a Processing Resource (PR).
+\item A wrapper to allow a GATE processing pipeline (specifically a
+\texttt{CorpusController}) to be used within UIMA as an AE.
+\end{enumerate}
+%
+The two components operate in very similar ways.  Given a document in the
+source form (either a GATE \texttt{Document} or a UIMA \texttt{CAS}), a
+document in the target form is created with a copy of the source document's
+text.  Some of the annotations from the source are transferred to the target,
+according to a mapping defined by the user, and the target component is then
+run.  Finally, some of the annotations on the updated target document are then
+transferred back to the source, according to the user-defined mapping.
+
+The rest of this document describes this process in more detail.  Section
+\ref{sec:uima:UIMAInGATE} describes the GATE AE wrapper, and Section
+\ref{sec:uima:GATEInUIMA} describes the UIMA CorpusController wrapper.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:uima:UIMAInGATE]{Embedding a UIMA AE in GATE}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Embedding a UIMA analysis engine in a GATE application is a two step
+process.  First, you must construct a \emph{mapping descriptor} XML file to
+define how to map annotations between the UIMA CAS and the GATE Document.  This
+mapping file, along with the analysis engine descriptor, is used to instantiate
+an \emph{AnalysisEnginePR} which calls the analysis engine on an appropriately
+initialized CAS.  Examples of all the XML files discussed in this section are
+available in \texttt{examples/conf} under the \texttt{UIMA} plugin directory.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:uima:UIMAInGATE:mapping]{Mapping File Format}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Figure \ref{fig:mappingFile} shows the structure of a mapping descriptor.  The
+\texttt{inputs} section defines how annotations on the GATE document are
+transferred to the UIMA CAS.  The \texttt{outputs} section defines how
+annotations which have been added, updated and removed by the AE are
+transferred back to the GATE document.
+\begin{figure}
+\begin{small}
+\begin{verbatim}
+<uimaGateMapping>
+  <inputs>
+    <uimaAnnotation type="..." gateType="..." indexed="true|false">
+      <feature name="..." kind="string|int|float|fs">
+        <!-- element defining the feature value goes here -->
+      </feature>
+      ...
+    </uimaAnnotation>
+  </inputs>
+
+  <outputs>
+    <added>
+      <gateAnnotation type="..." uimaType="...">
+        <feature name="...">
+          <!-- element defining the feature value goes here -->
+        </feature>
+        ...
+      </gateAnnotation>
+    </added>
+    
+    <updated>
+      ...
+    </updated>
+    
+    <removed>
+      ...
+    </removed>
+  </outputs>
+</uimaGateMapping>
+\end{verbatim}
+\end{small}
+\caption{Structure of a mapping descriptor for an AE in GATE}
+\label{fig:mappingFile}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsect[sec:uima:UIMAInGATE:mapping:inputs]{Input Definitions}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Each input definition takes the following form:
+\begin{small}
+\begin{verbatim}
+  <uimaAnnotation type="uima.Type" gateType="GATEType" indexed="true|false">
+    <feature name="..." kind="string|int|float|fs">
+      <!-- element defining the feature value goes here -->
+    </feature>
+    ...
+  </uimaAnnotation>
+\end{verbatim}
+\end{small}
+%
+When a document is processed, this will create one UIMA annotation of type
+\texttt{uima.Type} in the CAS for each GATE annotation of type
+\texttt{GATEType} in the input annotation set, covering the same offsets in the
+text.  If \texttt{indexed} is \texttt{true}, GATE will keep a record of which
+GATE annotation gave rise to which UIMA annotation.  If you wish to be able to
+track updates to this annotation's features and transfer the updated values
+back into GATE, you must specify \texttt{indexed="true"}.  The \texttt{indexed}
+attribute defaults to \texttt{false} if omitted.
+
+Each contained \texttt{feature} element will cause the corresponding feature to
+be set on the generated annotation.  UIMA features can be string, integer or
+float valued, or can be a reference to another feature structure, and this must
+be specified in the \texttt{kind} attribute.  The feature's value is specified
+using a nested element, but exactly how this value is handled is determined by
+the \texttt{kind}.
+
+There are various options for setting feature values:
+\begin{itemize}
+\item \verb|<string value="fixed string" />| The simplest case - a fixed Java
+String.
+\item \verb|<docFeatureValue name="featureName" />| The value of the given
+named feature of the current GATE document.
+\item \verb|<gateAnnotFeatureValue name="featureName" />| The value of a given
+feature on the current GATE annotation (i.e. the one on which the offsets of
+the UIMA annotation are based).
+\item \verb|<featureStructure type="uima.fs.Type">...</featureStructure>| A
+feature structure of the given type.  The \texttt{featureStructure} element can
+itself contain \texttt{feature} elements recursively.
+\end{itemize}
+
+The value is assigned to the feature according to the feature's \texttt{kind}:
+\begin{description}
+\item[string] The value object's \texttt{toString()} method is called,
+and the resulting String is set as the string value of the feature.
+\item[int] If the value object is a subclass of
+\texttt{java.lang.Number}, its \texttt{intValue()} method is called, and the
+result is set as the integer value of the feature.  If the value object is not
+a \texttt{Number}, it is \texttt{toString()}ed, and the resulting String is
+parsed using \texttt{Integer.parseInt()}.  If this succeeds, the integer result
+is used, if it fails the feature is set to zero.
+\item[float] As for \texttt{int}, except that \texttt{Number}s are
+converted by calling \texttt{floatValue()}, and non-\texttt{Number}s are parsed
+using \texttt{Float.parseFloat()}.
+\item[fs] The value object is assumed to be a \texttt{FeatureStructure}, and is
+used as-is.  A \texttt{ClassCastException} will result if the value object is
+not a \texttt{FeatureStructure}.
+\end{description}
+%
+In particular, \verb|<featureStructure>| value elements should only be used
+with features of kind \texttt{fs}.  While nothing will stop you using them with
+\texttt{string} features, the result will probably not be what you expected.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsect[sec:uima:UIMAInGATE:mapping:outputs]{Output Definitions}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The output definitions take a similar form.  There are three groups:
+\begin{description}
+\item[added] Annotations which have been added by the AE, and for which
+corresponding new annotations are to be created in the GATE document.
+\item[updated] Annotations that were created by an input definition (with
+\texttt{indexed="true"}) whose feature values have been modified by the AE,
+and these values are to be transferred back to the original GATE annotations.
+\item[removed] Annotations that were created by an input definition (with
+\texttt{indexed="true"}) which have been removed from the CAS\footnote{Strictly
+speaking, removed from the annotation index, as feature structures cannot be
+removed from the CAS entirely.} and whose source annotations are to be removed
+from the GATE document.
+\end{description}
+
+The definition elements for these three types all take the same form:
+\begin{small}
+\begin{verbatim}
+  <gateAnnotation type="GATEType" uimaType="uima.Type">
+    <feature name="featureName">
+      <!-- element defining the feature value goes here -->
+    </feature>
+    ...
+  </gateAnnotation>
+\end{verbatim}
+\end{small}
+%
+For \texttt{added} annotations, this has the mirror-image effect to the input
+definition -- for each UIMA annotation of the given type, create a GATE
+annotation at the same offsets and set its feature values as specified by
+\texttt{feature} elements.  For a \texttt{gateAnnotation} the \texttt{feature}
+elements do not have a \texttt{kind}, as features in GATE can have arbitrary
+Objects as values.  The possible feature value elements for a
+\texttt{gateAnnotation} are:
+\begin{itemize}
+\item \verb|<string value="fixed string" />| A fixed string, as before.
+\item \verb'<uimaFSFeatureValue name="uima.Type:FeatureName" kind="string|int|float" />'
+The value of the given feature of the current UIMA annotation.  The feature
+name must be specified in fully-qualified form, including the type on which it
+is defined.  The \texttt{kind} is used in a similar way as in input definitions:
+  \begin{description}
+  \item[string] The Java \texttt{String} object returned as the string value of
+  the feature is used.
+  \item[int] An \texttt{Integer} object is created from the integer value of
+  the feature.
+  \item[float] A \texttt{Float} object is created from the float value of the
+  feature.
+  \item[fs] The UIMA \texttt{FeatureStructure} object is returned.  Since
+  \texttt{FeatureStructure} objects are not guaranteed to be valid once the CAS
+  has been cleared, a downstream GATE component must extract the relevant
+  information from the feature structure before the next document is processed.
+  You have been warned.
+  \end{description}
+\end{itemize}
+%
+Feature names in \texttt{uimaFSFeatureValue} must be qualified with their type
+name, as the feature may have been defined on a supertype of the feature's own
+type, rather than the type itself.  For example, consider the following:
+\begin{small}
+\begin{verbatim}
+<gateAnnotation type="Entity" uimaType="com.example.Entity">
+  <feature name="type">
+    <uimaFSFeatureValue name="com.example.Entity:Type" kind="string" />
+  </feature>
+  <feature name="startOffset">
+    <uimaFSFeatureValue name="uima.tcas.Annotation:begin" kind="int" />
+  </feature>
+</gateAnnotation>
+\end{verbatim}
+\end{small}
+
+For \texttt{updated} annotations, there must have been an input definition with
+\texttt{indexed="true"} with the same GATE and UIMA types.  In this case, for
+each GATE annotation of the appropriate type, the UIMA annotation that was
+created from it is found in the CAS.  The feature definitions are then used as
+in the \texttt{added} case, but here, the feature values are set on the
+\emph{original} GATE annotation, rather than on a newly created annotation.
+
+For \texttt{removed} annotations, the feature definitions are ignored, and the
+annotation is removed from GATE if the UIMA annotation which it gave rise to
+has been removed from the UIMA annotation index.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsect[sec:uima:UIMAInGATE:mapping:example]{A Complete Example}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Figure \ref{fig:UIMAInGATE:example} shows a complete example mapping descriptor
+for a simple UIMA AE that takes tokens as input and adds a feature to each
+token giving the number of lower case letters in the token's
+string.\footnote{The Java code implementing this AE is in the \texttt{examples}
+directory of the \texttt{UIMA} plugin.  The AE descriptor and mapping file are
+in \texttt{examples/conf}.}  In this case the UIMA feature that holds the
+number of lower case letters is called \texttt{LowerCaseLetters}, but the GATE
+feature is called \texttt{numLower}.  This demonstrates that the feature names
+do not need to agree, so long as a mapping between them can be defined.
+%
+\begin{figure}
+\begin{small}
+\begin{verbatim}
+<uimaGateMapping>
+  <inputs>
+    <uimaAnnotation type="gate.uima.cas.Token" gateType="Token" indexed="true">
+      <feature name="String" kind="string">
+        <gateAnnotFeatureValue name="string" />
+      </feature>
+    </uimaAnnotation>
+  </inputs>
+  <outputs>
+    <updated>
+      <gateAnnotation type="Token" uimaType="gate.uima.cas.Token">
+        <feature name="numLower">
+          <uimaFSFeatureValue name="gate.uima.cas.Token:LowerCaseLetters"
+                              kind="int" />
+        </feature>
+      </gateAnnotation>
+    </updated>
+  </outputs>
+</uimaGateMapping>
+\end{verbatim}
+\end{small}
+\caption{An example mapping descriptor}
+\label{fig:UIMAInGATE:example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:uima:UIMAInGATE:descriptor]{The UIMA Component Descriptor}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+As well as the mapping file, you must provide the UIMA component descriptor
+that defines how to access the AE that is to be called.  This could be a
+primitive or aggregate analysis engine descriptor, or a URI specifier giving
+the location of a remote Vinci or SOAP service.  It is up to the developer to
+ensure that the types and features used in the mapping descriptor are
+compatible with the type system and capabilities of the AE, or a runtime error
+is likely to occur.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:uima:UIMAInGATE:using]{Using the \texttt{AnalysisEnginePR}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+To use a UIMA AE in GATE Developer, load the \texttt{UIMA} plugin and
+create a `UIMA Analysis Engine' processing resource.  If using the
+GATE Embedded, rather than GATE Developer, the class name
+is \texttt{gate.uima.AnalysisEnginePR}.  The processing resource
+expects two parameters:
+\begin{description}
+\item[analysisEngineDescriptor] The URL of the UIMA analysis engine descriptor
+(or URI specifier, for a remote AE service).  This must be a \texttt{file:}
+URL, as UIMA needs a file path against which to resolve imports.
+\item[mappingDescriptor] The URL of the mapping descriptor file.  This may be
+any kind of URL (\texttt{file:}, \texttt{http:}, \texttt{Class.getResource()},
+\texttt{ServletContext.getResource()}, etc.)
+\end{description}
+%
+Any errors processing either of the descriptor files will cause an exception to
+be thrown.  Once instantiated, you can add the PR to a pipeline in the usual
+way.  \texttt{AnalysisEnginePR} implements \texttt{LanguageAnalyser}, so can be
+used in any of the standard GATE pipeline types.
+
+The PR takes the following runtime parameter (in addition to the
+\texttt{document} parameter which is set automatically by a
+\texttt{CorpusController}):
+\begin{description}
+\item[annotationSetName] The annotation set to process.  Any input mappings
+take annotations from this set, and any output mappings place their new
+annotations in this set (\texttt{added} outputs) or update the input
+annotations in this set (\texttt{updated} or \texttt{removed}).  If not
+specified, the default (unnamed) annotation set is used.
+\end{description}
+
+The Annotator implementation must be available for GATE to load.  For an
+annotator written in Java, this means that the JAR file containing the
+annotator class (and any other classes it depends on) must be present in the
+GATE classloader.  The easiest way to achieve this is to put the JAR file or
+files in a new directory, and create a \texttt{creole.xml} file in the same
+directory to reference the JARs:
+\begin{small}
+\begin{verbatim}
+<CREOLE-DIRECTORY>
+  <JAR>my-annotator.jar</JAR>
+  <JAR>classes-it-uses.jar</JAR>
+</CREOLE-DIRECTORY>
+\end{verbatim}
+\end{small}
+%
+This directory should then be loaded in GATE as a CREOLE plugin.  Note that,
+due to the complex mechanics of classloaders in Java, putting your JARs in
+GATE's \texttt{lib} directory will \emph{not} work.
+
+For annotators written in C++ you need to ensure that the C++ enabler libraries
+(available separately from \htlinkplain{http://incubator.apache.org/uima/})
+and the shared library containing your annotator are in a directory which is on
+the \texttt{PATH} (Windows) or \texttt{LD\_LIBRARY\_PATH} (Linux) when GATE is
+run.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:uima:GATEInUIMA]{Embedding a GATE \texttt{CorpusController} in UIMA}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The process of embedding a GATE controller in a UIMA application is more or
+less the mirror image of the process detailed in the previous section.  Again,
+the developer must supply a mapping descriptor defining how to map between UIMA
+and GATE annotations, and pass this, plus the GATE controller definition, to an
+AE which performs the translation and calls the GATE controller.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:uima:GATEInUIMA:mapping]{Mapping File Format}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The mapping descriptor format is virtually identical to that described in
+Section \ref{sec:uima:UIMAInGATE:mapping}, except that the input definitions are
+\verb|<gateAnnotation>| elements and the output definitions are
+\verb|<uimaAnnotation>| elements.  The input and output definition elements
+support an extra attribute, \texttt{annotationSetName}, which allows inputs to
+be taken from, and outputs to be placed in, different annotation sets.  For
+example, the following hypothetical example maps \texttt{com.example.Person}
+annotations into the default set and \texttt{com.example.html.Anchor}
+annotations to `\texttt{a}' tags in the `Original markups' set.
+%
+\begin{small}
+\begin{verbatim}
+<inputs>
+  <gateAnnotation type="Person" uimaType="com.example.Person">
+    <feature name="kind">
+      <uimaFSFeatureValue name="com.example.Person:Kind" kind="string"/>
+    </feature>
+  </gateAnnotation>
+
+  <gateAnnotation type="a" annotationSetName="Original markups"
+                  uimaType="com.example.html.Anchor">
+    <feature name="href">
+      <uimaFSFeatureValue name="com.example.html.Anchor:hRef" kind="string" />
+    </feature>
+  </gateAnnotation>
+</inputs>
+\end{verbatim}
+\end{small}
+
+Figure \ref{fig:GATEInUIMA:example} shows a
+mapping descriptor for an application that takes tokens and sentences produced
+by some UIMA component and runs the GATE part of speech tagger to tag them with
+Penn TreeBank POS tags.\footnote{The \texttt{.gapp} file implementing this
+example is in the \texttt{test/conf} directory under the \texttt{UIMA} plugin,
+along with the mapping file and the AE descriptor that will run it.}  In the
+example, no features are copied from the UIMA tokens, but they are still
+\texttt{indexed="true"} as the POS feature must be copied back from GATE.
+%
+\begin{figure}
+\begin{small}
+\begin{verbatim}
+<uimaGateMapping>
+  <inputs>
+    <gateAnnotation type="Token"
+                    uimaType="com.ibm.uima.examples.tokenizer.Token"
+                    indexed="true" />
+    <gateAnnotation type="Sentence"
+                    uimaType="com.ibm.uima.examples.tokenizer.Sentence" />
+  </inputs>
+  <outputs>
+    <updated>
+      <uimaAnnotation type="com.ibm.uima.examples.tokenizer.Token"
+                      gateType="Token">
+        <feature name="POS" kind="string">
+          <gateAnnotFeatureValue name="category" />
+        </feature>
+      </uimaAnnotation>
+    </updated>
+  </outputs>
+</uimaGateMapping>
+\end{verbatim}
+\end{small}
+\caption{An example mapping descriptor for the GATE POS tagger}
+\label{fig:GATEInUIMA:example}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:uima:GATEInUIMA:gapp]{The GATE Application Definition}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The GATE application to embed is given as a standard `\texttt{.gapp} file',
+as produced by saving the state of an application in the GATE GUI.  The
+\texttt{.gapp} file encodes the information necessary to load the correct
+plugins and create the various CREOLE components that make up the application.
+The \texttt{.gapp} file must be fully specified and able to be executed with no
+user intervention other than pressing the Go button.  In particular, all
+runtime parameters must be set to their correct values before saving the
+application state.  Also, since paths to things like CREOLE plugin directories,
+resource files, etc. are stored relative to the \texttt{.gapp} file's location,
+you must not move the \texttt{.gapp} file to a different directory unless you
+can keep all the CREOLE plugins it depends on at the same relative locations.
+The `Export for GATE Cloud' option (section~\ref{sec:developer:export}) may
+help you here.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect{Configuring the \texttt{GATEApplicationAnnotator}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\texttt{GATEApplicationAnnotator} is the UIMA annotator that handles mapping
+the CAS into a GATE document and back again and calling the GATE controller.
+There is a template AE descriptor XML file for the annotator provided in the
+\texttt{conf} directory.  Most of the template file can be used unchanged, but
+you will need to modify the type system definition and input/output
+capabilities to match the types and features used in your mapping descriptor.
+If the mapping descriptor references a type or feature that is not defined in
+the type system, a runtime error will occur.
+
+The annotator requires two external resources:
+\begin{description}
+\item[GateApplication] The \texttt{.gapp} file containing the saved application
+state.
+\item[MappingDescriptor] The mapping descriptor XML file.
+\end{description}
+%
+These must be bound to suitable URLs, either by editing the
+\texttt{resourceManagerConfiguration} section of the primitive descriptor, or by
+supplying the binding in an aggregate descriptor that includes the
+\texttt{GATEApplicationAnnotator} as one of its delegates.
+
+In addition, you may need to set the following Java system properties:
+\begin{description}
+\item[uima.gate.configdir] The path to the GATE config directory.  This
+defaults to \texttt{gate-config} in the same directory as
+\texttt{uima-gate.jar}.
+\item[uima.gate.siteconfig] The location of the sitewide \texttt{gate.xml}
+configuration file.  This defaults to
+\texttt{\textit{gate.uima.configdir}/site-gate.xml}.
+\item[uima.gate.userconfig] The location of the user-specific \texttt{gate.xml}
+configuration file.  This defaults to
+\texttt{\textit{gate.uima.configdir}/user-gate.xml}.
+\end{description}
+
+The default config files are deliberately simplified from the standard versions
+supplied with GATE, in particular they do not load any plugins automatically
+(not even ANNIE).  All the plugins used by your application are specified in
+the \texttt{.gapp} file, and will be loaded when the application is loaded, so
+it is best to avoid loading any others from \texttt{gate.xml}, to avoid
+problems such as two different versions of the same plugin being loaded from
+different locations.
+
+\subsubsect{Classpath Notes}
+In addition to the usual UIMA library JAR files,
+\texttt{GATEApplicationAnnotator} requires a number of JAR files from the GATE
+distribution in order to function.  In the first instance, you should include
+\texttt{gate.jar} from GATE's \texttt{bin} directory, and also all the JAR
+files from GATE's \texttt{lib} directory on the classpath.  If you use the
+supplied Ant build file, \texttt{ant documentanalyser} will run the document
+analyser with this classpath.  Depending on exactly which GATE plugins your
+application uses, you may be able to exclude some of the \texttt{lib} JAR
+files (for example, you will not need Weka if you do not use the machine
+learning plugin), but it is safest to start with them all.  GATE will load
+plugin JAR files through its own classloader, so these do not need to be on the
+classpath.

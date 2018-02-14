@@ -1,0 +1,330 @@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapt[sec:domain-creole]{Domain Specific Resources}
+\markboth{Domain Specific Resources}{Domain Specific Resources}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\nnormalsize
+\begin{quote}
+As soon as more-or-less faithful replication has evolved, then natural
+selection begins to work. To say this is not to invoke some magic principle,
+some {\it deus ex machina}; natural selection in this sense is a logical necessity,
+not a theory waiting to be proved. It is inevitable that those cells more
+efficient at capturing and using energy, and of replicating more faithfully,
+would survive and their progeny spread; those less efficient would tend to die
+out, their contents re-absorbed and used by others. Two great evolutionary
+processes occur simultaneously. The one, beloved by many popular science
+writers, is about competition, the struggle for existence between rivals.
+Darwin begins here, and orthodox Darwinians tend both to begin and end here.
+But the second process, less often discussed today, perhaps because less in
+accord with the spirit of the times, is about co-operation, the teaming up of
+cells with particular specialisms to work together. For example, one type of
+cell may evolve a set of enzymes enabling it to metabolise molecules produced
+as waste material by another. There are many such examples of symbiosis in
+today's multitudinous world. Think, amongst the most obvious, of the complex
+relationships we have with the myriad bacteria -- largely Escherichia coli --
+that inhabit our own guts, and without whose co-operation in our digestive
+processes we would be unable to survive. In extreme cases, cells with
+different specific specialisms may even merge to form a single organism
+combining both, a process called symbiogenesis.
+
+Symbiogenesis is now believed to have been the origin of mitochondria,
+the energy-converting structures present in all of today's cells, as well
+as the photosynthesising chloroplasts present in green plants.
+
+Stephen Rose, The Future of the Brain: The Promise and Perils of Tomorrow's
+Neuroscience, 2005, (p. 18).
+\end{quote}
+
+The majority of GATE plugins work well on any English languages document (see Chapter
+\ref{sec:misc-creole:language-plugins} for details on non-English language support).
+Some domains, however, produce documents that use unusual terms, phrases or syntax.
+In such cases domain specific processing resources are often required in order to
+extract useful or interesting information. This chapter documents GATE resources
+that have been developed for specific domains.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:domain-creole:biomed]{Biomedical Support}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Documents from the biomedical domain offer a number of challenges, including a highly
+specialised vocabulary, words that include mixed case and numbers requiring unusual
+tokenization, as well as common English words used with a domain-specific sense.
+Many of these problems can only be solved through the use of domain-specific resources.
+
+Some of the processing resources documented elsewhere in this user guide can be
+adapted with little or no effort to help with processing biomedical documents.
+The Large Knowledge Base Gazetteer (Section \ref{sec:gazetteers:lkb-gazetteer}) can be initialized
+against a biomedical ontology such as \htlink{http://linkedlifedata.com/}{Linked Life Data} in order
+to annotate many different domain-specific concepts. The Language Identification PR
+(Section \ref{sec:misc-creole:language-identification}) can also be trained to differentiate between
+document domains instead of languages, which could help target specific resources to specific documents
+using a conditional corpus pipeline.
+
+Also many plugins can be used ``as is'' to extract information from
+biomedical documents. For example, the Measurements Tagger (Section \ref{sec:misc-creole:measurements})
+can be used to extract information about the dose of a medication, or the weight of patients participating in a study.
+
+The rest of this section, however, documents the resources included with or available to GATE and which are
+focused purely on processing biomedical documents.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:parsers:abner]{ABNER}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ABNER is A Biomedical Named Entity Recogniser \cite{Settles05}. It uses machine learning
+(linear-chain conditional random fields, CRFs) to find entities such as
+genes, cell types, and DNA in text. Full details of ABNER can be found at
+\htlinkplain{http://pages.cs.wisc.edu/~bsettles/abner/}
+
+To use ABNER within GATE, first load the Tagger\_Abner plugin through the plugins console,
+and then create a new ABNER Tagger PR in the usual way. The ABNER Tagger PR has no
+initialization parameters and it does not require any other PRs to be run
+prior to execution. Configuration of the tagger is performed using the following
+runtime parameters:
+
+\begin{itemize}
+\item \textbf{abnerMode} The ABNER model that will be used for tagging. The
+  plugin can use one of two previously trained machine learning models for
+  tagging text, as provided by ABNER:
+  \begin{itemize}
+  \item \textbf{BIOCREATIVE} trained on the BioCreative corpus
+  \item \textbf{NLPBA} trained on the NLPBA corpus
+  \end{itemize}
+\item \textbf{annotationName} The name of the annotations the tagger should create
+  (defaults to `Tagger'). If left blank (or null) the name of each annotation is
+  determined by the type of entity discovered by ABNER (see below).
+\item \textbf{outputASName} The name of the annotation set in which new
+  annotations will be created.
+\end{itemize}
+
+The tagger finds and annotates entities of the following types:
+\begin{itemize}
+\item Protein
+\item DNA
+\item RNA
+\item CellLine
+\item CellType
+\end{itemize}
+
+If an annotationName is specified then these types will appear as features on the
+created annotations, otherwise they will be used as the names of the annotations themselves.
+
+ABNER does support training of models on other data, but this functionality is
+not, however, supported by the GATE wrapper.
+
+For further details please refer to the ABNER documentation at
+\url{http://pages.cs.wisc.edu/~bsettles/abner/}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:misc-creole:metamap]{MetaMap}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+MetaMap, from the National Library of Medicine (NLM), maps biomedical text to 
+the \textbf{UMLS Metathesaurus} and allows Metathesaurus concepts to be 
+discovered in a text corpus \cite{Aronson10}.
+
+The Tagger\_MetaMap plugin for GATE wraps the MetaMap Java API client to allow GATE to communicate with a remote (or local) MetaMap PrologBeans \textbf{mmserver} and MetaMap distribution. This allows the content of specified annotations (or the entire document content) to be processed by MetaMap and the results converted to GATE annotations and features.
+
+To use this plugin, you will need access to a remote MetaMap server, or install one locally by downloading and installing the complete distribution:
+
+\url{http://metamap.nlm.nih.gov/}
+
+and Java PrologBeans \texttt{mmserver}
+
+\url{http://metamap.nlm.nih.gov/README_javaapi.html}
+
+The default \texttt{mmserver} location and port locations are \texttt{localhost} and \texttt{8066}. To use a different server location and/or port, see the above API documentation and specify the \texttt{--metamap\_server\_host} and \texttt{--metamap\_server\_port} options within the \textbf{metaMapOptions} run-time parameter.
+
+\subsubsect{Run-time parameters}
+
+\begin{enumerate}
+
+\item{\textbf{annotateNegEx}}: set this to true to add NegEx features to annotations 
+(\texttt{NegExType} and \texttt{NegExTrigger}). See 
+\url{http://code.google.com/p/negex/} for more information on NegEx
+
+\item{\textbf{annotatePhrases}}: set to true to output MetaMap phrase-level annotations 
+(generally noun-phrase chunks). Only phrases containing a MetaMap mapping will 
+be annotated. Can be useful for post-coordination of phrase-level terms that do 
+not exist in a pre-coordinated form in UMLS.
+
+\item{\textbf{inputASName}}: input Annotation Set name. Use in conjunction with 
+\textbf{inputASTypes}: (see below). Unless specified, the entire document content
+will be sent to MetaMap. 
+
+\item{\textbf{inputASTypes}}: only send the content of these annotations within \textbf{inputASName} to 
+MetaMap and add new MetaMap annotations inside each. Unless specified, the entire document
+content will be sent to MetaMap.
+
+\item{\textbf{inputASTypeFeature}}: send the content of this feature within \textbf{inputASTypes} to MetaMap and 
+wrap a new MetaMap annotation around each annotation in inputASTypes. 
+If the feature is empty or does not exist, then the annotation content is sent instead.
+
+\item{\textbf{metaMapOptions}}: set parameter-less MetaMap options here. Default is 
+\texttt{-Xdt} (truncate Candidates mappings, disallow derivational variants and do not use full text parsing). 
+See \url{http://metamap.nlm.nih.gov/README_javaapi.html} for more details. NB: 
+only set the \texttt{-y} parameter (word-sense disambiguation) if 
+\texttt{wsdserverctl} is running. 
+
+\item{\textbf{outputASName}}: output Annotation Set name.
+
+\item{\textbf{outputASType}}: output annotation name to be used for all MetaMap annotations
+
+\item{\textbf{outputMode}}: determines which mappings are output as annotations in the 
+GATE document, for each phrase:
+
+\begin{itemize}
+\item \textbf{AllCandidatesAndMappings}: annotate both Candidate and final mappings.
+This will usually result in multiple, overlapping annotations for each term/phrase
+\item \textbf{AllMappings}: annotate all the final MetaMap Mappings for each phrase. This will
+result in fewer annotations with higher precision (e.g. for 'lung cancer' only 
+the complete phrase will be annotated as Neoplastic Process [\texttt{neop}])
+\item \textbf{HighestMappingOnly}: annotate only the highest scoring MetaMap Mapping for each phrase. 
+If two Mappings have the same score, the first returned by MetaMap is output.
+\item \textbf{HighestMappingLowestCUI}: Where there is more than one highest-scoring mapping, return the mapping where the head word/phrase map event has the lowest CUI.
+\item \textbf{HighestMappingMostSources}: Where there is more than one highest-scoring mapping, return the mapping where the head word/phrase map event has the highest number of source vocabulary occurrences. 
+\item \textbf{AllCandidates}: annotate all Candidate mappings and not the final
+Mappings. This will result in more annotations with less precision (e.g. for 
+'lung cancer' both 'lung' (\texttt{bpoc}) and 'lung cancer' (\texttt{neop}) will
+be annotated).
+\end{itemize}
+
+\item{\textbf{taggerMode}}: determines whether all term instances are processed by MetaMap, the first
+  instance only, or the first instance with coreference annotations added. Only used if the inputASTypes
+  parameter has been set.
+
+\begin{itemize}
+\item \textbf{FirstOccurrenceOnly}: only process and annotate the first instance of each term in the document
+\item \textbf{CoReference}: process and annotate the first instance and coreference following instances
+\item \textbf{AllOccurrences}: process and annotate all term instances independently
+\end{itemize}
+
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:domain-creole:biomed:gspell]{GSpell biomedical spelling suggestion and correction}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+This plugin wraps the \htlink{http://lexsrv3.nlm.nih.gov/LexSysGroup/Projects/gSpell/current/GSpell.html}{GSpell API}, from the National Library of Medicine Lexical Systems Group, to add spelling suggestions to features in the input/output annotations defined (default is Token). The GSpell plugin has a number of options to customise the behaviour and to reduce the number of false positives in the spelling suggestions. For example, ignore words and spelling suggestions shorter than a given threshold, and regular expressions to filter the input to the spell checker. Two filters are provided by default: ignore capitalised abbreviations/words in all caps, and words starting or ending with a digit. 
+
+There are two processing modes: WholePhrase, which will spell-check the content of defined annotations as a single phrase, and does not require any prior tokenization; and PhraseTokens, which requires a tokenizer to have been run as a prior phase.
+
+The GSpell plugin can be downloaded from \htlink{http://vega.soi.city.ac.uk/~abdy181/software/\#gspell}{here}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:domain-creole:biomed:badrex]{BADREX}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+BADREX (identifying \emph{B}iomedical \emph{A}bbreviations using \emph{D}ynamic \emph{R}egular \emph{E}xpressions)\cite{Gooch12} is a GATE plugin that annotates, expands and coreferences term-abbreviation pairs using parameterisable regular expressions that generalise and extend the Schwartz-Hearst algorithm \cite{Schwartz03}. In addition it uses a subset of the inner--outer selection rules described in the \cite{Ao05} ALICE algorithm. Rather than simply extracting terms and their abbreviations, it annotates them in situ and adds the corresponding long-form and short-form text as features on each.
+
+In coreference mode BADREX expands all abbreviations in the text that match the short form of the most recently matched long-form--short-form pair. In addition, there is the option of annotating and classifying common medical abbreviations extracted from Wikipedia.
+
+BADREX can be downloaded from \htlink{https://github.com/philgooch/BADREX-Biomedical-Abbreviation-Expander}{GitHub}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:domain-creole:biomed:minichem]{MiniChem/Drug Tagger}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The MiniChem Tagger is a GATE plugin uses a small set (~500) of chemistry morphemes classified into 10 types (root, suffix, multiplier etc), and some deterministic rules based on the Wikipedia IUPAC entries, to identify chemical names, drug names and chemical formula in text.
+
+The plugin can be downloaded from \htlink{http://vega.soi.city.ac.uk/~abdy181/software/\#minichem}{here}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:domain-creole:biomed:abgene]{AbGene}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Support for using AbGene \cite{Tanabe02} (a modified version of the Brill tagger), to annotate gene names,
+within GATE is provided by the Tagger Framework plugin (Section \ref{sec:parsers:taggerframework}). 
+
+AbGene needs to be downloaded\footnote{\url{ftp://ftp.ncbi.nlm.nih.gov/pub/tanabe/AbGene/}}
+and installed externally to GATE and then the example AbGene GATE application, provided
+in the resources directory of the Tagger Framework plugin, needs to be modified accordingly.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:domain-creole:biomed:genia]{GENIA}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+A number of different biomedical language processing tools have been developed under the auspices of the
+\htlink{http://www-tsujii.is.s.u-tokyo.ac.jp/GENIA/home/wiki.cgi}{GENIA Project}. Support is provided within GATE
+for using both the GENIA sentence splitter and the tagger, which provides tokenization, part-of-speech tagging,
+shallow parsing and named entity recognition.
+
+To use either the GENIA sentence splitter\footnote{\url{http://www-tsujii.is.s.u-tokyo.ac.jp/~y-matsu/geniass/}}
+or tagger\footnote{\url{http://www-tsujii.is.s.u-tokyo.ac.jp/GENIA/tagger/}} within GATE you need to have downloaded
+and compiled the appropriate programs which can then be called by the GATE PRs.
+
+The GATE GENIA plugin provides the sentence splitter PR. The PR is configured through the following runtime parameters:
+\begin{itemize}
+\item \textbf{annotationSetName} the name of the annotation set in which the Sentence annotations should be created
+\item \textbf{debug} if true then details of calling the external process will be reported within the message pane
+\item \textbf{splitterBinary} the location of the GENIA sentence slitter binary
+\end{itemize}
+
+Support for the GENIA tagger within GATE is handled by the Tagger Framework which is documented in
+Section \ref{sec:parsers:taggerframework}.
+
+Together these two components in a GATE pipeline provides a biomedical
+equivalent of ANNIE (minus the orthographic coreference component). Such a pipeline
+is provided as an example within the GENIA plugin\footnote{The plugin contains a saved
+application, genia.xgapp, which includes both components. The runtime parameters of both
+components will need changing to point to your locally installed copies of the GENIA applications}.
+
+For more details on the GENIA tagger and its performance over biomedical text see \cite{Tsuruoka05}.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:domain-creole:biomed:pennbio]{Penn BioTagger}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The Penn BioTagger software suite\footnote{\url{http://www.seas.upenn.edu/~strctlrn/BioTagger/BioTagger.html}}
+provides a biomedical tokenizer and three taggers for gene entities \cite{McDonald05}, genomic variations
+entities \cite{McDonald04} and malignancy type entities \cite{Jin06}. All four components are available
+within GATE via the Tagger\_PennBio plugin.
+
+The tokenizer PR is configured through two parameters, one init and one runtime, as follows:
+\begin{itemize}
+\item \textbf{tokenizerURL} this init parameter specifies the location of the tokenizer model to use
+  (the default value points to the model distributed with the Penn BioTagger suite)
+\item \textbf{annotationSetName} this runtime parameter determines the annotation set in which Token
+  annotations will be created
+\end{itemize}
+
+All three taggers are configured in the same way, via one init parameter and two runtime parameters, as follows:
+\begin{itemize}
+\item \textbf{modelURL} the location of the model used by the tagger
+\item \textbf{inputASName} the annotation set to use as input to the tagger (must contain Token annotations)
+\item \textbf{outputASName} the annotation set in which new annotations are created via the tagger
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:domain-creole:biomed:mutationfinder]{MutationFinder}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\htlink{http://mutationfinder.sourceforge.net/}{MutationFinder} is a high-performance IE tool
+designed to extract mentions of point mutations from free text \cite{Caporaso2007}.
+
+The MutationFinder PR is configured via a single init parameter:
+\begin{itemize}
+\item \textbf{regexURL} this init parameter specifies the location of the regular expression file used
+  by MutationFinder. Note that the default value points to the file supplied with MutationFinder.
+\end{itemize}
+
+Once created the runtime behaviour of the PR can be controlled via the following runtime parameter:
+\begin{itemize}
+\item \textbf{annotationSetName} the name of the annotation set in which the Mutation annotations should be created
+\end{itemize}
+
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \subsect[sec:domain-creole:biomed:normagene]{NormaGene}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \htlink{http://pingu.unige.ch:8080/NormaGene/}{NormaGene} is a web service, provided by the
+% \htlink{http://eagl.unige.ch/BiTeM/}{BiTeM group} in Geneva. The service provides tools for both
+% gene tagging and normalization, although currently only tagging is supported by this GATE wrapper.
+% 
+% The NormaGene Tagger PR is configured via two runtime parameters as follows:
+% \begin{itemize}
+% \item \textbf{annotationSetName} the name of the annotation set in which the Gene annotations should be created.
+% \item \textbf{threshold} the threshold at which an entity will be considered a gene (defaults to 0.6). Minimize
+% the threshold parameter with short text input to receive better results. Tuning the threshold down helps to find
+% more complex gene names in the text but it also increases the time taken to process the text.
+% \end{itemize}

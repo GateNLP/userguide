@@ -1,0 +1,395 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapt[chap:ant]{Ant Tasks for GATE}
+\markboth{Ant Tasks for GATE}{Ant Tasks for GATE}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\nnormalsize
+%%%% qqqqqqqqqqqqqqqqqqqqqqqqq %%%%
+
+This \chapthing\ describes the Ant tasks provided by GATE that you can use in
+your own build files.  The tasks require Ant 1.7 or later.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:ant:declare]{Declaring the Tasks}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+To use the GATE Ant tasks in your build file you must include the following
+\verb|<typedef>| (where \verb|${gate.home}| is the location of your GATE
+installation):
+
+\begin{small}
+\begin{verbatim}
+<typedef resource="gate/util/ant/antlib.xml">
+  <classpath>
+    <pathelement location="${gate.home}/bin/gate.jar" />
+    <fileset dir="${gate.home}/lib" includes="*.jar" />
+  </classpath>
+</typedef>
+\end{verbatim}
+\end{small}
+
+If you have problems with library conflicts you should be able to reduce the
+JAR files included from the lib directory to just jdom, xstream and jaxen.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:ant:packagegapp]{The \texttt{packagegapp} task - bundling an
+application with its dependencies}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsect{Introduction}
+
+GATE saved application states (GAPP files) are an XML representation of the
+state of a GATE application.  One of the features of a GAPP file is that it
+holds references to the external resource files used by the application as
+paths relative to the location of the GAPP file itself (or relative to the
+location of the GATE home directory where appropriate).  This is useful in many
+cases but if you want to package up a copy of an application to send to a third
+party or to use in a web application, etc., then you need to be very careful to
+save the file in a directory above \emph{all} its resources, and package the
+resources up with the GAPP file at the same relative paths.  If the application
+refers to resources outside its own file tree (i.e. with relative paths that
+include \texttt{..}) then you must either maintain this structure or manually
+edit the XML to move the resource references around and copy the files to the
+right places to match.  This can be quite tedious and error-prone...
+
+The \texttt{packagegapp} Ant task aims to automate this process.  It extracts
+all the relative paths from a GAPP file, writes a modified version of the file
+with these paths rewritten to point to locations below the new GAPP file
+location (i.e. with no \texttt{..} path segments) and copies the referenced
+files to their rewritten locations.  The result is a directory structure that
+can be easily packaged into a zip file or similar and moved around as a
+self-contained unit.
+
+This Ant task is the underlying driver for the `Export for GATE Cloud' option
+described in Section~\ref{sec:developer:export}.  Export for GATE Cloud does the
+equivalent of:
+\begin{small}
+\begin{verbatim}
+<packagegapp src="sourceFile.gapp"
+             destfile="{tempdir}/application.xgapp"
+             copyPlugins="yes"
+             copyResourceDirs="yes"
+             onUnresolved="recover" />
+\end{verbatim}
+\end{small}
+followed by packaging the temporary directory into a zip file.  These options
+are explained in detail below.
+
+The \texttt{packagegapp} task requires Ant 1.7 or later.
+
+\subsect[sec:ant:packagegapp:basic]{Basic Usage}
+
+In many cases, the following simple invocation will do what you want:
+
+\begin{small}
+\begin{verbatim}
+<packagegapp src="original.xgapp"
+             gatehome="/path/to/GATE"
+             destfile="package/target.xgapp" />
+\end{verbatim}
+\end{small}
+
+Note that the parent directory of the \texttt{destfile} (in this case
+\texttt{package}) must already exist.  It will not be created automatically.
+The value for the \verb|gatehome| attribute should be the path to your GATE
+installation (the directory containing \verb|build.xml|, the \verb|bin|,
+\verb|lib| and \verb|plugins| directories, etc.).  If you know that the gapp
+file you want to package does not reference any resources relative to the GATE
+home directory\footnote{You can check this by searching for the string
+``\$gatehome\$'' in the XML} then this attribute may be omitted.
+
+This will perform the following steps:
+\begin{enumerate}
+\item Read in the \texttt{original.xgapp} file and extract all the relative
+  paths it contains.
+\item For each plugin referred to by a relative path,
+  \texttt{foo/bar/MyPlugin}, rewrite the plugin location to be
+  \texttt{plugins/MyPlugin} (relative to the location of the
+  \texttt{destfile}).  If the application refers to two plugins in different
+  original locations with the same name, one of them will be renamed to avoid a
+  name clash.  If one plugin is a subdirectory of another plugin, this nesting
+  will be maintained in the relocated directory structure.
+\item For each resource file referred to by the gapp, see if it lives under the
+  original location of one of the plugins moved in the previous step.  If so,
+  rewrite its location relative to the new location of the plugin.
+\item If there are any relative resource paths that are not accounted for by
+  the above rule (i.e. they do not live inside a referenced plugin), the build
+  fails (see Section~\ref{sec:ant:packagegapp:unresolved} for how to change
+  this behaviour).
+\item Write out the modified GAPP to the \texttt{destfile}.
+\item Recursively copy the whole content of each of the plugins from step 2 to
+  their new locations\footnote{This is done with an Ant copy task and so is
+  subject to the normal defaultexcludes}.
+\end{enumerate}
+
+This means that the all the relative paths in the new GAPP file
+(\texttt{package/target.xgapp}) will point to \texttt{plugins/Something}.  You
+can now bundle up the whole \texttt{package} directory and take it elsewhere.
+
+\subsect{Handling Non-Plugin Resources}
+
+By default, the task only handles relative resource paths that point within one
+of the plugins that the GAPP refers to.  However, many applications refer to
+resources that live outside the plugin directories, for example custom JAPE
+grammars, gazetteer lists, etc.  The task provides two approaches to support
+this: it can handle the unresolved references automatically, or you can provide
+your own `hints' to augment the default plugin-based ones.
+
+\subsubsect[sec:ant:packagegapp:unresolved]{Resolving Unresolved Resources}
+
+By default, the build will fail if there are any relative paths that cannot be
+accounted for by the plugins (or the explicit hints, see
+Section~\ref{sec:ant:packagegapp:hints}).
+However, this is configurable using the \texttt{onUnresolved} attribute, which can
+take the following values:
+
+\begin{description}
+\item[fail] (default) the build fails if an unresolved relative path is found.
+\item[absolute] unresolved relative paths are left pointing to the same location
+  as in the original file, but as an \emph{absolute} rather than a relative URL.
+  The same file will be used even if you move the GAPP file to a different
+  directory.  This option is useful if the resource in question is visible at
+  the same absolute location on the machine where you will be putting the
+  packaged file (for example a very large dictionary or ontology held on a
+  network share).
+\item[recover] attempt to recover gracefully (see below).
+\end{description}
+
+With \verb|onUnresolved="recover"|, unresolved resources are relocated to a
+directory named \texttt{application-resources} under the target GAPP file
+location.  Resources in the same original directory are copied to the same
+subdirectory of \texttt{application-resources}, files from different original
+directories are copied to different subdirectories.  Typically, for a resource
+whose original location was \texttt{.../myresources/grammar/clever.jape} the
+target location would be \texttt{application-resources/grammar/clever.jape} but
+if the application also referred to (say)
+\texttt{.../otherresources/grammar/clean.jape} then this would be
+mapped into \texttt{application-resources/grammar-2} to avoid a name clash.
+
+As with plugins, if one unresolved resource is contained in a subdirectory of a
+directory containing another unresolved resource, the relative path will be
+preserved, i.e. if the application refers to \texttt{.../dictionaries/main.txt}
+and also \texttt{.../dictionaries/specialist/medical.txt} then the latter will
+be relocated to \texttt{application-resources/dictionaries/specialist} rather
+than simply creating another top-level
+\texttt{application-resources/specialist} directory.  This is particularly
+relevant when using the \texttt{copyResourceDirs} option described below.
+
+Example:
+\begin{small}
+\begin{verbatim}
+<packagegapp src="original.xgapp" destfile="package/target.xgapp"
+             onUnresolved="recover" />
+\end{verbatim}
+\end{small}
+
+\subsubsect[sec:ant:packagegapp:hints]{Providing Mapping Hints}
+
+By default, the task knows how to handle resources that live inside plugins.
+You can think of this as a `hint' \texttt{/foo/bar/MyPlugin ->
+plugins/MyPlugin}, saying that whenever the mapper finds a resource path of
+the form \texttt{/foo/bar/MyPlugin/\emph{X}}, it will relocate it to
+\texttt{plugins/MyPlugin/\emph{X}} relative to the output GAPP file.  You can
+specify your own hints which will be used the same way.
+
+\begin{small}
+\begin{verbatim}
+<packagegapp src="original.xgapp" destfile="package/target.xgapp">
+  <hint from="${user.home}/my-app-v1" to="resources/my-app" />
+  <hint from="/share/data/bigfiles" absolute="yes" />
+</packagegapp>
+\end{verbatim}
+\end{small}
+
+In this example, \verb|~/my-app-v1/grammar/main.jape| would be mapped to the
+location \verb|resources/my-app/grammar/main.jape| (as always, relative to the
+output GAPP file).  You can also hint that certain resources should be
+converted to absolute paths rather than being packaged with the application,
+using \verb|absolute="yes"|.  The \texttt{from} and \texttt{to} values refer to
+directories - you cannot hint a single file, nor put two files from the same
+original directory into different directories in the packaged GAPP.
+
+Explicit hints override the default plugin-based hints.  For example given the
+hint \verb|from="${gate.home}/plugins/ANNIE/resources" to="resources/ANNIE"|,
+resources in the ANNIE plugin would be mapped into
+\texttt{resources/ANNIE}, but the plugin \texttt{creole.xml} itself would still
+be mapped into \texttt{plugins/ANNIE}.
+
+As well as providing the hints inline in the build file you can also read them
+from a file in the normal Java Properties format\footnote{the hint tag supports
+all the attributes of the standard Ant property tag so can load the hints from
+a file on disk or from a resource in a JAR file}, using
+
+\begin{verbatim}
+<hint file="hints.properties" />
+\end{verbatim}
+
+The keys in the property file are the \texttt{from} paths (in this case,
+relative paths are resolved against the project base directory, as with the
+\texttt{location} attribute of a \texttt{property} task) and the values are the
+\texttt{to} paths relative to the output file location.
+
+The order of the \verb|<hint>| elements is significant -- if more than one hint
+could apply to the same resource file, the one defined first is used.  For
+example, given the hints
+
+\begin{small}
+\begin{verbatim}
+<hint from="${gate.home}/plugins/ANNIE/resources/tokeniser" to="tokeniser" />
+<hint from="${gate.home}/plugins/ANNIE/resources" to="annie" />
+\end{verbatim}
+\end{small}
+
+the resource \texttt{plugins/ANNIE/resources/tokeniser/DefaultTokeniser.rules}
+would be mapped into the \texttt{tokeniser} directory, but if the hints were
+reversed it would instead be mapped into \texttt{annie/tokeniser}.  Note,
+however, that this does not necessarily extend to hints loaded from property
+files, as the order in which hints from a single property file are applied is
+not specified.  Given
+
+\begin{small}
+\begin{verbatim}
+<hint file="file1.proeprties" />
+<hint file="file2.properties" />
+\end{verbatim}
+\end{small}
+
+the relative precedence of two hints from file1 is not fixed, but it is the
+case that all hints in file1 will be applied before those in file2.
+
+\subsect[sec:ant:packagegapp:streamline]{Streamlining your Plugins}
+
+By default, the task will recursively copy the whole content of every plugin
+into the target directory.  In most cases this is OK but it may be the case
+that your plugins contain many extraneous resources that are not used by your
+application.  In this case you can specify \verb|copyPlugins="no"|:
+\begin{small}
+\begin{verbatim}
+<packagegapp src="original.xgapp" destfile="package/target.xgapp"
+             copyPlugins="no" />
+\end{verbatim}
+\end{small}
+
+In this mode, the packager task will copy only the following files from each
+plugin:
+
+\begin{itemize}
+\item \texttt{creole.xml}
+\item any JAR files referenced from \verb|<JAR>| elements in
+\texttt{creole.xml}\footnote{When loading a plugin, the classloader inspects
+  the Class-Path attribute in each JAR file's manifest and also loads the JARs
+  that this references.  However the packager task does {\bf not} do this, so
+  if you use the manifest mechanism with your plugins you will need to
+  explicitly reference the additional JAR files using an
+  \texttt{extraresourcespath}.}
+\end{itemize}
+
+In addition it will of course copy any files \emph{directly} referenced by the
+GAPP, but not files referenced indirectly (the classic examples being
+\texttt{.lst} files used by a gazetteer \texttt{.def}, or the individual phases
+of a multiphase JAPE grammar) or files that are referenced by the
+\texttt{creole.xml} itself as \texttt{AUTOINSTANCE} parameters (e.g. the
+annotation schemas in ANNIE).  You will need to name these extra files
+explicitly as extra resources (see the next section).
+
+\subsect[sec:ant:packagegapp:extraresources]{Bundling Extra Resources}
+
+Apart from plugins (when you don't use \verb|copyPlugins="no"|), the only files
+copied into the target directory are those that are referenced directly from
+the GAPP file.  This is often but not always sufficient, for example if your
+application contains a multiphase JAPE transducer then \texttt{packagegapp} will
+include the main JAPE file but not the individual phase files.  The task provides two ways to include extra files in the package:
+
+\begin{itemize}
+\item If you set the attribute \verb|copyResourceDirs="yes"| on the
+  \texttt{packagegapp} task then whenever the task packages a referenced
+  resource file it will also recursively include the whole contents of the
+  directory containing that file in the output package.  You probably don't
+  want to use this option if you have resource files in a directory shared with
+  other files (e.g. your home directory...).
+\item To include specific extra resources you can use an
+  \verb|<extraresourcespath>| (see below).
+\end{itemize}
+
+The \verb|<extraresourcespath>| allows you to specify specific extra files that should be included in the package:
+
+\begin{small}
+\begin{verbatim}
+<packagegapp src="original.xgapp" destfile="package/target.xgapp">
+  <extraresourcespath>
+    <pathelement location="${user.home}/common-files/README" />
+    <fileset dir="${user.home}/my-app-v1" includes="grammar/*.jape" />
+  </extraresourcespath>
+</packagegapp>
+\end{verbatim}
+\end{small}
+
+As the name suggests, this is a
+\htlink{http://ant.apache.org/manual/using.html\#path}{path-like structure} and
+supports all the usual elements and attributes of an Ant \verb|<path>|,
+including multiple nested \texttt{fileset}, \texttt{filelist},
+\texttt{pathelement} and other \texttt{path} elements.  For specific types of
+indirect references, there are helper elements that can be included under
+\texttt{extraresourcespath}.  Currently the only one of these is
+\texttt{gazetteerlists}, which takes the path to a gazetteer definition file
+and returns the set of \texttt{.lst} files the definition uses:
+\begin{verbatim}
+<gazetteerlists definition="my/resources/lists.def" encoding="UTF-8" />
+\end{verbatim}
+Other helpers (e.g. for multiphase JAPE) may be implemented in future.
+
+You can also refer to a path defined elsewhere in the usual way:
+
+\begin{small}
+\begin{verbatim}
+<path id="extra.files">
+  ...
+</path>
+
+<packagegapp ...>
+  <extraresourcespath refid="extra.files" />
+</packagegapp>
+\end{verbatim}
+\end{small}
+
+Resources declared in the \texttt{extraresourcespath} and directories included
+using\linebreak \verb|copyResourceDirs| are treated exactly the same as resources that
+are referenced by the GAPP file - their target locations in the package are
+determined by the mapping hints, default plugin-based hints, and the
+\texttt{onUnresolved} setting as above.  If you want to put extra resource
+files at specific locations in the package tree, independent of the mapping
+hints mechanism, you should do this with a separate \verb|<copy>| task after
+the \verb|<packagegapp>| task has done its work.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:ant:expandcreoles]{The \texttt{expandcreoles} Task - Merging
+Annotation-Driven Config into creole.xml}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The \texttt{expandcreoles} task processes a number of creole.xml files from
+plugins, processes any \verb|@CreoleResource| and \verb|@CreoleParameter|
+annotations on the declared resource classes, and merges this configuration
+with the original XML configuration into a new copy of the creole.xml.  It is
+not necessary to do this in the normal use of GATE, and this task is documented
+here simply for completeness.  It is intended simply for use with non-GATE
+tools that can process the creole.xml file format to extract information about
+plugins (the prime use case for this is to generate the
+\htlink{http://gate.ac.uk/gate/doc/plugins.html}{GATE plugins information page}
+automatically from the plugin definitions).
+
+The typical usage of this task (taken from the GATE build.xml) is:
+
+\begin{small}
+\begin{verbatim}
+<expandcreoles todir="build/plugins" gatehome="${basedir}">
+  <fileset dir="plugins" includes="*/creole.xml" />
+</expandcreoles>
+\end{verbatim}
+\end{small}
+
+This will initialise GATE with the given GATE\_HOME directory, then read each
+file from the nested fileset, parse it as a creole.xml, expand it from any
+annotation configuration, and write it out to a file under
+\texttt{build/plugins}.  Each output file will be generated at the same
+location relative to the \texttt{todir} as the original file was relative to
+the \texttt{dir} of its \texttt{fileset}.
+

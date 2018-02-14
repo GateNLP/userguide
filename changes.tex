@@ -1,0 +1,2273 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% changes.tex
+%
+% diana, Oct 2002
+%
+% $Id: changes.tex,v 1.78 2006/10/23 12:56:36 ian Exp $
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapt[chap:changes]{Change Log}
+\markboth{Change Log}{Change Log}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+This \chapthing\ lists major changes to GATE (currently Developer and Embedded
+only) in roughly chronological order by
+release. Changes in the documentation are also referenced here.
+
+%NEW CHANGES SHOULD BE ADDED IN `recent-changes.tex' NOT HERE!!!
+\input{recent-changes}
+
+\rcSect[8.3]{Version 8.3 (January 2017)}
+
+GATE Developer and Embedded 8.3 is mainly a bug fix release, with several
+critical fixes and functionality improvements.
+
+\begin{itemize}
+\item JAPE grammars can now match and create annotation types and features
+  with spaces or punctuation in their names, by using double quotes around
+  the type or feature name (e.g. \verb!{"w:p"}!).
+\item Fixed a regression in 8.2 that meant saved application states and
+  ``export for GATE Cloud'' packages created on Windows would not load on other
+  platforms.
+\item Fixed a bug in the Stanford CoreNLP plugin which would sometimes fail
+  when GATE is installed in a directory whose path contains spaces.
+\item Various improvements to the Twitter normaliser and emoticon finder.
+\item Improvements to the \verb!Lang_French! and \verb!Lang_German! components.
+  Further improvements will follow in the next release.
+\item Improvement to the \verb!Crowd_Sourcing! plugin to allow a default
+  option to be specified for clasification jobs.
+\item Fixed Java version detection in the Windows EXE launcher.
+\item Detection of document format using clues from the content is now much
+  more efficient.
+\item Fixed some GUI deadlocks in the searchable data store GUI and the plugin
+  manager.
+\item Fixed a long-standing bug in the regex sentence splitter for documents
+  with long sequences of blank lines.
+\item Removed Minipar parser plugin as the data files on which it depends are
+  no longer available for download, and the \verb!Tagger_NormaGene! plugin as
+  the service it relies on is no longer online.
+\end{itemize}
+
+Plus the usual suite of miscellaneous smaller bug fixes.
+
+\rcSubsect{Java compatibility}
+
+For GATE 8.3 we recommend the use of the latest Java 8 from Oracle.  If you are
+still restricted to Java 7, most components will still work with the exception
+of the Stanford CoreNLP tools and the TwitIE application (which uses the
+Stanford POS tagger).  Future versions of GATE will require Java 8 as a
+minimum.
+
+\rcSect[8.2]{Version 8.2 (May 2016)}
+
+GATE Developer and Embedded 8.2 is mainly a bug fix release -- there are a few
+new plugins but the emphasis is on bug fixing and library updates.
+
+\begin{itemize}
+\item New tools for temporal expression and event detection, including a wrapper
+  for the HeidelTime tagger (section~\ref{sec:misc-creole:gate-time}).
+\item New language plugins for Danish and Welsh named entitiy recognition.
+\item Performance improvements in the ANNIE NER system, in particular to deal
+  better with hyphenated names and titles.
+\item Improvements to TermRaider to support GATE documents that contain many
+  independent sections (e.g. web forums, lists of tweets).
+\item Bug fixes in the handling of Twitter JSON data -- GATE now has full
+  round-trip support for Twitter JSON, tweets can be loaded, annotated, and
+  saved back to the same format accurately.  The JSON format parser has been
+  separated from the rest of the Twitter plugin, making it easier to add JSON
+  support to non-TwitIE applications.
+\item Updated dependencies -- the \verb!Stanford_CoreNLP! plugin now uses
+  version 3.6.0 of Stanford CoreNLP, and the Groovy plugin uses Groovy version
+  2.4.4
+\item GCP input and output handlers added to the \verb!Format_CSV! plugin.
+\end{itemize}
+
+Plus the usual suite of miscellaneous smaller bug fixes.
+
+\rcSubsect{Java compatibility}
+
+For GATE 8.2 we recommend the use of the latest Java 8 from Oracle.  If you are
+still restricted to Java 7, most components will still work with the exception
+of the Stanford CoreNLP tools.  Future versions of GATE will require Java 8 as
+a minimum.
+
+
+\rcSect[8.1]{Version 8.1 (June 2015)}
+
+\rcSubsect{New plugins and significant new features}
+
+\begin{itemize}
+\item Integration of the Stanford NER tools -- all the Stanford tools in GATE
+  have been brought together under a single \texttt{Stanford\_CoreNLP} plugin.
+\item Improved crowdsourcing tools (chapter~\ref{chap:crowd}), including tools
+  to perform automatic adjudication of multiply-annotated documents.
+\item Parsers for new document formats, including the \emph{DataSift} format
+  (section~\ref{sec:creole:datasift}) for social media data, and an improved
+  Twitter JSON parser (section~\ref{sec:social:twitter:format}) which can import
+  the standoff annotations Twitter themselves provide (hashtags, etc.).
+\item Improved support for data \emph{export}, making it easy for plugins to
+  add their own export formats accessible through the GUI and the API. New
+  exporters are provided for the Twitter JSON format
+  (section~\ref{sec:social:twitter:export}) and a more configurable inline
+  XML format.
+\item A new plugin for simplifying sentences using linguistic rules and other
+  information (section~\ref{sec:misc-creole:linguistic-simplifier}), contributed
+  by the \htlink{https://www.forgetit-project.eu}{ForgetIT project}.
+\end{itemize}
+
+\rcSubsect{Library updates and bugfixes}
+
+\begin{itemize}
+\item Apache Tika (for parsing PDF, MS Word, etc.) updated to version 1.7.
+\item ASM (for processing CREOLE metadata) updated to version 5.0.3.  This
+  allows the use of Java 8 language features such as lambdas in third-party
+  plugins, though GATE itself remains compatible with Java 7.
+\item Stanford CoreNLP tools updated to version 3.4 (the latest version
+  that is compatible with Java 7).
+\item MetaMap libraries (for UMLS) updated to version 2014.
+\item Better support in the GATE Unicode Tokeniser for scripts that use
+  supplementary characters beyond the basic 16 bit range.
+\item Bugfixes in the segment processing PR.
+\end{itemize}
+
+\rcSubsect{Tools for developers}
+
+Three new tools have been added to the \verb!Developer_Tools! plugin:
+
+\begin{itemize}
+\item Menu options to produce Java heap dumps to aid debugging.
+\item Menu option to dynamically increase the Log4J logging verbosity
+  at runtime.
+\item A tool that attempts to unload all plugins that are loaded but not
+  currently in use.
+\end{itemize}
+
+Other changes that benefit developers include:
+\begin{itemize}
+\item New helper methods in the \verb!gate.Utils! class.
+\item The \verb!gate.util.ProcessManager! API has been extended to allow an
+  external process to be kept running.  This is especially useful for running
+  some external tools which have very long starup times yet can be reused
+  across documents.
+\item Some changes in the management of classloaders that should reduce the
+  potential for deadlocks.
+\end{itemize}
+
+\ldots and as always, a range of smaller improvements and bug fixes.
+
+\rcSect[8.0]{Version 8.0 (May 2014)}
+
+GATE 8.0 is a major release which brings some major new features, many new and
+updated plugins, and significant under-the-bonnet changes to GATE Embedded.
+
+\rcSubsect{Major changes}
+
+\textbf{Java 7 required}
+
+GATE 8.0 requires \textbf{Java 7} or later to run.
+
+\textbf{Tools for Twitter}
+
+A new ``Twitter'' plugin provides tools dedicated to Twitter data:
+\begin{itemize}
+\item format parsers to handle Tweets in the JSON formats produced by the
+  Twitter APIs
+\item Twitter-specific components such as a tokeniser and POS tagger
+\item the \emph{TwitIE} named entity annotation pipeline.
+\end{itemize}
+
+See section~\ref{sec:social:twitter} for full details.
+
+\textbf{ANNIE Refreshed}
+
+The ANNIE named entity annotation pipeline which has been the mainstay of many
+GATE applications for many years has been brought up to date, with new
+gazetteers and improved JAPE grammars giving improved precision and recall on
+common test corpora.
+
+\textbf{Tools for Crowd Sourcing}
+
+A new \verb!Crowd_Sourcing! plugin provides facilities to support generation of
+manually annotated corpora via the CrowdFlower crowdsourcing
+platform\footnote{\url{http://www.crowdflower.com}}.  The plugin provides
+support for two different kinds of tasks, general entity annotation (e.g.
+determining which words in a given sentence are person names) and entity
+linking (e.g. for ontology-based annotation, where the spans of the entities
+are known but not which particular ontology instance each annotation
+corresponds to).  Using crowdsourcing you can generate multiply-annotated gold
+standard corpora rapidly and at relatively low cost.  For full details see
+chapter~\ref{chap:crowd}.
+
+\rcSubsect{Other new and improved plugins}
+
+\begin{itemize}
+\item New language plugins to support \emph{Russian} and \emph{Bulgarian}
+\item Integration of the Stanford POS Tagger
+  (section~\ref{sec:misc:creole:stanford}), which is used by TwitIE
+\item A document normalizer plugin, predominantly to normalize punctuation such
+  as Microsoft Word ``ssec:creole:datasiftmart quotes'' (see
+  section~\ref{sec:misc-creole:doc-normalizer})
+\item Wrappers for the \emph{AlchemyAPI} keyword and entity extraction services
+  (in the \verb!AlchemyAPI! plugin)
+\item Wrapper for the \emph{TextRazor} annotation service (see
+  section~\ref{sec:misc-creole:textrazor}).
+\item New document format parser to populate a GATE corpus from one or more CSV
+  files (see section~\ref{sec:creole:csv}).
+\item Support for loading and saving GATE XML files in the binary
+  \emph{FastInfoset} format (see section~\ref{sec:creole:fastinfoset}).
+\item Various improvements to the \verb!Learning! plugin, in particular to
+  support numeric and boolean features (see
+  section~\ref{sec:ml:batch-learning-pr})
+\item Improvements to the \emph{TermRaider} term extraction plugin (see
+  section~\ref{sec:creole:termraider})
+\item The OntoRoot Gazetteer (in the \verb!Gazetteer_Ontology_Based! plugin)
+  now supports tokenisers and POS taggers other than the default ANNIE PR
+  types, making it possible to use other preprocessing tools for non-English
+  data
+\item Further improvements to the classloading model to better isolate plugins
+  from one another.
+\item A new \verb!enableDebugging! runtime parameter for JAPE grammars will add
+  additional features to every generated annotation detailing which rule was
+  responsible for creating the annotation.
+\end{itemize}
+
+\rcSubsect{Bug fixes and other improvements}
+
+\begin{itemize}
+\item The annotation schema LR type is now available by default without the
+  need to load any plugins.  The schemas that were previously loaded by default
+  by the ANNIE plugin must now be loaded explicitly if you require them
+  (section~\ref{sec:developer:schemaannotationeditor}).  Annotation schemas now
+  support the \verb!include! element, so multiple schemas can be loaded by
+  loading a single master file.
+\item The segment processing PR
+  (section~\ref{sec:alignment:segment-processing}) now preserves annotation
+  IDs, allowing ID-sensitive tools such as coreference to work properly.
+\end{itemize}
+
+\rcSubsect{For developers}
+
+Changes of note for users of the GATE Embedded APIs include:
+\begin{itemize}
+\item A new data model to represent relations between annotations, see
+  section~\ref{sec:api:relations} for details.  The \verb!Coref_Tools! plugin
+  has been retrofitted to use this new model to represent coreference
+  chains.  Relation information is preserved when saving documents as GATE XML,
+  but note that such documents will not be compatible with older versions of
+  GATE.
+\item A new ``resource helper'' mechanism allows plugins to contribute
+  additional actions to existing resource types, both in the Developer GUI
+  (section~\ref{sec:creole-model:tools:resourcehelpers}) and in the Embedded API
+  (section~\ref{sec:api:resourcehelpers})
+\item A new class \verb!gate.corpora.DocumentJsonUtils! provides methods to
+  export a GATE document in a JSON format compatible with that used by Twitter.
+  See the JavaDoc documentation for details.
+\item Many deprecated classes, fields and methods have been removed.  If you
+  were previously calling any of these deprecated APIs you will need to update
+  your code accordingly.  Also some classes in the GATE core that were only
+  used by one plugin have been moved into the respective plugin's source tree.
+  In particular, Java RHS actions in JAPE rules no longer provide the
+  long-deprecated \verb!annotations! variable -- use \verb!inputAS! or
+  \verb!outputAS! as appropriate.
+\item Many library dependencies have been updated to more recent versions.
+\item The GATE APIs make much wider use of generics than previously -- many
+  places in the code that previously used raw types are now properly generic
+\item A new \verb!Developer_Tools! plugin
+  (section~\ref{sec:misc-creole:dev-tools}) provides utilities to assist in
+  debugging applications in GATE Developer.
+\end{itemize}
+
+If you are working on the core GATE source code, note that:
+\begin{itemize}
+\item the source tree has been split into ``main'' and ``test'', isolating the
+  test classes from the rest of the source
+\item each plugin is now a separate Eclipse ``project'', and the main project
+  is just the core sources, which makes it easier to control dependencies among
+  the different parts
+\item dependencies are no longer checked in to subversion, instead they are
+  fetched at build time from the Maven central repository by Apache Ivy.
+\end{itemize}
+
+\rcSect[7.1]{Version 7.1 (November 2012)}
+
+\rcSubsect{New plugins}
+
+The \emph{TermRaider} plugin (see Section~\ref{sec:creole:termraider})
+provides a toolkit and sample application for term extraction.
+
+Two new plugins, \emph{Tagger\_Zemanta} (since removed)
+and \emph{Tagger\_Lupedia} (see
+Section~\ref{sec:misc-creole:lupedia}) provide PRs that wrap online annotation
+services provided by Zemanta and Ontotext.
+
+A new plugin named \emph{Coref\_Tools} includes a framework for fast
+co-reference processing, and one PR that performs orthographical co-reference in
+the style of the ANNIE Orthomatcher. See Section~\ref{sec:creole:coref-tools}
+for full details.
+
+A new \emph{Configurable Exporter} PR in the Tools plugin, allowing annotations
+and features to be exported in formats specified by the user (e.g. for use with
+external machine learning tools).  See Section~\ref{sec:misc-creole:confexport}
+for details.
+
+Support for reading a number of new document formats has also been added:
+\begin{itemize}
+\item \emph{PubMed and the Cochrane Library} formats (see
+  Section~\ref{sec:creole:pubmed}).
+\item \emph{CoNLL ``IOB''} format (see Section~\ref{sec:corpora:conll}).
+\item\emph{MediaWiki} markup, both plain text and XML dump files such as those
+  from Wikipedia (see Section~\ref{sec:creole:mediawiki}).
+\end{itemize}
+
+In addition, ``ready-made applications'' have been added to many existing
+plugins (notably the \emph{Lang\_*} non-English language plugins) to make it
+easier to experiment with their PRs.
+
+\rcSubsect{Library updates}
+
+Updated the Stanford Parser plugin (see Section~\ref{sec:parsers:stanford}) to
+version 2.0.4 of the parser itself, and added run-time parameters to the PR to
+control the parser's dependency options.
+
+The Measurement and Number taggers have been upgraded to use JAPE+ instead of
+JAPE.  This should result in faster processing, and also allows for more memory
+efficient duplication of PR instances, i.e. when a pool of applications is
+created.
+
+The OpenNLP plugin has been completely revised to use Apache OpenNLP 1.5.2 and
+the corresponding set of models.  See Section~\ref{sec:misc-creole:opennlp} for
+details.
+
+The native launcher for GATE on Mac OS X now works with Oracle Java 7 as well
+as Apple Java 6.
+
+\rcSubsect{GATE Embedded API changes}
+
+Some of the most significant changes in this version are ``under the bonnet''
+in GATE Embedded:
+\begin{itemize}
+\item The class loading architecture underlying the loading of plugins and the
+  generation of code from JAPE grammars has been re-worked. The new version
+  allows for the complete unloading of plugins and for better memory handling of
+  generated classes. Different plugins can now also use different versions of the
+  same 3rd party libraries. There have also been a number of changes to the way
+  plugins are (un)loaded which should provide for more consistent behaviour.
+\item The GATE XML format has been updated to handle more value types
+  (essentially every data type supported by XStream
+  (\url{http://xstream.codehaus.org/faq.html}) should be usable as feature name
+  or value. Files in the new format can be opened without error by older GATE
+  versions, but the data for the previously-unsupported types will be
+  interpreted as a String, containing an XML fragment.
+\item The PRs defined in the ANNIE plugin are now described by annotations on
+  the Java classes rather than explicitly inside creole.xml. The main reason for
+  this change is to enable the definitions to be inherited to any subclasses of
+  these PRs. Creating an empty subclass is a common way of providing a PR with a
+  different set of default parameters (this is used extensively in the language
+  plugins to provide custom gazetteers and named entity transducers). This has
+  the added benefit of ensuring that new features also automatically percolate
+  down to these subclasses.  If you have developed your own PR that extends one
+  of the ANNIE ones you may find it has acquired new parameters that were not
+  there previously, you may need to use the \verb!@HiddenCreoleParameter!
+  annotation to suppress them.
+\item The corpus parameter of LanguageAnalyser (an interface most, if not all,
+  PRs implement) is now annotated as \verb|@Optional| as most implementations
+  do not actually require the parameter to be set.
+\item When saving an application the plugins are now saved in the same order in
+  which they were originally loaded into GATE. This ensures that dependencies
+  between plugins are correctly maintained when applications are restored.
+\item API support for working with relations between annotations was added. See
+  Section~\ref{sec:api:relations} for more details.
+\item The method of populating a corpus from a single file has been updated to
+  allow any mime type to be used when creating the new documents.
+\end{itemize}
+
+And numerous smaller bug fixes and performance improvements\ldots
+
+
+\rcSect[7.0]{Version 7.0 (February 2012)}
+
+\rcSubsect{Major new features}
+
+The CREOLE Plugin Manager has been completely re-written and now includes
+support for installing new plugins from remote update sites. See sections
+\ref{sec:developer:installplugins} and \ref{sec:development:pluginrepository}
+for more details.  In addition, plugins can now contribute additional
+``ready-made applications'' to the GATE Developer menus alongside the standard
+applications (ANNIE, etc.).  Details can be found in
+section~\ref{sec:development:readymade}.
+
+A new plugin named \texttt{JAPE\_Plus} has been added. It contains a new JAPE
+execution engine that includes various optimisations and should be significantly
+faster than the standard engine. \texttt{JAPE\_Plus} has not yet been
+comprehensively tested, so it should be considered {\em beta} software, and used
+with caution. See Section~\ref{sec:jape:plus} for more details.
+
+A new Java-based launcher has been implemented which now replaces the use of
+Apache ANT for starting-up GATE Developer.  The GATE Developer application now
+behaves in a more natural way in dock-based desktop environments such as Mac OS
+X and Ubuntu Unity.
+
+Improved the support for processing biomedical text by adding new PRs to
+incorporate the following tools: AbGene, the NormaGene tagger, the GENIA
+sentence splitter, MutationFinder and the Penn BioTagger (contains a tokenizer
+and three taggers for gene, malignancy and variation). For full details of
+these new resources see section~\ref{sec:domain-creole:biomed}.
+
+The Flexible Gazetteer PR has been rewritten to provide a better and faster
+implementation.  The two parameters \texttt{inputAnnotationSetName} and
+\texttt{outputAnnotationSetName} have been renamed to \texttt{inputASName} and
+\texttt{outputASName}, however old applications with the old parameters
+should still work.  Please see Section \ref{sec:gazetteers:flexgazetteer} for
+more details.
+
+\rcSubsect{Removal of deprecated functionality}
+
+Various components were removed in this release as they have been unsupported
+and deprecated in previous releases:
+\begin{itemize}
+\item the GATE Unicode Kit (GUK), which has been superseded by improved native
+  support for localisation in the various target operating systems.  If you
+  still require GUK it is available as a separate software project at
+  \url{http://gate.svn.sourceforge.net/viewvc/gate/guk/trunk}.
+\item the database-backed datastore implementation.
+\item the plugins Jape\_Compiler (superseded by JAPE\_Plus) and
+  Ontology\_OWLIM2.
+\end{itemize}
+
+In addition the Web\_Search\_Google, Web\_Search\_Yahoo and
+Web\_Translate\_Google plugins have been removed as the underlying web services
+on which they depend are no longer available.  Documentation for obsolete
+plugins can be found in appendix~\ref{chap:obsolete-plugins}, and if you
+require any of them for your application please see
+\verb|plugins/Obsolete/README.TXT| in the GATE Developer distribution.
+
+\rcSubsect{Other enhancements and bug fixes}
+
+CREOLE plugins can now use \htlink{http://ant.apache.org/ivy/}{Apache Ivy} to
+include third-party dependencies. See section~\ref{sec:creole-model:config:ivy} for details.
+
+The Default ANNIE Gazetteer now allows a user to specify different annotation
+types to be used for annotating entries from different lists. For example, a
+user may want to find city names mentioned in a gazetteer list (e.g. city.lst)
+and annotate the matching strings as City. Please see
+section~\ref{sec:annie:gazetteer} for more details.
+
+The Segment Processing PR has two additional run-time parameters called
+\texttt{segmentAnnotationFeatureName} and
+\texttt{segmentAnnotationFeatureValue}.  These features allow users to specify
+a constraint on feature name and feature value.  If user has provided values
+for these parameters, only the annotations with the specified feature name and
+feature value are processed with the Segment Processing PR.  Also, the
+parameter \texttt{controller} has been renamed to \texttt{analyser} which means
+the Segment Processing PR can now also run an individual PR on the specified
+segments\footnote{Existing saved applications using the \texttt{controller}
+parameter will still work \emph{provided} the controller in question implements
+the \texttt{LanguageAnalyser} interface.  The \texttt{CorpusController}
+implementations supplied as standard with GATE all implement this interface.}.
+See \ref{sec:alignment:segment-processing} for more information on
+section-by-section processing.
+
+The Hash Gazetteer (section~\ref{sec:gazetteers:hash}) now properly supports
+the \texttt{caseSensitive} parameter (previously the parameter could be set but
+had no effect).
+
+The Document Reset PR (Section~\ref{sec:misc-creole:reset}) now defaults to
+keeping the Key set as well as Original markups. This makes working with
+pre-annotated gold standard document less dangerous (assuming you put the gold
+standard annotations in a set called Key).
+
+Updated Stanford Parser plugin (see Section~\ref{sec:parsers:stanford}) to
+version~1.6.8.
+
+The TextCat based Language Identification PR now supports generating new
+language fingerprints.  See
+section~\ref{sec:misc-creole:language-identification} for full details.
+
+Added support for reading XCAS and XMI-format documents created by UIMA. See
+section~\ref{sec:corpora:uima} for details.
+
+Various improvements to the GATE Developer GUI:
+\begin{itemize}
+\item added support in the document editor to switch the principal text
+  orientation, to better support documents written in right-to-left languages
+  such as Arabic, Hebrew or Urdu (section~\ref{sec:developer:documents}).
+\item added new mouse shortcuts to the Annotation Stack view in the document
+  editor to speed up the curation process
+  (section~\ref{sec:developer:annotationsstackview}).
+\item the document editor layout is now saved to the user preferences file,
+  gate.xml. It means that you can give this file to a new user so s/he will
+  have a preconfigured document editor
+  (section~\ref{sec:developer:documents}).
+\item the script behind an instance of the Groovy Scripting PR
+  (section~\ref{sec:api:groovy:pr}) can now be edited from within GATE
+  Developer through a new visual resource which supports syntax highlighting.
+\end{itemize}
+
+The rule and phase names are now accessible in a JAPE Java RHS by the 
+\verb=ruleName()= and \verb=phaseName()= methods and the name of the 
+JAPE processing resource executing the JAPE transducer is accessible
+through the action context \verb=getPRName()= method. 
+See section~\ref{sec:jape:javarhsoverview}.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\rcSect[6.1]{Version 6.1 (April 2011)}
+
+\rcSubsect{New CREOLE Plugins}
+
+\textbf{Tagger\_Numbers} to annotate many kinds of numbers in documents and
+determine their numeric values.  The tagger can annotate numbers expressed in
+many forms including Arabic and Roman numerals, words (in English, French,
+German and Spanish) and scientific notation (4.3e6 = 4300000).  See
+section~\ref{sec:misc-creole:numbers} for full details.
+
+\textbf{Tagger\_Measurements} to annotate many different forms of measurement
+expressions (``5.5 metres'', ``1 minute 30 seconds'', ``10 to 15 pounds'',
+etc.) along with their normalized values in SI units.  See
+section~\ref{sec:misc-creole:measurements} for full details.
+
+\textbf{Tagger\_Boilerpipe}, which contains a
+boilerpipe\footnote{\htlinkplain{http://code.google.com/p/boilerpipe/}} based
+PR for performing content detection. See
+section~\ref{sec:misc-creole:boilerpipe} for full details.
+
+\textbf{Tagger\_DateNormalizer} to annotate and normalize dates within a
+document. See section~\ref{sec:misc-creole:datenormalizer} for full details.
+
+\textbf{Schema\_Tools} providing a ``Schema Enforcer'' PR that can be used to
+create a clean output annotation set based on a set of annotation schemas. See
+section~\ref{sec:misc-creole:schemaenforcer} for full details.
+
+\textbf{Teamware\_Tools} providing a new PR called QA Summariser for Teamware.
+When documents are annotated using GATE Teamware, this PR can be used for
+generating a summary of agreements among annotators.  See
+section~\ref{sec:eval:qaForTW} for full details.
+
+\textbf{Tagger\_MetaMap} has been rewritten to make use of the new MetaMap Java
+API features.  There are numerous performance enhancements and bug fixes
+detailed in section~\ref{sec:misc-creole:metamap}.  Note that this version of
+the plugin is \emph{not} compatible with the version provided in GATE 6.0,
+though this earlier version is still available in the Obsolete directory if
+required.
+
+\rcSubsect{Other new features and improvements}
+
+Added support for handling controller events to JAPE by making it possible
+to define \texttt{ControllerStarted}, \texttt{ControllerFinished}, and 
+\texttt{ControllerAborted} code blocks in a JAPE file (see 
+section~\ref{sec:jape:javarhsoverview}).
+
+JAPE Java right-hand-side code can now access an \texttt{ActionContext} object
+through the predefined field \texttt{ctx} which allows access to the corpus LR
+and the transducer PR and their features (see
+section~\ref{sec:jape:javarhsoverview}).
+
+Three new optional attributes can be specified in {\tt<GATECONFIG>}
+element of {\tt gate.xml} or local configuration file:
+
+\begin{itemize}
+\item \textbf{addNamespaceFeatures} - set to ``true'' to deserialize namespace prefix and URI information as features.
+\item \textbf{namespaceURI} - The feature name to use that will hold the namespace URI of the element, e.g. ``namespace''
+\item \textbf{namespacePrefix} - The feature name to use that will hold the namespace prefix of the element, e.g. ``prefix''
+\end{itemize}
+
+Setting these attributes will alter GATE's default namespace deserialization
+behaviour to remove the namespace prefix and add it as a feature, along with
+the namespace URI.  This allows namespace-prefixed elements in the
+\textbf{Original markups} annotation set to be matched with JAPE expressions,
+and also allows namespace scope to be added to new annotations when serialized
+to XML. See  \ref{sec:corpora:input} for details.
+
+Searchable Serial Datastores (Lucene-based) are now portable and can be moved
+across different systems. Also, several GUI improvements have been made to ease
+the creation of Lucene datastores. See chapter~\ref{chap:annic} for details.
+
+The populate method that allowed populating corpus from a trecweb file has been
+made more generic to accept a tag. The method extracts content between the start
+and end of this tag to create new documents. In GATE Developer, right-clicking 
+on an instance of the Corpus and choosing the option ``Populate from Single
+Concatenated File" allows users to populate the corpus using this functionality.
+See Section \ref{sec:api:corpora} for more details.
+
+Fixed a regression in the JAPE parser that prevented the use of RHS macros that
+refer to a LHS label (named blocks \verb|:label { ... }| and assignments
+\verb|:label.Type = {}|
+
+Enhanced the Groovy scriptable controller with some features inspired by the
+realtime controller, in particular the ability to ignore exceptions thrown by
+PRs and the ability to limit the running time of certain PRs.  See
+section~\ref{sec:api:groovy:controller} for details.
+
+The Ontology and Gazetteer\_LKB plugins have been upgraded to use Sesame 3.2.3
+and OWLIM 3.5.
+
+The Websphinx Crawler PR (section~\ref{sec:misc-creole:crawler}) has new runtime
+parameters for controlling the maximum page size and spoofing the user-agent.
+
+A few bug fixes and improvements to the ``recover'' logic of the
+\texttt{packagegapp} Ant task (see section~\ref{sec:ant:packagegapp}).
+
+\ldots and many other smaller bugfixes.
+
+\textbf{Note: As of version 6.1, GATE Developer and Embedded require Java 6 or
+later and will no longer run on Java 5}.  If you require Java 5 compatibility
+you should use GATE 6.0.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\rcSect[6.0]{Version 6.0 (November 2010)}\ifnested\label{subsec:changes:6.0b1}\else\label{sec:changes:6.0b1}\fi
+
+\rcSubsect{Major new features}
+
+Added an annotation tool for the document editor: the Relation Annotation
+Tool (RAT). It is designed to annotate a document with ontology instances
+and to create relations between annotations with ontology object
+properties. It is close and compatible with the Ontology Annotation Tool
+(OAT) but focus on relations between annotations. See
+section~\ref{sec:ontologies:rat} for details.
+
+Added a new \emph{scriptable controller} to the Groovy plugin, whose execution
+strategy is controlled by a simple Groovy DSL.  This supports more powerful
+conditional execution than is possible with the standard conditional
+controllers (for example, based on the presence or absence of a particular
+annotation, or a combination of several document feature values), rich flow
+control using Groovy loops, etc.  See
+section~\ref{sec:api:groovy:controller} for details.
+
+A new version of Alignment Editor has been added to the GATE distribution. It 
+consists of several new features such as the new alignment viewer, ability to
+create alignment tasks and store in xml files, three different views to align
+the text (links view and matrix view - suitable for character, word and phrase
+alignments, parallel view - suitable for sentence or long text alignment), an
+alignment exporter and many more.  See chapter \ref{chap:alignment} for more 
+information.
+
+MetaMap, from the National Library of Medicine (NLM), maps biomedical text to 
+the \textbf{UMLS Metathesaurus} and allows Metathesaurus concepts to be 
+discovered in a text corpus. The Tagger\_MetaMap plugin for GATE wraps the 
+MetaMap Java API client to allow GATE to communicate with a remote (or local) 
+MetaMap PrologBeans \textbf{mmserver} and MetaMap distribution. This allows the 
+content of specified annotations (or the entire document content) to be 
+processed by MetaMap and the results converted to GATE annotations and features.
+See section~\ref{sec:misc-creole:metamap} for details.
+
+A new plugin called Web\_Translate\_Google has been added with a PR called 
+Google Translator PR in it.  It allows users to translate text using the
+Google translation services.  See section \ref{sec:misc-creole:google-translate}
+for more information.
+
+New Gazetteer Editor for ANNIE Gazetteer that can be used instead of
+Gaze. It uses tables instead of text area to display the gazetteer
+definition and lists, allows sorting on any column, filtering of the lists,
+reloading a list, etc. See section~\ref{sec:gazetteers:anniegazeditor}.
+
+\rcSubsect{Breaking changes}
+
+This release contains a few small changes that are not backwards-compatible:
+\begin{itemize}
+\item Changed the semantics of the ontology-aware matching mode in JAPE to take
+account of the default namespace in an ontology.  Now {\tt class} feature
+values that are not complete URIs will be treated as naming classes within the
+default namespace of the target ontology only, and not (as previously) any
+class whose URI ends with the specified name.  This is more consistent with the
+way OWL normally works, as well as being much more efficient to execute.  See
+section~\ref{sec:ontologies:ontology-aware-jape} for more details.
+
+\item Updated the WordNet plugin to support more recent releases of WordNet
+than 1.6.  The format of the configuration file has changed, if you are using
+the previous WordNet 1.6 support you will need to update your configuration.
+See section~\ref{sec:misc-creole:wn} for details.
+
+\item The deprecated Tagger\_TreeTagger plugin has been removed, applications
+that used it will need to be updated to use the Tagger\_Framework plugin
+instead.  See section~\ref{sec:parsers:taggerframework} for details of how to
+do this.
+\end{itemize}
+
+\rcSubsect{Other new features and bugfixes}
+
+The concept of {\it templates} has been introduced to JAPE.  This is a way to
+declare named ``variables'' in a JAPE grammar that can contain placeholders
+that are filled in when the template is referenced.  See
+section~\ref{sec:jape:templates} for full details.
+
+Added a JAPE operator to get the string covered by a left-hand-side label and
+assign it to a feature of a new annotation on the right hand side (see
+section~\ref{sec:jape:metaproperties}).
+
+Added a new API to the CREOLE registry to permit plugins that live 
+entirely on the classpath. {\tt CreoleRegister.registerComponent} instructs
+the registry to scan a single java Class for annotations, adding it to the 
+set of registered plugins.  See section~\ref{sec:api:plugins} for details.
+
+Maven artifacts for GATE are now published to the central Maven
+repository.  See section~\ref{sec:gettingstarted:maven} for details.
+
+Bugfix: {\tt DocumentImpl} no longer changes its {\tt stringContent} parameter
+value whenever the document's content changes.  Among other things, this means
+that saved application states will no longer contain the full text of the
+documents in their corpus, and documents containing XML or HTML tags that were
+originally created from string content (rather than a URL) can now safely be
+stored in saved application states and the GATE Developer saved session.
+
+A processing resource called Quality Assurance PR has been added in the Tools
+plugin. The PR wraps the functionality of the Quality Assurance Tool 
+(section \ref{sec:eval:corpusqualityassurance}).
+
+A new section for using the Corpus Quality Assurance from GATE Embedded has
+been written. See section~\ref{sec:eval:corpusqualityassurance}.
+
+The Generic Tagger PR (in the Tagger\_Framework plugin) now allows more
+flexible specification of the input to the tagger, and is no longer limited to
+passing just the ``string'' feature from the input annotations.  See
+section~\ref{sec:parsers:taggerframework} for details.
+
+Added new parameters and options to the LingPipe Language Identifier PR.
+(section~\ref{sec:misc-creole:lingpipe:langid}), and corrected the
+documentation for the LingPipe POS Tagger
+(section~\ref{sec:misc-creole:lingpipe:postagger}).
+
+In the document editor, fixed several exceptions to make editing text with
+annotations highlighted working. So you should now be able to edit the text
+and the annotations should behave correctly that is to say move, expand or
+disappear according to the text insertions and deletions.
+
+Options for document editor: read-only and insert append/prepend have been
+moved from the options dialogue to the document editor toolbar at the top
+right on the triangle icon that display a menu with the options. See
+section~\ref{sec:developer:documents}.
+
+Added new parameters and options to the Crawl PR and document features to its
+output; see section~\ref{sec:misc-creole:crawler} for details.
+
+Fixed a bug where ontology-aware JAPE rules worked correctly when the target
+annotation's class was a subclass of the class specified in the rule, but
+failed when the two class names matched exactly.
+
+Improved support for conditional pipelines containing non-LanguageAnalyser
+processing resources.
+
+Added the current {\tt Corpus} to the script binding for the Groovy Script PR,
+allowing a Groovy script to access and set corpus-level features.  Also added
+callbacks that a Groovy script can implement to do additional pre- or
+post-processing before the first and after the last document in a corpus.  See
+section~\ref{sec:api:groovy} for details.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:changes:5.2.1]{Version 5.2.1 (May 2010)}
+
+This is a bugfix release to resolve several bugs that were reported shortly
+after the release of version 5.2:
+
+\begin{itemize}
+\item Fixed some bugs with the automatic ``create instance'' feature in OAT
+  (the ontology annotation tool) when used with the new {\tt Ontology} plugin.
+
+\item Added validation to datatype property values of the \emph{date},
+  \emph{time} and \emph{datetime} types.
+
+\item Fixed a bug with Gazetteer\_LKB that prevented it working when the
+  {\tt dictionaryPath} contained spaces.
+
+\item Added a utility class to handle common cases of encoding URIs for use in
+  ontologies, and fixed the example code to show how to make use of this.  See
+  chapter~\ref{chap:ontologies} for details.
+
+\item The annotation set transfer PR now copies the feature map of each
+  annotation it transfers, rather than re-using the same FeatureMap (this means
+  that when used to copy annotations rather than move them, the copied
+  annotation is independent from the original and modifying the features of one
+  does not modify the other).  See section~\ref{sec:misc-creole:ast} for
+  details.
+
+\item The Log4J log files are now created by default in the {\tt .gate}
+  directory under the user's home directory, rather than being created in the
+  current directory when GATE starts, to be more friendly when GATE is
+  installed in a shared location where the user does not have write permission.
+\end{itemize}
+
+This release also fixes some shortcomings in the Groovy support added by 5.2,
+in particular:
+
+\begin{itemize}
+\item The {\tt corpora} variable in the console now includes persistent corpora
+  (loaded from a datastore) as well as transient corpora.
+\item The subscript notation for annotation sets works with long values as well
+  as ints, so \verb|someAS[annotation.start()..annotation.end()]| works as
+  expected.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:changes:5.2]{Version 5.2 (April 2010)}
+
+\subsect{JAPE and JAPE-related}
+
+Introduced a utility class
+\htlink{http://gate.ac.uk/gate/doc/javadoc/gate/Utils.html}{gate.Utils}
+containing static utility methods for frequently-used idioms such as getting
+the string covered by an annotation, finding the start and end offsets of
+annotations and sets, etc.  This class is particularly useful on the right hand
+side of JAPE rules (section~\ref{sec:jape:javarhsoverview}).
+
+Added type parameters to the \verb|bindings| map available on the RHS of JAPE
+rules, so you can now do \verb|AnnotationSet as = bindings.get("label")|
+without a cast (see section~\ref{sec:jape:javarhsoverview}).
+
+Fixed a bug with JAPE's handling of features called ``class'' in
+non-ontology-aware mode.  Previously JAPE would always match such features
+using an equality test, even if a different operator was used in the grammar,
+i.e. \verb|{SomeType.class != "foo"}| was matched as
+\verb|{SomeType.class == "foo"}|.  The correct operator is now used.  Note that
+this does not affect the ontology-aware behaviour: when an ontology parameter
+is specified, ``class'' features are always matched using ontology subsumption.
+
+Custom JAPE operators and annotation accessors can now be loaded from plugins
+as well as from the \texttt{lib} directory (see
+section~\ref{sec:jape:customoperators}).
+
+\subsect{Other Changes}
+
+Added a mechanism to allow plugins to contribute menu items to the ``Tools''
+menu in GATE Developer.  See section~\ref{sec:creole-model:tools} for details.
+
+Enhanced Groovy support in GATE: the Groovy console and Groovy Script PR (in
+the Groovy plugin) now import many GATE classes by default, and a number of
+utility methods are mixed in to some of the core GATE API classes to make them
+more natural to use in Groovy.  See section~\ref{sec:api:groovy} for details.
+
+Modified the batch learning PR (in the \texttt{Learning} plugin) to make it
+safe to use several instances in {\it APPLICATION} mode with the same
+configuration file and the same learned model at the same time (e.g. in a
+multithreaded application).  The other modes (including training and
+evaluation) are unchanged, and thus are still \emph{not} safe for use in this
+way.  Also fixed a bug that prevented APPLICATION mode from working anywhere
+other than as the last PR in a pipeline when running over a corpus in a
+datastore.
+
+Introduced a simple way to create duplicate copies of an existing resource
+instance, with a way for individual resource types to override the default
+duplication algorithm if they know a better way to deal with duplicating
+themselves.  See section~\ref{sec:api:duplicate}.
+
+Enhanced the Spring support in GATE to provide easy access to the new
+duplication API, and to simplify the configuration of the built-in Spring
+pooling mechanisms when writing multi-threaded Spring-based applications.  See
+section~\ref{sec:api:spring}.
+
+The GAPP packager Ant task now respects the ordering of mapping hints, with
+earlier hints taking precedence over later ones (see
+section~\ref{sec:ant:packagegapp:hints}).
+
+Bug fix in the UIMA plugin from Roland Cornelissen - \texttt{AnalysisEnginePR}
+now properly shuts down the wrapped \texttt{AnalysisEngine} when the PR is
+deleted.
+
+Patch from Matt Nathan to allow several instances of a gazetteer PR in an
+embedded application to share a single copy of their internal data structures,
+saving considerable memory compared to loading several complete copies of the
+same gazetteer lists (see section~\ref{sec:gazetteers:shared}).
+
+In the corpus quality assurance, measures for classification tasks have been
+added. You can also now set the beta for the fscore. This tool has been
+optimised to work with datastores so that it doesn't need to read all the
+documents before comparing them.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[5.1]{Version 5.1 (December 2009)}
+\label{sec:changes:5.1b1}\label{sec:changes:5.1b2}\htcode{<A name="sec:changes:5.1b1"></A><A name="sec:changes:5.1b2"></A>}
+
+Version 5.1 is a major increment with lots of new features and integration of
+a number of important systems from 3rd parties (e.g. LingPipe, OpenNLP,
+OpenCalais, a revised UIMA connector). We've stuck with the 5 series (instead
+of jumping to 6.0) because the core remains stable and backwards compatible.
+
+Other highlights include:
+\begin{itemize}
+\item
+an entirely new ontology API from Johann Petrak of OFAI (the old one is still
+available but as a plugin)
+\item
+new benchmarking facilities for JAPE from Andrew Borthwick and colleagues at
+Intelius
+\item
+new quality assurance tools from Thomas Heitz and colleagues at Ontotext and
+Sheffield 
+\item
+a generic tagger integration framework from Ren\'e Witte of Concordia University
+\item
+several new code contributions from Ontotext, including a large
+knowledge-based gazetteer and various plugin wrappers from Marin Nozchev,
+Georgi Georgiev and colleagues
+\item
+a revised and reordered user guide, amalgamated with the programmers' guide
+and other materials
+\item
+Groovy support, application composition, section-by-section processing and
+lots of other bits and pieces
+\end{itemize}
+
+\subsect{New Features}
+
+\subsubsect{LingPipe Support}
+
+LingPipe is a suite of Java libraries for the linguistic analysis of human
+language.  We have provided a plugin called `LingPipe' with wrappers for some 
+of the resources available in the LingPipe library. For more details, see the 
+section \ref{sec:misc-creole:lingpipe}.
+
+\subsubsect{OpenNLP Support}
+
+OpenNLP provides tools for sentence detection, tokenization, pos-tagging,
+chunking and parsing, named-entity detection, and coreference. The tools use
+Maximum Entropy modelling. We have provided a plugin called `OpenNLP' with
+wrappers for some of the resources available in the OpenNLP Tools library. For
+more details, see section \ref{sec:misc-creole:opennlp}.
+
+\subsubsect{OpenCalais Support}
+
+We added a new PR called `OpenCalais PR'. This will process a document
+through the OpenCalais service, and add OpenCalais entity annotations to the
+document. (This plugin was subsequently removed in GATE 8.4)
+
+\subsubsect{Ontology API}
+
+The ontology API (package \verb!gate.creole.ontology! has been changed, the 
+existing ontology implementation based on Sesame1 and OWLIM2 
+(package \verb!gate.creole.ontology.owlim!) has been moved into 
+the plugin \verb!Ontology_OWLIM2!. An upgraded implementation 
+based on Sesame2 and OWLIM3 that also provides a number of new 
+features has been added as plugin \verb!Ontology!. 
+See Section~\ref{sec:ontology:changes5.1} for a detailed description of
+all changes.
+
+\subsubsect{Benchmarking Improvements}
+
+A number of improvements to the benchmarking support in GATE. JAPE transducers
+now log the time spent in individual phases of a multi-phase grammar and by
+individual rules within each phase. Other PRs that use JAPE grammars
+internally (the pronominal coreferencer, English tokeniser) log the time taken
+by their internal transducers. A reporting tool, called `Profiling Reports' 
+under the `Tools' menu makes summary information easily available. For more
+details, see chapter~\ref{chap:profiling}.
+
+\subsubsect{GUI improvements}
+
+To deal with quality assurance of annotations, one component has been
+updated and two new components have been added. The annotation diff tool has
+a new mode to copy annotations to a consensus set, see
+section~\ref{sec:eval:adiff}. An annotation stack view has been added in the
+document editor and it allows to copy annotations to a consensus set, see
+section~\ref{sec:developer:annotationsstackview}. A corpus view has been
+added for all corpus to get statistics like precision, recall and F-measure,
+see section~\ref{sec:eval:corpusqualityassurance}.
+
+An annotation stack view has been added in the document editor to make
+easier to see overlapping annotations, see
+section~\ref{sec:developer:annotationsstackview}.
+
+\subsubsect{ABNER Support}
+
+ABNER is A Biomedical Named Entity Recogniser, for finding entities such as
+genes in text. We have provided a plugin called `AbnerTagger' with a wrapper
+for ABNER. For more details, see section \ref{sec:parsers:abner}.
+
+\subsubsect{Generic Tagger Support}
+
+A new plugin has been added to provide an easy route to integrate taggers with
+GATE. The Tagger\_Framework plugin provides examples of incorporating a number
+of external taggers which should serve as a starting point for using other
+taggers. See Section \ref{sec:parsers:taggerframework} for more details.
+
+
+\subsubsect{Section-by-Section Processing}
+
+We have added a new PR called `Segment Processing PR'. As the name suggests
+this PR allows processing individual segments of a document independently of one
+other. For more details, please look at the section 
+\ref{sec:alignment:segment-processing}.
+
+
+\subsubsect{Application Composition}
+
+The {\tt gate.Controller} implementations provided with the main GATE 
+distribution now also implement the {\tt gate.ProcessingResource} interface.
+This means that an application can now contain another application as one of
+its components.
+
+\subsubsect{Groovy Support}
+
+Groovy is a dynamic programming language based on Java. You can now use it as
+a scripting language for GATE, via the Groovy Console. For more
+details, see Section \ref{sec:api:groovy}.
+
+\subsect{JAPE improvements}
+
+GATE now produces a warning when any Java right-hand-sides in JAPE rules make
+use of the deprecated {\tt annotations} parameter.  All bundled JAPE grammars
+have been updated to use the replacement {\tt inputAS} and {\tt outputAS}
+parameters as appropriate.
+
+The new \verb|Imports:| statement at the beginning of a JAPE grammar file can
+now be used to make additional Java import statements available to the Java RHS
+code, see~\ref{sec:jape:javarhsoverview}.
+
+The JAPE debugger has been removed. Debugging of JAPE has been made easier
+as stack traces now refer to the JAPE source file and line numbers instead
+of the generated Java source code.
+
+The Montreal Transducer has been made obsolete.
+
+\subsect{Other improvements and bug fixes}
+
+Plugin names have been rationalised. Mappings exist so that existing
+applications will continue to work, but the new names should be used in the
+future. Plugin name mappings are given in Appendix~\ref{chap:plugin-names-map}.
+Also, the Segmenter\_Chinese plugin (used to be known as chineseSegmenter
+plugin) is now part of the Lang\_Chinese plugin.
+
+The User Guide has been amalgamated with the
+Programmer's Guide; all material can now be found in the User Guide. The
+`How-To' chapter has been converted into separate chapters for
+installation, GATE Developer and GATE Embedded. Other material has been
+relocated to the appropriate specialist chapter.
+
+Made Mac OS launcher 64-bit compatible.  See
+section~\ref{sec:gettingstarted:easy} for details.
+
+The UIMA integration layer (\Chapthing\ \ref{chap:uima}) has been upgraded to
+work with Apache UIMA 2.2.2.
+
+Oracle and PostGreSQL are no longer supported.
+
+The MIAKT Natural Language Generation plugin has been removed.
+
+The Minorthird plugin has been removed. Minorthird has changed significantly
+since this plugin was written. We will consider writing an up-to-date
+Minorthird plugin in the future.
+
+A new gazetteer, Large KB Gazetteer (in the plugin `Gazetteer\_LKB') has been
+added, see Section~\ref{sec:gazetteers:lkb-gazetteer} for details.
+
+gate.creole.tokeniser.chinesetokeniser.ChineseTokeniser and related resources 
+under the plugins/ANNIE/tokeniser/chinesetokeniser folder have been removed.
+Please refer to the Lang\_Chinese plugin for resources related to the Chinese 
+language in GATE.
+
+Added an {\tt isInitialised()} method to {\tt gate.Gate()}.
+
+Added a parameter to the chemistry tagger PR
+(section~\ref{sec:parsers:chemistrytagger}) to allow it to operate on
+annotation sets other than the default one.
+
+Plus many more smaller bugfixes...
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:changes:5.0]{Version 5.0 (May 2009)}
+\label{sec:changes:5.0b1}\htcode{<A name="sec:changes:5.0b1"></A>}
+
+\begin{quote}
+\textbf{Note:} {\em existing users -- if you delete your user configuration
+file for any reason you will find that GATE Developer no longer loads the ANNIE plugin
+by default.  You will need to manually select `load always' in the plugin
+manager to get the old behaviour.}
+\end{quote}
+
+\subsect{Major New Features}
+
+\subsubsect{JAPE Language Improvements}
+
+Several new extensions to the JAPE language to support more flexible pattern
+matching.  Full details are in \Chapthing~\ref{chap:jape} but briefly:
+
+\begin{itemize}
+\item Negative constraints, that prevent a rule from matching if certain other
+      annotations are present (Section~\ref{sec:jape:negation}).
+\item Additional matching operators for feature values, so you can now look for
+      \verb|{Token.length < 5}|, \verb|{Lookup.minorType != "ignore"}|, etc.~as
+      well as simple equality (Section~\ref{sec:jape:matchingoperators}).
+\item `Meta-property' accessors, see Section~\ref{sec:jape:metaproperties} to
+permit access to the string covered by an annotation, the length of the annotation, etc., e.g.
+      \verb|{Lookup@length > 4}|.
+\item Contextual operators, allowing you to search for one annotation contained
+      within (or containing) another, e.g.
+      \verb|{Sentence contains {Lookup.majorType == "location"}}| (see
+      Section~\ref{sec:jape:operators:contextual}).
+\item Additional Kleene operator for ranges, e.g. \verb|({Token})[2,5]| matches
+      between 2 and 5 consecutive tokens, see Section~\ref{sec:jape:ranges}.
+\item Additional operators can be added via runtime configuration (see
+Section~\ref{sec:jape:customoperators}).
+\end{itemize}
+
+Some of these extensions are similar to, but not the same as, those provided by
+the Montreal Transducer plugin.  If you are already familiar with the Montreal
+Transducer, you should first look at Section~\ref{sec:jape:montrealdifferences}
+which summarises the differences.
+
+\subsubsect{Resource Configuration via Java 5 Annotations}
+
+Introduced an alternative style for supplying resource configuration
+information via Java 5 annotations rather than in {\tt creole.xml}.  The
+previous approach is still fully supported as well, and the two styles can be
+freely mixed.  See Section \ref{sec:creole-model:config} for full details.
+
+\subsubsect{Ontology-Based Gazetteer}
+
+Added a new plugin `Gazetteer\_Ontology\_Based', which contains OntoRoot
+Gazetteer -- a dynamically created gazetteer which is, in combination with few
+other generic resources, capable of producing ontology-aware annotations
+over the given content with regards to the given ontology. For more details see
+Section~\ref{sec:gazetteers:ontoRootGaz}.
+
+\subsubsect{Inter-Annotator Agreement and Merging}
+
+New plugins to support tasks involving several annotators working on the same
+annotation task on the same documents.  The plugin
+`Inter\_Annotator\_Agreement' (Section~\ref{sec:eval:iaaplugin}) computes
+inter-annotator agreement scores between the annotators, the
+`Copy\_Annots\_Between\_Docs' plugin
+(Section~\ref{sec:misc-creole:copyAS2AnoDoc}) copies annotations from several parallel documents into a single master document,
+and the `Annotation\_Merging' plugin (Section~\ref{sec:misc-creole:merging})
+merges annotations from multiple annotators into a single `consensus'
+annotation set.
+
+\subsubsect{Packaging Self-Contained Applications for GATE Teamware}
+
+Added a mechanism to assemble a saved GATE application along with all the
+resource files it uses into a single self-contained package to run on another
+machine (e.g. as a service in \htlink{http://gate.ac.uk/teamware}{GATE
+Teamware}).  This is available as a menu option
+(Section~\ref{sec:developer:export}) which will work for most common cases, but for
+complex cases you can use the underlying Ant task described in
+Section~\ref{sec:ant:packagegapp}.
+
+\subsubsect{GUI Improvements}
+
+\begin{itemize}
+\item A new schema-driven tool to streamline manual annotation tasks
+(see Section~\ref{sec:developer:schemaannotationeditor}).
+
+\item Context-sensitive help on elements in the resource tree and when
+pressing F1 key. Search in mailing list from the Help menu. Help is displayed
+in your browser or in a Java browser if you don't have one.
+
+\item Improved search function inside documents with a regular expression
+builder. Search and replace annotation function in all annotation editors.
+
+\item Remember for each resource type the last path used when loading/saving
+a resource.
+
+\item Remember the last annotations selected in the annotation set
+view when you shift click on the annotation set view button.
+
+\item Improved context menu and when possible added drag and drop in:
+resource tree, annotation set view, annotation list view, corpus view,
+controller view. Context menu key can be now used if you have Java 1.6.
+
+\item New dialog box for error messages with user oriented messages,
+optional display of the configuration and proposing some useful
+actions. This will progressively replace the old stack trace dump into the
+message panel which is still here for the moment but should be hide by
+default in the future.
+
+\item Add read-only document mode that can be enable from the Options menu.
+
+\item Add a selection filter in the status bar of the annotations list table
+to easily select rows based on the text you enter.
+
+\item Add the last five applications loaded/saved in the context menu of the
+language resources in the resources tree.
+
+\item Display more informations on what going's on in the waiting dialog box
+when running an application. The goal is to improve it to get a global
+progress bar and estimated time.
+\end{itemize}
+
+\subsect{Other New Features and Improvements}
+
+\begin{itemize}
+\item New parser plugins: A new plugin for the 
+  \htlink{http://nlp.stanford.edu/software/lex-parser.shtml}{Stanford Parser}
+  (see Section~\ref{sec:parsers:stanford}) and a rewritten plugin for the 
+  \htlink{http://www.informatics.sussex.ac.uk/research/groups/nlp/rasp/}{RASP
+  NLP tools} (Section~\ref{sec:parsers:rasp}).
+
+\item A new sentence splitter, based on regular expressions, has been added to
+  the ANNIE plugin. More details in Section~\ref{sec:annie:regex-splitter}.
+
+\item `Real-time' corpus controller (Section~\ref{sec:creole-model:applications}), which
+  terminates processing of a document if it takes longer than a configurable
+  timeout..
+  
+\item Major update to Annie OrthoMatcher coreference engine.  Now correctly matches 
+   the sequence `David Jones ... David ... David Smith ... David' as referring to 
+   two people.  Also handles nicknames (David = Dave) via a new nickname list.  Added
+   optional parameter `highPrecisionOrgs', which if set to true turns off riskier org 
+   matching rules.  Many misc. bug fixes.
+
+\item Improved alignment editor (\Chapthing~\ref{chap:alignment}) with several
+  advanced features and an API for adding your own actions to the editor.
+
+\item A new plugin for Chinese word segmentation, which is
+  based on our work using machine learning algorithms for the Sighan-05 Chinese
+  word segmentation task. It can learn a model from manually segmented text, and
+  apply a learned model to segment Chinese text. In addition several learned
+  models are available with the plugin, which can be used to segment text. For
+  details about the plugin and those learned models see Section
+  \ref{sec:misc-creole:chineseSeg}.
+
+\item New features in the ML API to produce an n-gram based language model from
+  a corpus and a so-called `document-term matrix' (see
+  Section~\ref{sec:misc-creole:ir}).  Also introduced features to support active learning,
+  a new learning algorithm (PAUM) and various optimisations including the
+  ability to use an external executable for SVM training.  Full details in
+  \Chapthing~\ref{chap:ml}.
+
+\item A new plugin to compute BDM scores for an ontology. The BDM score
+  can be used to evaluate ontology based information extraction and
+  classification. For details about the plugin see Section
+  \ref{sec:eval:bdmplugin}.
+
+\item Added new `getCovering' method to AnnotationSet.  This method returns
+  annotations that completely span the provided range.  An optional annotation
+  type parameter can be provided to further limit the returned set.
+
+\item Complete redesign of ANNIC GUI. More details in
+  Section~\ref{chap:annic}.
+\end{itemize}
+
+\subsect{Specific Bug Fixes}
+
+\begin{itemize}
+\item HTML document format parser: several bugs fixed, including a
+  null pointer exception if the document contained certain characters illegal
+  in HTML
+  (\htlink{https://sourceforge.net/support/tracker.php?aid=1754749}{\#1754749}).
+  Also, the HTML parser now respects the `Add space on markup unpack'
+  configuration option -- previously it would always add space, even if the
+  option was set to false.
+  
+\item Fixed a severe performance bug in the Annie Pronominal Coreferencer
+  resulting in a 50X speed improvement.
+
+\item JAPE did not always correctly handle the case when the input and output
+  annotation sets for a transducer were different.  This has now been fixed.
+
+\item `Save Preserving Format' was not correctly escaping ampersands
+  and less than signs when two HTML entities are close together. Only the first
+  one was replaced: A \& B \& C was output as A \&amp; B \& C instead of A
+  \&amp; B \&amp; C. This has now been fixed, and the fix is also valid for the
+  flexible exporter but only if the standoff annotations parameter is set to
+  false.
+\end{itemize}
+
+Plus many more minor bug fixes
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\sect{April 2009}
+%
+%\begin{itemize}
+%
+%\item Create a plugin for Chinese word segmentation, which is
+% based on our work of using machine learning algorithms for the Sighan-05 
+%Chinese word segmentation task. It can learn a model from the segmented text.
+% It can also apply a learned model to segment Chinese text. In addition
+% several learned models are available with the plugin, which can be used
+%to segment text. For details about the 
+%plugin and those learned models see Section \ref{sec:misc-creole:chineseSeg}.
+%
+%\end{itemize}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\sect{March 2009}
+%
+%\begin{itemize}
+%
+%\item {\bf Important change}: ANNIE plugin is no more loaded by default so you
+%need to load it first before to use any of its processing resources. This is
+%done in order to be able to use GATE without ANNIE.
+%
+%\item Correct the output of 'Save Preserving Format' when
+%two HTML entities are close. Only the first one was replaced: A \& B \& C
+%was output as A \&amp; B \& C instead of A \&amp; B \&amp; C. This
+%correction is also valid for the flexible exporter but only if the standoff
+%annotations parameter is set to false.
+%
+%\item Create a plugin for computing the BDM scores for an ontology. The BDM score
+%can be used for evaluating the ontology based information extraction and
+%classification. For details about the plugin see Section \ref{sec:gui:bdmplugin}.
+%
+%\item Update the IAA plugin such that it can compute the BDM based F-measures now.
+%For more see Section \ref{sec:gui:iaaplugin}.
+%\end{itemize}
+%
+%\subsubsect{GUI improvements}
+%
+%\begin{itemize}
+%\item New dialog box for error messages with user oriented messages,
+%optional display of the configuration and proposing some useful
+%actions. This will progressively replace the old stack trace dump into the
+%message panel which is still here for the moment but should be hide by
+%default in the future.
+%
+%\item Add read-only document mode that can be enable from the Options menu.
+%
+%\item Add a selection filter in the status bar of the annotations list table
+%to easily select rows based on the text you enter.
+%
+%\item Add the last five applications loaded/saved in the context menu of the
+%language resources in the resources tree.
+%
+%\item Display more informations on what going's on in the waiting dialog box
+%when running an application. The goal is to improve it to get a global
+%progress bar and estimated time.
+%\end{itemize}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\sect{February 2009}
+%
+%Improved the scalability of the machine learning PR (i.e. it can use large 
+%training data without memory problem and also faster) in three ways: improved
+%the memory usage by optimising the codes; implemented the PAUM learning algorithm
+%which can achieve the similar performance as SVM but is much faster and needs
+%less memory; providing one option of running the SVM learning outside of the GATE
+%(i.e. the learning engine {\em SVMExec} in the configuration file). For more details
+%about the last two ways, see Section \ref{subsect-settings}.
+%
+%Added a mechanism to assemble a saved GATE application along with all the
+%resource files it uses into a single self-contained package to run on another
+%machine (e.g. as a service in \htlink{http://gate.ac.uk/teamware}{GATE
+%Teamware}).  This is available as a menu option
+%(section~\ref{sec:howto:export}) which will work for most common cases, but for
+%complex cases you can use the underlying Ant task described in
+%section~\ref{sec:ant:packagegapp}.
+%
+%\subsubsect{GUI improvements}
+%
+%\begin{itemize}
+%\item Remember the last annotations selected in the annotation set
+%view when you shift click on the annotation set view button.
+%
+%\item Improved context menu and when possible added drag and drop in:
+%resource tree, annotation set view, annotation list view, corpus view,
+%controller view. Context menu key can be now used if you have Java 1.6.
+%\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\sect{October 2008}
+%
+%\subsect{iaaPlugin}
+%
+%Added a new plugin `iaaPlugin', which computes inner-annotator agreement (IAA)
+%for two or more annotators for the same annotation task on the same documents.
+%For text classification tasks such as document, sentence or token classification,
+%it computes the IAA measures such as observed agreement, Cohen's kappa, and Scott's pi,
+%among others (see Appendix \ref{chap:iaakappa} for the explanations about those
+%measures). For named entity annotation task, it computes the F-measures as IAA.
+%For full details see Section \ref{sec:gui:iaaplugin}.
+%
+%\subsect{Tools for Alignment Tasks}
+%
+%A better alignment editor with several advanced features. API that allows
+%adding more features to the editor is explained under the section 
+%\ref{sec:alignment:editor:advanced-features}.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\sect{September 2008}
+%
+%Added new `getCovering' method to AnnotationSet.  This method returns
+%annotations that completely span the provided range.  An optional annotation
+%type parameter can be provided to further limit the returned set.
+%
+%\subsect{JAPE Updates}
+%Added annotation `meta-property' accessors. The three that are built in are
+%length, string, and cleanString.  See chapter~\ref{chap:jape} for full
+%details.
+%
+%Added custom boolean operators.  In addition to the standard \verb|==|,
+%\verb|<|, \verb|>|, etc, two new built in operators are \texttt{contains} and
+%\texttt{within}.  See section \ref{sec:jape:operators:contextual} for full
+%details.
+%
+%Add support for a range Kleene operator. e.g. \verb|({Token})[1,3]| matches one
+%to three Tokens in a row.
+%
+%Added parameters to Transducer objects to allow additional annotation
+%accessors and custom operators to be referenced without having to change
+%the JAPE language.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\sect{August 2008}
+%
+%Introduced an alternative style for supplying resource configuration
+%information via Java 5 annotations rather than in {\tt creole.xml}.  The
+%previous approach is still fully supported as well, and the two styles can be
+%freely mixed.  See section \ref{sec:creole-model:config} for full details.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\sect{July 2008}
+%Bug fix: the HTML document format parser now respects the "Add space on markup
+%unpack" configuration option. Previously it would always behave as if the
+%option was set to true (the default).
+%
+%\subsect{JAPE Updates}
+%A major update to the JAPE language, incorporating features inspired by (though
+%not exactly the same as) the Montreal Transducer.  Full details are in
+%chapter~\ref{chap:jape}, but briefly:
+%\begin{itemize}
+%\item Negative constraints, that prevent a rule from matching if certain other
+%      annotations are present (section~\ref{sec:jape:negation}).
+%\item Additional matching operators for feature values, so you can now look for
+%      \verb|{Token.length < 5}|, \verb|{Lookup.minorType != "ignore"}|, etc.~as
+%      well as simple equality (section~\ref{sec:jape:operators}).
+%\end{itemize}
+%
+%If you are already familiar with the Montreal Transducer, you should first look
+%at section~\ref{sec:jape:montrealdifferences} which summarises the differences.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\sect{May 2008}
+%%
+%Added a new plugin Ontology\_Based\_Gazetteer, which contains OntoRoot
+%Gazetteer -- a dynamically created gazetteer which is, in combination with few
+%other generic GATE resources, capable of producing ontology-aware annotations
+%over the given content with regards to the given ontology. For more details see
+%section~\ref{sec:gazetteers:ontoRootGaz}.
+%
+%Added the new Real-time corpus controller. See
+%section~\ref{sec:applications}.
+%%
+%\sect{March 2008}
+%%
+%Added a new plugin for the
+%\htlink{http://nlp.stanford.edu/software/lex-parser.shtml}{Stanford
+%  Parser}; see section~\ref{sec:parsers:stanford}.
+%
+%Added a new plugin for using the RASP NLP tools
+%(\htlink{http://www.informatics.sussex.ac.uk/research/groups/nlp/rasp/}{RASP
+%  web page}) and moved the old one into Obsolete/rasp; see
+%section~\ref{sec:parsers:rasp}.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\sect{January 2008}
+%Added some new functions to the ML API: it now can produce the n-gram based language model
+%from a corpus and also the so-called document-term matrix described in
+%Section \ref{sect:ir}. It also provides the facilities for SVM active learning,
+%mainly ranking the unlabelled documents according to their confidence scores
+%to the current learned SVM models. Also add one option to speed up
+%the processing of extracting feature vector from linguistic features.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\sect{October 2007}
+%A new plugin called {\em Annotation\_Merging} has been added to GATE. It
+%can be used for merging annotations from different annotators about the
+%same subject on the same document. It uses one of the
+%two implemented merging methods, the majority voting method and another one based
+%on the minimal number of annotators agreeing on the merged annotation.
+%See section~\ref{sec:misc-creole:merging} for more details.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\sect{September 2007}
+%A new sentence splitter, based on regular expressions, has been added to the
+%ANNIE plugin. More details in section~\ref{sec:regex-splitter}.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\sect{August 2007}
+%
+%Fixed a bug
+%(\htlink{https://sourceforge.net/support/tracker.php?aid=1754749}{\#1754749})
+%in the HTML document format parser where it would fail with a null pointer
+%exception if the document contained certain characters illegal in HTML.
+%
+%Fixed a bug in the JAPE parser which showed up in certain circumstances where
+%the input and output annotation sets are different.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:changes:4.0]{Version 4.0 (July 2007)}
+
+\subsect{Major New Features}
+
+\subsubsect{ANNIC}
+ANNotations In Context: a full-featured annotation indexing and retrieval
+system designed to support corpus querying and JAPE rule authoring.  It is
+provided as part of an extension of the Serial Datastores, called Searchable
+Serial Datastore (SSD). See Section~\ref{chap:annic} for more
+details.
+
+\subsubsect{New Machine Learning API}
+A brand new machine learning layer specifically targetted at NLP tasks
+including text classification, chunk learning (e.g. for named entity
+recognition) and relation learning.  See \Chapthing~\ref{chap:ml} for more
+details.
+
+\subsubsect{Ontology API}
+A new ontology API, based on \htlink{http://www.ontotext.com/owlim/}{OWL
+In Memory} (OWLIM), which offers a better API, revised ontology event model and
+an improved ontology editor to name but few. See
+\Chapthing~\ref{chap:ontologies} for more details.
+
+\subsubsect{OCAT}
+Ontology-based Corpus Annotation Tool to help annotators to manually annotate
+documents using ontologies. For more details please see
+Section~\ref{sec:ontologies:ocat}.
+
+\subsubsect{Alignment Tools}
+A new set of components (e.g. CompoundDocument, AlignmentEditor etc.) that help
+in building alignment tools and in carrying out cross-document processing.  See
+\Chapthing~\ref{chap:alignment} for more details.
+
+\subsubsect{New HTML Parser}
+A new HTML document format parser, based on Andy Clark's
+\htlink{http://people.apache.org/~andyc/neko/doc/html/}{NekoHTML}.  This parser
+is much better than the old one at handling modern HTML and XHTML constructs,
+JavaScript blocks, etc., though the old parser is still available for existing
+applications that depend on its behaviour.
+
+\subsubsect{Java 5.0 Support}
+GATE now requires Java 5.0 or later to compile and run.
+This brings a number of benefits:
+\begin{itemize}
+\item Java 5.0 syntax is now available on the right hand side of JAPE rules
+  with the default Eclipse compiler.  See
+  Section~\ref{sec:jape:javarhs} for details.
+\item \texttt{enum} types are now supported for resource parameters.  see
+  Section \ref{sec:api:bootstrap} for details on defining the parameters
+  of a resource.
+\item \texttt{AnnotationSet} and the \texttt{CreoleRegister} take advantage of
+  generic types.  The \texttt{AnnotationSet} interface is now an extension of
+  \texttt{Set<Annotation>} rather than just \texttt{Set}, which should make for
+  cleaner and more type-safe code when programming to the API, and the
+  \texttt{CreoleRegister} now uses parameterized types, which are
+  backwards-compatible but provide better type-safety for new code.
+\end{itemize}
+
+\subsect{Other New Features and Improvements}
+\begin{itemize}
+
+\item Hiding the view for a particular resource (by right clicking on its tab
+and selecting `Hide this view') will now completely close the associated
+viewers and dispose them. Re-selecting the same resource at a later time will
+lead to re-creating the necessary viewers and displaying them. This has two
+advantages: firstly it offers a mechanism for disposing views that are not
+needed any more without actually closing the resource and secondly it provides
+a way to refresh the view of a resource in the situations where it becomes
+corrupted.
+
+\item The DataStore viewer now allows multiple selections. This lets users load
+or delete an arbitrarily large number of resources in one operation.
+
+\item The Corpus editor has been completely overhauled. It now allows
+re-ordering of documents as well as sorting the document list by either index
+or document name.
+
+\item Support has been added for resource parameters of type
+  \texttt{gate.FeatureMap}, and it is also possible to specify a default value
+  for parameters whose type is \texttt{Collection}, \texttt{List} or
+  \texttt{Set}.  See Section~\ref{sec:api:plugins} for details.
+
+\item (Feature Request
+  \htlink{https://sourceforge.net/support/tracker.php?aid=1446642}{\#1446642})
+  After several requests, a mechanism has been added to allow overriding of
+  GATE's document format detection routine.  A new creation-time parameter
+  {\tt mimeType} has been added to the standard document implementation, which
+  forces a document to be interpreted as a specific MIME type and prevents the
+  usual detection based on file name extension and other information.  See
+  Section~\ref{sec:corpora:detecting-reader} for details.
+
+\item A capability has been added to specify arbitrary sets of additional
+  features on individual gazetteer entries.  These features are passed forward
+  into the Lookup annotations generated by the gazetteer.  See
+  Section~\ref{sec:annie:gazetteer} for details.
+
+\item As an alternative to the Google plugin, a new plugin called
+  \textit{yahoo} has been added to to allow users to submit their query to
+  the Yahoo search engine and to load the found pages as GATE documents.  See
+  Section~\ref{sec:misc-creole:yahoo} for more details.
+
+\item It is now easier to run a corpus pipeline over a single document in the
+  GATE Developer GUI -- documents now provide a right-click menu item to create a
+  singleton corpus containing just this document.  See Section
+  \ref{sec:developer:loadlr} for details.
+
+\item A new interface has been added that lets PRs receive notification at the
+  start and end of execution of their containing controller.  This is useful
+  for PRs that need to do cleanup or other processing after a whole corpus has
+  been processed.  See Section~\ref{sec:creole-model:applications} for details.
+
+\item The GATE Developer GUI does not call System.exit() any more when it is closed.
+  Instead an effort is made to stop all active threads and to release all
+  GUI resources, which leads to the JVM exiting gracefully. This is
+  particularly useful when GATE is embedded in other systems as closing the
+  main GATE window will not kill the JVM process any more.
+
+\item The set of AnnotationSchemas that used to be included in the core
+  gate.jar and loaded as builtins have now been moved to the ANNIE plugin. When
+  the plugin is loaded, the default annotation schemas are instantiated
+  automatically and are available when doing manual annotation.
+
+\item There is now support in creole.xml files for automatically creating
+  instances of a resource that are hidden (i.e. do not show in the GUI). One
+  example of this can be seen in the creole.xml file of the ANNIE plugin where
+  the default annotation schemas are defined.
+
+\item A couple of helper classes have been added to assist in using GATE within
+  a \htlink{http://www.springframework.org}{Spring} application.
+  Section~\ref{sec:api:spring} explains the details.
+
+\item Improvements have been made to the thread-safety of some internal
+  components, which mean that it is now safe to create resources in
+  multiple threads (though it is not safe to use the same resource instance in
+  more than one thread).  This is a big advantage when using GATE in a
+  multithreaded environment, such as a web application.  See Section
+  \ref{sec:api:multithread} for details.
+
+\item Plugins can now provide custom icons for their PRs and LRs in the plugin
+  JAR file.  See Section \ref{sec:api:bootstrap} for details.
+
+\item It is now possible to override the default location for the saved session
+  file using a system property.  See Section~\ref{sec:gettingstarted:sysprop} for
+  details.
+
+\item The TreeTagger plugin (`Tagger\_TreeTagger') supports a system property
+to specify the location of the shell interpreter used for the tagger shell
+script.  In combination
+  with Cygwin this makes it much easier to use the tagger on Windows.  
+  % See Section~\ref{sec:parsers:treetagger} for details.
+
+\item The {\tt Buchart} plugin has been removed.  It is superseded by SUPPLE,
+  and instructions on how to upgrade your applications from Buchart to SUPPLE
+  are given in Section~\ref{sec:parsers:supple}.  The probability finder
+  plugin has also been removed, as it is no longer maintained.
+
+\item The bootstrap wizard now creates a basic plugin that builds with Ant.
+  Since a Unix-style make command is no longer required this means that the
+  generated plugin will build on Windows without needing Cygwin or MinGW.
+
+\item The GATE source code has moved from CVS into Subversion.  See
+  Section~\ref{sec:gettingstarted:svn} for details of how to check out the code from the
+  new repository.
+
+\item An optional parameter, keepOriginalMarkupsAS, has been added to the
+  DocumentReset PR which allows users to decide whether to keep the Original
+  Markups AS or not while reseting the document. See
+  Section~\ref{sec:misc-creole:reset} for more details.
+
+\end{itemize}
+
+\subsect{Bug Fixes and Optimizations}
+\begin{itemize}
+\item The Morphological Analyser has been optimized.  A new FSM based, although
+  with minor alteration to the basic FSM algorithm, has been implemented to
+  optimize the Morphological Analyser. The previous profiling figures show
+  that the morpher when integrated with ANNIE application used to take upto
+  60\% of the overall processing time.  The optimized version only takes 7.6\%
+  of the total processing time. See Section~\ref{sec:parsers:morpher} for
+  more details on the morpher.
+
+\item The ANNIE Sentence Splitter was optimised. The new version is about twice
+  as fast as the previous one. The actual speed increase varies widely
+  depending on the nature of the document.
+
+\item The imlementation of the \textit{OrthoMatcher} component has been
+  improved.  This resources takes significantly less time on large documents.
+
+\item The implementation of \texttt{AnnotationSets} has been improved. GATE now
+  requires up to 40\% less memory to run and is also 20\% faster on average.
+  The \texttt{get} methods of \texttt{AnnotationSet} return instances of
+  \texttt{ImmutableAnnotationSet}. Any attempt at modifying the content of
+  these objects will trigger an \texttt{Exception}. An empty
+  \texttt{ImmutableAnnotationSet} is returned instead of \texttt{null}.
+
+\item The Chemistry tagger (Section~\ref{sec:parsers:chemistrytagger}) has
+  been updated with a number of bugfixes and improvements.
+
+\item The Document user interface has been optimised to deal better with large
+bursts of events which tend to occur when the document that is currently
+displayed gets modified. The main advantages brought by this new implementation
+are:
+\begin{itemize}
+  \item The document UI refreshes faster than before.
+  \item The presence of the GUI for a document induces a smaller performance
+  penalty than it used to. Due to a better threading implementation, machines
+  benefiting from multiple CPUs (e.g. dual CPU, dual core or hyperthreading
+  machines) should only see a negligible increase in processing time when a
+  document is displayed compared to the situations where the document view is
+  not shown. In the previous version, displaying a document while it was
+  processed used to increase execution time by an order of magnitude.
+  \item The GUI is more responsive now when a large number of annotations are
+  displayed, hidden or deleted.
+  \item The strange exceptions that used to occur occasionally while working
+  with the document GUI should not happen any more.
+\end{itemize}
+
+\end{itemize}
+And as always there are many smaller bugfixes too numerous to list here...
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \sect{March 2007}
+%
+% A new corpus annotation tool, OCAT, has been added to GATE, which assists
+% annotators to manually annotate documents using ontologies. For more details
+% please see section~\ref{sec:ontologies:ocat}.
+%
+% A new ontology API, based on OWLIM\footnote{http://www.ontotext.com/owlim/} has
+% been added to GATE. It offers a better API, revised ontology event model and an
+% improved ontology editor to name but few. See chapter~\ref{chap:ontologies} for
+% more details.
+%
+% A new corpus query and rule creation tool, ANNIC (Annotations in Context), has
+% been added to GATE. ANNIC is a full-featured annotation indexing and retrieval
+% system. It is provided as part of an extention of the Serial Datastores, called
+% Searchable Serial Datastore (SSD). See section~\ref{sec:misc-creole:annic} for
+% more details.
+%
+% The ANNIE Sentence Splitter was optimised. The new version is about twice as
+% fast as the previous one. The actual speed increase varies widely depending on
+% the nature of the document.
+%
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \sect{February 2007}
+%
+% A new plugin called \textit{Web\_Search\_Yahoo} has been added to GATE to
+% allow users to
+% submit their query to Yahoo and to load the found pages as GATE documents.  See
+% section~\ref{sec:misc-creole:yahoo} for more details.
+%
+% The imlementation of the \textit{OrthoMatcher} component has been improved.
+% This resources takes significantly less time on large documents.
+%
+% The Corpus editor has been completely overhauled. It now allows re-ordering of
+% documents as well as sorting the document list by either index or document name.
+%
+% The GATE GUI does not call System.exit() any more when it is closed. Instead an
+% effort is made to stop all active GATE threads and to release all GUI resources,
+% which leads to the JVM exiting gracefully. This is particularly useful when GATE
+% is embedded in other systems as closing the main GATE window will not kill the
+% JVM process any more.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \sect{January 2007}
+%
+% Support has been added for resource parameters of type
+% \texttt{gate.FeatureMap}.  See section~\ref{sec:howto:creoleconfig} for
+% details.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \sect{November 2006}
+%
+% A couple of subtle bugs relating to thread-safety of CREOLE
+% \texttt{ResourceData} have been fixed.  It is now safe to create resources
+% in multiple threads (though it is not safe to use the same resource instance in
+% more than one thread).  See section \ref{sec:howto:multithread} for details.
+%
+% A capability has been added to specify arbitrary sets of additional features on
+% individual gazetteer entries.  These features are passed forward into the
+% Lookup annotations generated by the gazetteer.  See section~\ref{sec:gazetteer}
+% for details.
+%
+% The implementation of \texttt{AnnotationSets} has been improved. GATE now requires
+% up to 40\% less memory to run and is also 20\% faster on average.
+%
+% The \texttt{get} methods of \texttt{AnnotationSet} return instances of
+% \texttt{ImmutableAnnotationSet}. Any attempt at modifying the content of these objects
+% will trigger an \texttt{Exception}. An empty \texttt{ImmutableAnnotationSet} is returned
+% instead of \texttt{null}.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \sect{October 2006}
+% GATE has officially become version 4.0-alpha1.
+%
+% The \texttt{AnnotationSet} interface is now an extension of
+% \texttt{Set<Annotation>} rather than just \texttt{Set}, which should make for
+% cleaner and more type-safe code when programming to the API.  Existing code
+% that uses \texttt{AnnotationSet}s does not need to change, but if you have a
+% class that {\em implements} \texttt{AnnotationSet} you will need to update it.
+% Similarly, the \texttt{CreoleRegister} now uses parameterized types, which are
+% backwards-compatible but provide better type-safety for new code.
+%
+% Java 5.0 \texttt{enum} types are now supported for resource parameters.  see
+% section \ref{sec:howto:creoleconfig} for details on defining the parameters of
+% a resource.
+%
+% It is now easier to run a corpus pipeline over a single document in the GATE
+% GUI -- documents now provide a right-click menu item to create a singleton
+% corpus containing just this document.  See section \ref{sec:howto:loadlr} for
+% details.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \sect{August 2006}
+%
+% GATE now (as of subversion revision 7592) requires Java 5.0 to build and run.
+%
+% Java 5.0 syntax is now available on the right hand side of JAPE rules with the
+% default Eclipse compiler.  See section~\ref{sec:japeimpl:javacompiler} for
+% details.
+%
+% A couple of helper classes have been added to assist in using GATE within a
+% \htlink{http://www.springframework.org}{Spring} application.
+% Section~\ref{sec:howto:spring} explains the details.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \sect{July 2006}
+%
+% (Feature Request \htlink{https://sourceforge.net/support/tracker.php?aid=1446642}{\#1446642})
+% After several requests, a mechanism has been added to allow overriding of
+% GATE's document format detection routine.  A new creation-time parameter
+% {\tt mimeType} has been added to the standard document implementation, which
+% forces a document to be interpreted as a specific MIME type and prevents the
+% usual detection based on file name extension and other information.  See
+% section~\ref{subsect:DetectingTheReader} for details.
+%
+% \subsect{Optimization of the GATE Morphological Analyzer}
+% A new FSM based, although with minor alteration to the basic FSM algorithm,
+% has been implemented to optimize the GATE Morphological Analyser. The previous
+% profiling figures show that the morpher when integrated with ANNIE application
+% used to take upto 60\% of the overall processing time.  The optimized version
+% only takes 7.6\% of the total processing time. See
+% section~\ref{sec:misc-creole:morpher} for more details on the morpher.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \sect{June 2006}
+%
+% The GATE source code has moved from CVS into Subversion.  See
+% section~\ref{sec:howto:svn} for details of how to check out the code from the
+% new repository.
+%
+% Plugins can now provide custom icons for their PRs and LRs in the plugin JAR
+% file.  See section \ref{sec:howto:creoleconfig} for details.
+%
+% The {\tt Buchart} plugin has been removed.  It is superseded by SUPPLE, and
+% instructions on how to upgrade your applications from Buchart to SUPPLE are
+% given in section~\ref{sec:parsers:supple}.  The probability finder plugin
+% has also been removed, as it is no longer maintained.
+%
+% The Chemistry tagger (section~\ref{sec:parsers:chemistrytagger}) has been
+% updated with a number of bugfixes and improvements.
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \sect{April 2006 (after 3.1)}
+%
+% Osamu Masutani from Denso IT Laboratory in Tokyo has contributed a GATE wrapper
+% for the Sen morphological analyser for Japanese.  See
+% \htlinkplain{http://gate.ac.uk/gate/doc/plugins.html} for details.
+%
+% The bootstrap wizard now creates a basic plugin that builds with Ant.  Since a
+% Unix-style make command is no longer required this means that the generated
+% plugin will build on Windows without needing Cygwin or MinGW.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect{Version 3.1 (April 2006)}
+
+\subsect{Major New Features}
+
+\subsubsect{Support for UIMA}
+UIMA (\htlinkplain{http://www.research.ibm.com/UIMA/}) is a language
+processing framework developed by IBM.  UIMA and GATE share some
+functionality but are complementary in most respects. GATE now provides an
+interoperability layer to allow UIMA applications to include GATE components
+in their processing and vice-versa.  For full information, see \Chapthing
+\ref{chap:uima}.
+
+\subsubsect{New Ontology API} The ontology layer has been rewritten in order to
+provide an abstraction layer between the model representation and the tools used
+for input and output of the various representation formats. An implementation
+that uses Jena 2 (\htlinkplain{http://jena.sourceforge.net/ontology}) for
+reading and writing OWL and RDF(S) is provided.
+
+\subsubsect{Ontotext Japec Compiler}
+Japec is a compiler for JAPE grammars developed by Ontotext Lab.  It has
+some limitations compared to the standard JAPE transducer implementation,
+but can run JAPE grammars up to five times as fast.  By default, GATE still
+uses the stable JAPE implementation, but if you want to experiment with
+Japec, see Section \ref{sec:misc-creole:japec}.
+
+\subsect{Other New Features and Improvements}
+
+\begin{itemize}
+\item Addition of a new JAPE matching style `all'. This is similar to Brill,
+  but once all rules from a given start point have matched, the matching will
+  continue from the next offset to the current one, rather than from the
+  position in the document where the longest match finishes. More details can
+  be found in Section \ref{sec:jape:priority}.
+\item Limited support for loading PDF and Microsoft Word document formats.
+  Only the text is extracted from the documents, no formatting information is
+  preserved.
+\item The Buchart parser has been deprecated and replaced by a new plugin
+  called SUPPLE - the Sheffield University Prolog Parser for Language
+  Engineering.  Full details, including information on how to move your
+  application from Buchart to SUPPLE, is in Section
+  \ref{sec:parsers:supple}.
+\item The Hepple POS Tagger is now open-source.  The source code has been
+  included in the GATE Developer/Embedded distribution, under
+  src/hepple/postag. More information about the POS Tagger can be
+  found in Section \ref{sec:annie:tagger}.
+\item Minipar is now supported on Windows.  \textit{minipar-windows.exe}, a
+  modified version of \textit{pdemo.cpp} is added under the
+  gate/plugins/Parser\_Minipar directory to allow users to run Minipar on
+  windows platform. While using Minipar on Windows, this binary should be
+  provided as a value for \textit{miniparBinary} parameter.  (The Minipar plugin
+  has been subsequently retired.)
+  %For full information on Minipar
+  %in GATE, see Section \ref{sec:parsers:minipar}.
+  % This \ref is dead (Minipar removed in 2016)
+\item The XmlGateFormat writer(Save As Xml from GATE Developer GUI, gate.Document.toXml()
+  from GATE Embedded API) and reader have been modified to write and read GATE
+  annotation IDs. For backward compatibility reasons the old reader
+  has been kept. This change fixes a bug which manifested in the
+  following situation: If a GATE document had annotations carrying
+  features of which values were numbers representing other GATE
+  annotation IDs, after a save and a reload of the document to and
+  from XML, the former values of the features could have become
+  invalid by pointing to other annotations. By saving and restoring
+  the GATE annotation ID, the former consistency of the GATE document
+  is maintained. For more information, see
+  Section \ref{sec:corpora:saveasxml}.
+\item The NP chunker and chemistry tagger plugins have been updated.  Mark A.
+  Greenwood has relicenced them under the LGPL, so their source code has been
+  moved into the GATE Developer/Embedded distribution.  See Sections
+  \ref{sec:parsers:npchunker} and \ref{sec:parsers:chemistrytagger} for
+  details.
+\item The Tree Tagger wrapper has been updated with an option to be less strict
+  when characters that cannot be represented in the tagger's encoding are
+  encountered in the document. 
+  % Details are in Section \ref{sec:parsers:treetagger}.
+\item JAPE Transducers can be serialized into binary files.  The option to load
+  serialized version of JAPE Transducer (an init-time parameter
+  \textit{binaryGrammarURL}) is also implemented which can be used as an
+  alternative to the parameter \textit{grammarURL}. More information can be
+  found in Section \ref{sec:jape:serialization}.
+\item On Mac OS, GATE Developer now behaves more `naturally'.  The application menu items
+  and keyboard shortcuts for {\it About} and {\it Preferences} now do
+  what you would expect, and exiting GATE Developer with command-Q or the {\it
+  Quit} menu item properly saves your options and current session.
+\item Updated versions of Weka(3.4.6) and Maxent(2.4.0).
+\item Optimisation in {\it gate.creole.ml}: the conversion of AnnotationSet
+  into ML examples is now faster.
+\item It is now possible to create your own implementation of {\tt Annotation},
+  and have GATE use this instead of the default
+  implementation.  See {\tt AnnotationFactory} and {\tt
+  AnnotationSetImpl} in the {\tt gate.annotation} package for details.
+\end{itemize}
+
+\subsect{Bug Fixes}
+
+\begin{itemize}
+\item The Tree Tagger wrapper has been updated in order to run under Windows.
+% See \ref{sec:parsers:treetagger}.
+\item The SUPPLE parser has been made more user-friendly.  It now produces more
+helpful error messages if things go wrong.  Note that you will need to update
+any saved applications that include SUPPLE to work with this version - see
+Section \ref{sec:parsers:supple} for details.
+\item Miscellaneous fixes in the Ontotext JapeC compiler.
+\item Optimization : the creation of a Document is much faster.
+\item Google plugin: The optional pagesToExclude parameter was causing a
+  NullPointerException when left empty at run time. Full details about the
+  plugin functionality can be found in Section \ref{sec:misc-creole:google}.
+\item Minipar, SUPPLE, TreeTagger: These plugins that call external processes
+  have been fixed to cope better with path names that contain spaces.  Note that
+  some of the external tools themselves still have problems handling spaces in
+  file names, but these are beyond our control to fix.  If you want to use any
+  of these plugins, be sure to read the documentation to see if they have any
+  such restrictions.  (The Minipar plugin has been subsequently retired.)
+\item When using a non-default location for GATE configuration files, the
+  configuration data is saved back to the correct location when GATE exits.
+  Previously the default locations were always used.
+\item Jape Debugger:  ConcurrentModificationException in JAPE debugger.
+  The JAPE debugger was generating a ConcurrentModificationException during an
+  attempt to run ANNIE. There is no exception when running without the debugger
+  enabled. As result of fixing one unnecessary and incorrect callback to
+  debugger was removed from SinglePhaseTransducer class.
+\item Plus many other small bugfixes...
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\sect{January 2005}
+Release of version 3.
+
+New plugins for processing in various languages (see
+\ref{sec:misc-creole:language-plugins}). These are not full IE systems but are
+designed as starting points for further development (French, German, Spanish,
+etc.), or as sample or toy applications (Cebuano, Hindi, etc.).
+
+Other new plugins:
+\begin{itemize}
+\item Chemistry Tagger \ref{sec:parsers:chemistrytagger}
+\item Montreal Transducer (since retired)
+%\ref{sec:misc-creole:montrealtransducer}
+\item RASP Parser \ref{sec:parsers:rasp}
+\item MiniPar (since retired)
+\item Buchart Parser \ref{sec:parsers:buchart}
+\item MinorThird (Version 5.1: removed)
+\item NP Chunker \ref{sec:parsers:npchunker}
+\item Stemmer \ref{sec:parsers:stemmer}
+\item TreeTagger %\ref{sec:parsers:treetagger}
+\item Probability Finder %\ref{sec:misc-creole:probability}
+\item Crawler \ref{sec:misc-creole:crawler}
+\item Google PR \ref{sec:misc-creole:google}
+\end{itemize}
+
+Support for SVM Light, a support vector machine implementation, has been added
+to the machine learning plugin `Learning' (see section \ref{sec:ml:svmlight}).
+
+
+\sect{December 2004}
+
+GATE no longer depends on the Sun Java compiler to run, which means it will now
+work on any Java runtime environment of at least version 1.4.  JAPE grammars
+are now compiled using the Eclipse JDT Java compiler by default.
+
+A welcome side-effect of this change is that it is now much easier to integrate
+GATE-based processing into web applications in Tomcat.  See
+Section~\ref{sec:api:tomcat} for details.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect{September 2004}
+
+GATE applications are now saved in XML format using the XStream library,
+rather than by using native java
+serialization. On loading an application, GATE
+will automatically detect whether it is in the old or the new format, and so
+applications in both formats can be loaded. However, older
+versions of GATE will be unable to load applications saved in the XML format. (A
+{\tt java.io.StreamCorruptedException: invalid stream header exception} will
+occcur.) It is possible to get new versions of GATE to use the old format by
+setting a flag in the source code. (See the Gate.java file for details.) This
+change has been made because it allows the details of an application to be
+viewed and edited in a text editor, which is sometimes easier than loading the
+application into GATE.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect{Version 3 Beta 1 (August 2004)}
+
+Version 3 incorporates a lot of new functionality and some reorganisation of
+existing components.
+
+Note that Beta 1 is feature-complete but needs further debugging (please
+send us bug reports!).
+
+Highlights include: completely rewritten document viewer/editor;
+extensive ontology support; a new plugin management
+system; separate .jar files and a Tomcat classloading fix; lots more CREOLE
+components (and some more to come soon).
+
+Almost all the changes are backwards-compatible; some recent classes have
+been renamed (particularly the ontologies support classes) and a few events
+added (see below); datastores created by version 3 will probably not read
+properly in version 2.  If you have problems use the mailing list and we'll
+help you fix your code!
+
+The gorey details:
+\begin{itemize}
+%
+\item
+Anonymous CVS is now available.  See Section \ref{sec:gettingstarted:svn} for details.
+%
+\item
+CREOLE repositories and the components they contain are now managed as
+plugins. You can select the plugins the system knows about (and add new
+ones) by going to `Manage CREOLE Plugins' on the file menu.
+%
+\item
+The {\tt gate.jar} file no longer contains all the subsidiary libraries and
+CREOLE component resources. This makes it easier to replace library versions
+and/or not load them when not required (libraries used by CREOLE builtins
+will now not be loaded unless you ask for them from the plugins manager
+console).
+%
+\item
+ANNIE and other bundled components now have their resource files (e.g.
+pattern files, gazetteer lists) in a separate directory in the distribution
+-- {\tt gate/plugins}.
+%
+\item
+Some testing with Sun's JDK 1.5 pre-releases has been done and no problems
+reported.
+%
+\item
+The {\tt gate://} URL system used to load CREOLE and ANNIE resources in past
+releases is no longer needed. This means that loading in systems like Tomcat
+is now much easier.
+%
+\item
+MAC OS X is now properly supported by the installed and the runtime.
+%
+\item
+An Ontology-based Corpus Annotation Tool (OCAT) has been implemented as a
+plugin. Documentation of its functionality is in Section
+\ref{sec:ontologies:ocat}.
+%
+\item
+The NLG Lexical tools from the MIAKT project have now been released.
+% See documentation in Section \ref{sec:misc-creole:nlg}.
+%
+\item
+The Features viewer/editor has been completely updated -- see Section \ref{sec:developer:edit} for details.
+%
+\item
+The Document editor has been completely rewritten
+-- see Section \ref{sec:developer:documents} for more information.
+%
+\item
+The datastore viewer is now a full-size VR -- see Section
+\ref{sec:developer:datastores} for more information.
+%
+\end{itemize}
+%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect{July 2004}
+
+GATE documents now fire events when the document content is edited.  This
+was added in order to support the new facility of editing documents from the
+GUI. This change will break backwards compatibility by requiring all
+DocumentListener implementations to implement a new method: \\
+{\tt public void contentEdited(DocumentEvent e);}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect{June 2004}
+
+A new algorithm has been implemented for the AnnotationDiff function. A new,
+more usable, GUI is included, and an `Export to HTML' option added. More
+details about the AnnotationDiff tool are in Section \ref{sec:eval:adiff}.
+
+A new build process, based on ANT (http://ant.apache.org/) is now
+available. The old build process, based on make, is now
+unsupported. See Section \ref{sec:gettingstarted:build} for details of the new
+build process.
+
+A Jape Debugger from Ontos AG has been integrated. You can turn
+integration ON with command line option `-j'. If you run GATE Developer with
+this option, the new menu item for Jape Debugger GUI will appear in the
+Tools menu. The default value of integration is OFF. We are currently
+awaiting documentation for this.
+
+NOTE! Keep in mind there is ClassCastException if you try to debug
+ConditionalCorpusPipeline. Jape Debugger is designed for Corpus Pipeline
+only. The Ontos code needs to be changed to allow debugging of
+ConditionalCorpusPipeline.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect{April 2004}
+
+There are now two alternative strategies for ontology-aware grammar
+transduction:
+%
+\begin{itemize}
+%
+\item using the [ontology] feature both in grammars and annotations; with the
+default Transducer.
+%
+\item using the ontology aware transducer -- passing an ontology LR to a new
+subsume method in the SimpleFeatureMapImpl. the latter strategy does not
+check for ontology features (this will make the writing of grammars
+easier -- no need to specify ontology).
+%
+\end{itemize}
+
+The changes are in:
+%
+\begin{itemize}
+%
+\item SinglePhaseTransducer (always call subsume with ontology -- if null
+then the ordinary subsumption takes place)
+%
+\item SimpleFeatureMapImpl (new subsume method using an ontology LR)
+%
+\end{itemize}
+%
+More information about the ontology-aware transducer can be found in Section
+\ref{sec:ontologies:ontology-aware-jape}.
+
+A morphological analyser PR has been added. This finds the root and
+affix values of a token and adds them as features to that token.
+
+A flexible gazetteer PR has been added. This performs lookup over a
+document based on the values of an arbitrary feature of an arbitrary
+annotation type, by using an externally provided gazetteer. See
+\ref{sec:gazetteers:flexgazetteer} for details.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect{March 2004}
+
+Support was added for the MAXENT machine learning library. (See
+\ref{sec:ml:maxent} for details.)
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect{Version 2.2 -- August 2003}
+
+Note that GATE 2.2 works with JDK 1.4.0 or above. Version 1.4.2 is
+recommended, and is the one included with the latest installers.
+
+GATE has been adapted to work with Postgres 7.3. The compatibility with
+PostgreSQL 7.2 has been preserved. 
+
+Note that as of Version 5.1 PostgreSQL is no longer supported.
+
+%See \ref{chap:oraclepostgre} for more
+%details.
+
+New library version -- Lucene 1.3 (rc1)
+
+A bug in gate.util.Javac has been fixed in order to account for situations
+when String literals require an encoding different from the platform
+default.
+
+Temporary .java files used to compile JAPE RHS actions are now saved using
+UTF-8 and the `-encoding UTF-8' option is passed to the javac compiler.
+
+A custom tools.jar is no longer necessary
+
+Minor changes have been made to the look and feel of GATE Developer to
+improve its appearance with JDK 1.4.2
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect{Version 2.1 --  February 2003}
+
+Integration of Machine Learning PR and WEKA wrapper (see Section
+\ref{sec:ml:machine-learning-pr}).
+
+Addition of DAML+OIL exporter.
+
+Integration of WordNet (see Section \ref{sec:misc-creole:wn}).
+
+The syntax tree viewer has been updated to fix some bugs.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect{June 2002}
+
+Conditional versions of the controllers are now available (see Section
+\ref{sec:developer:cond}). These allow processing resources to be run
+conditionally on document features.
+
+PostgreSQL Datastores are now supported.
+% (see Section
+%\ref{chap:oraclepostgre}). 
+
+These store data into a PostgreSQL RDBMS.
+
+(As of Version 5.1 PostgreSQL is no longer supported.)
+
+Addition of OntoGazetteer (see Section \ref{sec:gazetteers:ontogaz}), an
+interface which makes ontologies visible within GATE Developer, and
+supports basic methods for hierarchy management and traversal.
+
+Integration of Prot\'eg\'e, so that people
+with developed Prot\'eg\'e ontologies can use them within GATE.
+
+Addition of IR facilities in GATE (see Section \ref{sec:misc-creole:ir}).
+
+Modification of the corpus benchmark tool (see Section
+\ref{sec:eval:howto-benchmarktool}), which now takes an application as a
+parameter.
+
+See also \htlink{http://gate.ac.uk/gate/doc/bugs.html} for details of other
+recent bug fixes.

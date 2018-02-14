@@ -1,0 +1,319 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% negram.tex
+%
+% diana, 8/1
+%
+% $Id: negram.tex,v 1.9 2005/02/10 17:08:59 ian Exp $
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapt[chap:negram]{Named-Entity State Machine Patterns}
+\markboth{Named-Entity State Machine Patterns}{Named-Entity State Machine
+Patterns}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%% qqqqqqqqqqqqqqqqqqqqqqqqq %%%%
+\begin{quote}
+There are, it seems to me, two basic reasons why minds aren't computers...
+The first... is that human beings are organisms. Because
+of this we have all sorts of needs - for food, shelter, clothing, sex
+etc - and capacities - for locomotion, manipulation, articulate
+speech etc, and so on - to which there are no real analogies in computers.
+These needs and capacities underlie and interact with our
+mental activities. This is important, not simply because we can't
+understand how humans behave except in the light of these needs
+and capacities, but because any historical explanation of how human
+mental life developed can only do so by looking at how this
+process interacted with the evolution of these needs and capacities
+in successive species of hominids. 
+
+\ldots
+
+The second reason... is that... brains don't work like computers. 
+
+{\it Minds, Machines and Evolution}, Alex Callinicos, 1997 (ISJ 74, p.103).
+\end{quote}
+%%%% qqqqqqqqqqqqqqqqqqqqqqqqq %%%%
+
+
+This \chapthing\ describes the individual grammars used in GATE for Named
+Entity Recognition, and how they are combined together. It relates to
+the default NE grammar for ANNIE, but should also provide guidelines
+for those adapting or creating new grammars. For documentation about
+specific grammars other than this core set, use this document in
+combination with the comments in the relevant grammar
+files. \chapthing\ \ref{chap:jape} also provides information
+about designing new grammar rules and tips for ensuring maximum
+processing speed.
+
+
+\sect{Main.jape}
+
+This file contains a list of the grammars to be used, in the
+correct processing order. The ordering of the grammars is crucial,
+because they are processed in series, and later grammars may depend on
+annotations produced by earlier grammars.
+
+The default grammar consists of the following phases:
+\begin{itemize}
+\item first.jape
+\item firstname.jape
+\item name.jape
+\item name\_post.jape
+\item date\_pre.jape
+\item date.jape
+\item reldate.jape
+\item number.jape
+\item address.jape
+\item url.jape
+\item identifier.jape
+\item jobtitle.jape
+\item final.jape
+\item unknown.jape
+\item name\_context.jape
+\item org\_context.jape
+\item loc\_context.jape
+\item clean.jape
+\end{itemize}
+
+
+\sect{first.jape}
+
+This grammar must always be processed first. It can contain any
+general macros needed for the whole grammar set. This should consist
+of a macro defining how space and control characters are to be
+processed (and may consequently be different for each grammar set,
+depending on the text type). Because this is defined first of all, it
+is not necessary to restate this in later grammars. This has a big
+advantage -- it means that default grammars can be used for specialised
+grammar sets, without having to be adapted to deal with e.g. different
+treatment of spaces and control characters. In this way, only the
+first.jape file needs to be changed for each grammar set, rather than
+every individual grammar.
+
+The first.jape grammar also has a dummy rule in. This is never
+intended to fire -- it is simply added because every grammar set must
+contain rules, but there are no specific rules we wish to add
+here. Even if the rule were to match the pattern defined, it is
+designed not to produce any output (due to the empty RHS).
+
+\sect{firstname.jape}
+This grammar contains rules to identify first names and titles via the
+gazetteer lists. It adds a gender feature where appropriate from the
+gazetteer list. This gender feature is used later in order to improve
+co-reference between names and pronouns. The grammar creates
+separate annotations of type FirstPerson and Title.
+
+\sect{name.jape}
+
+This grammar contains initial rules for organization, location and
+person entities. These rules all create temporary annotations, some of
+which will be discarded later, but the majority of which will be
+converted into final annotations in later grammars. Rules beginning
+with `Not' are negative rules -- this means that we detect something
+and give it a special annotation (or no annotation at all) in order to
+prevent it being recognised as a name. This is because we have no
+negative operator (we have `=' but not `!=').
+
+\subsect{Person}
+
+We first define macros for initials, first names, surnames, and
+endings. We then use these to recognise combinations of first names
+from the previous phase, and surnames from their POS tags
+or case information. Persons get marked with the
+annotation `TempPerson'. We also percolate feature information about
+the gender from the previous annotations if known.
+
+\subsect{Location}
+
+The rules for Location are fairly straightforward, but we define them
+in this grammar so that any ambiguity can be resolved at the top
+level. Locations are often combined with other entity types, such as
+Organisations. This is dealt with by annotating the two entity types
+separately, and them combining them in a later phase. Locations are
+recognised mainly by gazetteer lookup, using not only lists of known
+places, but also key words such as mountain, lake, river, city
+etc. Locations are annotated as TempLocation in this phase.
+
+\subsect{Organization}
+
+Organizations tend to be defined either by straight lookup from
+the gazetteer lists, or, for the majority, by a combination of POS or
+case information and key words such as `company', `bank',
+`Services' `Ltd.' etc. Many organizations are also identified by
+contextual information in the later phase org\_context.jape. In this
+phase, organizations are annotated as TempOrganization.
+
+\subsect{Ambiguities}
+
+Some ambiguities are resolved immediately in this grammar, while
+others are left until later phases. For example, a Christian name
+followed by a possible Location is resolved by default to a person rather than
+a Location (e.g. `Ken London'). On the other hand, a Christian name
+followed by a possible organisation ending is resolved to an
+Organisation (e.g. `Alexandra Pottery'), though this is a slightly
+less sure rule.
+
+\subsect{Contextual information}
+Although most of the rules involving contextual information are
+invoked in a much later phase, there are a few which are invoked here,
+such as `X joined Y' where X is annotated as a Person and Y as an
+Organization. This is so that both annotations types can be handled at once.
+
+\sect{name\_post.jape}
+This grammar runs after the name grammar to fix some erroneous
+annotations that may have been created. Of course, a more elegant
+solution would be not to create the problem in the first instance, but
+this is a workaround. For example, if the surname of a Person contains
+certain stop words, e.g. `Mary And' then only the first name should be
+recognised as a Person. However, it might be that the firstname is
+also an Organization (and has been tagged with TempOrganization
+already), e.g. `U.N.' If this is the case, then the annotation is left
+untouched, because this is correct.
+
+\sect{date\_pre.jape}
+This grammar precedes the date phase, because it includes extra context
+to prevent dates being recognised erroneously in the middle of longer
+expressions. It mainly treats the case where an expression is already
+tagged as a Person, but could also be tagged as a date (e.g. 16th
+Jan).
+
+\sect{date.jape}
+This grammar contains the base rules for recognising times and
+dates. Given the complexity of potential patterns representing such
+expressions, there are a large number of rules and macros.
+
+Although times and dates can be mutually ambiguous, we try to
+distinguish between them as early as possible. Dates, times and years
+are generally tagged separately (as TempDate, TempTime and TempYear
+respectively) and then recombined to form a final Date annotation in a
+later phase. This is because dates, times and years can be combined
+together in many different ways, and also because there can be much
+ambiguity between the three. For example, 1312 could be a time or a
+year, while 9-10 could be a span of time or date, or a fixed time
+or date.
+
+\sect{reldate.jape}
+This grammar handles relative rather than absolute date and time
+sequences, such as `yesterday morning', `2 hours ago', `the first
+9 months of the financial year'etc. It uses mainly explicit key words
+such as `ago' and items from the gazetteer lists.
+
+
+\sect{number.jape}
+
+This grammar covers rules concerning money and percentages.
+The rules are fairly straightforward, using keywords from the
+gazetteer lists, and there is little ambiguity here, except for
+example where `Pound' can be money or weight, or where there is no
+explicit currency denominator.
+
+ 
+\sect{address.jape}
+
+Rules for Address cover ip addresses, phone and fax
+numbers, and postal addresses. In general, these are not highly ambiguous, and can be
+covered with simple pattern matching, although phone numbers can
+require use of contextual information. Currently only UK formats are
+really handled, though handling of foreign zipcodes and
+phone number formats is envisaged in future. The annotations produced
+are of type Email, Phone etc. and are then replaced in a later phase
+with final Address annotations with `phone' etc. as features.
+
+\sect{url.jape}
+Rules for email addresses and Urls are in a separate grammar from the
+other address types, for the simple reason that SpaceTokens need to be
+identified for these rules to operate, whereas this is not necessary
+for the other Address types. For speed of processing, we place them in
+separate grammars so that SpaceTokens can be eliminated from the Input
+when they are not required.
+
+\sect{identifier.jape}
+
+This grammar identifies `Identifiers' which basically means any
+combination of numbers and letters acting as an ID, reference number
+etc. not recognised as any other entity type. 
+
+\sect{jobtitle.jape}
+
+This grammar simply identifies Jobtitles from the gazetteer lists, and
+adds a JobTitle annotation, which is used in later phases to aid
+recognition of other entity types such as Person and Organization. It
+may then be discarded in the Clean phase if not required as a final
+annotation type.
+
+
+\sect{final.jape}
+
+This grammar uses the temporary annotations previously assigned in
+the earlier phases, and converts them into final annotations. The
+reason for this is that we need to be able to resolve ambiguities
+between different entity types, so we need to have all the different
+entity types handled in a single grammar somewhere. Ambiguities can be
+resolved using prioritisation techniques. Also, we may need to combine
+previously annotated elements, such as dates and times, into a single
+entity.
+
+The rules in this grammar use Java code on the RHS to
+remove the existing temporary annotations, and replace them with new
+annotations. This is because we want to retain the features associated
+with the temporary annotations. For example, we might need to keep
+track of whether a person is male or female, or whether a location is
+a city or country. It also enables us to keep track of which rules
+have been used, for debugging purposes.
+
+For the sake of obfuscation, although this phase is called final, it
+is not the final phase!
+
+\sect{unknown.jape}
+
+This short grammar finds proper nouns not previously recognised,
+and gives them an Unknown annotation. This is then used by the
+namematcher -- if an Unknown annotation can be matched with a
+previously categorised entity, its annotation is changed to that of
+the matched entity. Any remaining Unknown annotations are useful
+for debugging purposes, and can also be used as input for additional
+grammars or processing resources.
+
+
+\sect{name\_context.jape}
+
+This grammar looks for Unknown annotations occurring in certain
+contexts which indicate they might belong to Person. This is a typical
+example of a grammar that would benefit from learning or automatic
+context generation, because useful contexts are (a) hard to find
+manually and may require large volumes of training data, and (b) often
+very domain--specific. In this core grammar, we confine the use of
+contexts to fairly general uses, since this grammar should not be
+domain--dependent.
+
+\sect{org\_context.jape}
+
+This grammar operates on a similar principle to name\_context.jape. It
+is slightly oriented towards business texts, so does not quite fulfil
+the generality criteria of the previous grammar. It does, however,
+provide some insight into more detailed use of contexts.</p>
+
+\sect{loc\_context.jape}
+
+This grammar also operates in a similar manner to the preceding two,
+using general context such as coordinated pairs of locations, and
+hyponymic types of information.
+
+\sect{clean.jape}
+
+This grammar comes last of all, and simply aims to clean up (remove)
+some of the temporary annotations that may not have been deleted along
+the way.
+
+%\include{grammars}
+
+
+
+
+
+
+

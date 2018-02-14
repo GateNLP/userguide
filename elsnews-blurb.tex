@@ -1,0 +1,195 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% elsnews-blurb.tex
+%
+% hamish, 19/3/2
+%
+% $Id: elsnews-blurb.tex,v 1.1 2002/03/19 13:38:38 hamish Exp $
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Version 2 of GATE, a General Architecture for Text Engineering, was released
+on March 14th 2002.
+GATE is an infrastructure for developing and deploying software components 
+that process human language.
+
+GATE has been in development at the University of Sheffield since
+1995 and has been used in a wide variety of research and development
+projects, including Information Extraction in English,
+Bulgarian, Romanian, Belgali,
+Greek, Spanish, Swedish, German, Italian and French.
+
+GATE aims to help scientists and developers in three ways:
+%
+\begin{enumerate}
+%
+\item
+by specifiying an {\bf architecture}, or organisational structure,
+for language processing software;
+%
+\item
+by providing a {\bf framework}, or class library or SDK,
+that implements the architecture and can be used
+to embed language processing capabilities in diverse applications;
+%
+\item
+by providing a {\bf development environment} built on top of the framework 
+made up of convenient graphical tools for developing components.
+\end{enumerate}
+%
+The architecture exploits component-based software development,
+object orientation and mobile code. The framework and development
+environment are written in Java and available as open-source free software.
+
+GATE as an architecture suggests that the elements of software systems that
+process natural language can usefully be broken down into various types of
+component, known as resources.  Components
+are reusable software chunks with well-defined interfaces; 
+GATE components are specialised types of Java Bean, and come in
+three flavours:
+%
+\begin{itemize}
+%
+\item 
+LanguageResources (LRs) represent entities such as lexicons, corpora or
+ontologies;
+%
+\item 
+ProcessingResources (PRs) represent entities that are primarily algorithmic,
+such as parsers, generators or ngram modellers;
+%
+\item 
+VisualResources (VRs) represent visualisation and editing components that
+participate in GUIs.
+%
+\end{itemize}
+%
+These definitions can be blurred in practice as necessary.
+
+Collectively, the set of resources integrated with GATE is known as
+{\bf CREOLE}: a
+Collection of REusable Objects for Language Engineering. All the resources are
+packaged as Java Archive (or `JAR') files, plus some XML configuration data.
+The JAR and XML files are made available to GATE by putting them on a web
+server, or simply placing them in the local file space.
+
+When using GATE to develop language processing functionality for an application,
+the developer uses the development environment and the framework to construct
+resources of the three types. This may involve programming, or the development
+of Language Resources such as grammars that are used by existing Processing
+Resources, or a mixture of both. The development environment is used for
+visualisation of the data structures produced and consumed during processing,
+and for debugging, performance measurement and so on.
+When an appropriate set of resources have been developed, they can then be
+embedded in the target client application using the GATE framework. The 
+framework is supplied as two JAR files.
+
+GATE includes resources for common LE data structures and algorithms,
+including documents, corpora and various annotation types, a set of
+language analysis components for Information Extraction and a range of data
+visualisation and editing components.
+GATE supports documents in a variety of formats including XML, RTF, email,
+HTML, SGML and plain text. In all cases the format is analysed and converted
+into a single unified model of {\em annotation}, compatible with other
+formats such as XCES, ATLAS, etc.
+A family of Processing Resources for language analysis is included in the
+shape of ANNIE, A Nearly-New Information Extraction system. These components
+use finite state techniques to implement various tasks from tokenisation to
+semantic tagging or verb phrase chunking.
+
+Three other facilities in GATE deserve special mention:
+%
+\begin{itemize}
+%
+\item
+JAPE, a Java Annotation Patterns Engine, provides regular-expression based
+pattern/action rules over annotations.
+%
+\item
+The `annotation diff' tool in the development environment implements
+performance metrics such as precision and recall for comparing annotations.
+%
+\item
+GUK, the GATE Unicode Kit, fills in some of the gaps in Java'
+s support for Unicode, e.g. by adding input methods for various languages
+from Urdu to Chinese.
+\end{itemize}
+%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\subsect{An Example}\label{sec:example}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+{\bf An Example}
+
+Let's imagine that a developer called Fatima is building an email
+client for Cyberdyne Systems' large corporate Intranet.
+In this application she would like to have a language processing system
+that automatically spots the names of people in the corporation and
+transforms them into {\tt mailto} hyperlinks.
+
+A little investigation shows that GATE's existing components can be tailored
+to this purpose. Fatima starts up the development environment,
+and creates a new document containing some example emails. She then
+loads some processing resources that will do named-entity recognition (a
+tokeniser, gazetteer and semantic tagger), and creates an application to run
+these components on the document in sequence. Having processed the emails,
+she can see the results in one of several viewers for annotations.
+
+The GATE components are a decent start, but they need to be altered to deal
+specially with people from Cyberdyne's personnel database. Therefore Fatima
+creates new ``cyber-'' vesions of the gazetteer and semantic tagger resources,
+using the ``bootstrap'' tool. This tool creates a directory structure on disk
+that has some Java stub code, a Makefile and an XML configuration file.
+After several hours struggling with badly written documentation, Fatima manages
+to compile the stubs and create a JAR file containing the new resources. She
+tells GATE the URL of these files and the
+system then allows her to load them in the same way that she loaded the
+built-in resources earlier on.
+
+Fatima then creates a second copy of the email document, and uses the
+annotation editing facilities to mark up the results that she would like to
+see her system producing. She saves this and the version that she ran GATE on
+into her Oracle datastore. From now on she can follow this routine:
+%
+\begin{enumerate}
+\item\label{item:run}
+Run her application on the email test corpus.
+\item
+Check the performance of the system by running the `annotation diff' tool to
+compare her manual results with the system's results. This gives her both
+percentage accuracy figures and a graphical display of the differences
+between the machine and human outputs.
+\item
+Make edits to the code, pattern grammars or gazetteer lists in her resources,
+and recompile where necessary.
+\item
+Tell GATE to re-initialise the resources.
+\item
+Go to \ref{item:run}.
+\end{enumerate}
+%
+To make the alterations that she requires, Fatima re-implements the ANNIE
+gazetteer so that it regenerates itself from the local personnel data.
+She then alters the pattern grammar in the semantic tagger to prioritise
+recognition of names from that source. 
+
+Eventually the system is running nicely.
+Now Fatima stops using the GATE development
+environment and works instead on embedding the new components in her email
+application. This application is written in Java, so embedding is very
+easy -- the
+code to talk to GATE takes up only around 150 lines of the eventual
+application, most of which is just copied from the example in the
+{\tt StandAloneAnnie} class on the web site.
+
+Because Fatima is worried about Cyberdyne's unethical policy of developing
+Skynet to help the large corporates of the West strengthen their
+strangle-hold over the World, she wants to get a job as an academic instead
+(so that her conscience will only have to cope with the torture of students,
+as opposed to humanity). She takes the accuracy measures that she has
+attained for her system and writes a paper for the Journal of Nasturtium
+Logarithm Encitement describing the approach used and the results obtained.
+Because she used GATE for development, she can cite the repeatability of her
+experiments and offer access to example binary versions of her software by 
+putting them on an external web server.

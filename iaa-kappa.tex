@@ -1,0 +1,152 @@
+%\documentclass[10pt, a4paper]{article}
+
+%\input{../template/preamble.tex}
+
+%\usepackage{moreverb}
+
+%\usepackage{a4}
+%\usepackage{times}
+
+%\date{}
+
+%\begin{document}
+
+%\title{Performance Evaluation of Language Analysers}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% iaa-kappa.tex
+%
+% yaoyong, Oct. 2008
+%
+% $I $
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapt[chap:iaakappa]{IAA Measures for Classification Tasks}
+\markboth{IAA Measures for Classification Tasks}{IAA Measures for Classification Tasks}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+IAA has been used mainly in the classification tasks, where two or more annotators 
+are given a set of instances and are asked to classify those instances into some 
+pre-defined categories. IAA measures the agreements among the annotators on the
+class labels assigned to the instances by the annotators. Text classification 
+tasks include document classification, sentence classification(e.g. opinionated 
+sentence recognition), and token classification (e.g. POS tagging).
+
+The three commonly used IAA measures are {\em observed agreement}, {\em specific agreement}, 
+and {\em Kappa ($\kappa$)} \cite{Hripcsak02}. Those measures can be 
+calculated from a contingency table, which lists the numbers of instances of 
+agreement and disagreement between two annotators on each category. To explain the 
+IAA measures, a general contingency table for two categories {\em cat1} and {\em cat2}
+ is shown in Table \ref{table:iaa-kappa:contingency}.
+
+\begin{table}[hbt]
+\caption{Contingency table for two-category problem}
+\label{table:iaa-kappa:contingency}
+{\centering
+\begin{tabular}{l|cc|c} 
+\hline
+   & Annotator-2 & & \\
+\hline
+Annotator-1  & cat1 & cat2 & marginal sum\\
+\hline
+ cat1& a & b & a+b\\ 
+cat2 & c & d & c+d\\
+\hline
+marginal sum & a+c & b+d &a+b+c+d\\
+ \hline
+\end{tabular}\par}
+\end{table}
+
+
+{\bf Observed agreement} is the portion of the instances on which the 
+annotators agree. For the two annotators and two categories as shown in
+ Table \ref{table:iaa-kappa:contingency}, it is defined as
+\begin{equation}
+A_{o} = \frac{a+d}{a+b+c+d}
+\end{equation}
+The extension of the above formula to more than two categories is 
+straightforward. The extension to more than two annotators is usually taken 
+as the mean of the pair-wise agreements \cite{Fleiss75}, which is the average agreement 
+across all possible pairs of annotators. 
+An alternative compares each annotator with the majority opinion of the others 
+\cite{Fleiss75}.
+
+However, the observed agreement has two shortcomings. One is that a certain 
+amount of agreement is expected by chance. The Kappa measure is a chance-corrected 
+agreement. Another is that it sums up the agreement on all the categories, but 
+the agreements on each category may differ. Hence the category specific agreement 
+is needed.
+
+{\bf Specific agreement} quantifies the degree of agreement for each of the categories 
+separately. For example, the specific agreement for the two categories list in 
+Table \ref{table:iaa-kappa:contingency} is the following, respectively,
+\begin{equation}
+A_{cat1} = \frac{2a}{2a+b+c}; \ \ \
+A_{cat2} = \frac{2d}{b+c+2d}
+\end{equation}
+
+{\bf Kappa} is defined as the observed agreements $A_{o}$ minus the agreement 
+expected by chance $A_{e}$ and is normalized as a number between -1 and 1.
+\begin{equation}
+\kappa =\frac{A_{o}-A_{e}}{1-A_{e}}
+\end{equation}
+
+$\kappa=1$ means perfect agreements, $\kappa=0$ means the agreement is equal to 
+chance, $\kappa=-1$ means `perfect' disagreement.
+
+There are two different ways of computing the chance agreement $A_{e}$
+(for a detailed explanations about it see
+\cite{Eugenio04}). The Cohen's Kappa is based on the individual distribution of 
+each annotator, while the Siegel \& Castellan's Kappa is based on the assumption that all 
+the annotators have the same distribution. The former is more informative than the 
+latter and has been used widely. 
+
+The Kappa suffers from the prevalence problem which arises because imbalanced 
+distribution of categories in the data increases $A_{e}$. The prevalence problem can be 
+alleviated by reporting the positive and negative specified  agreement on each category 
+besides the Kappa \cite{ Hripcsak02, Eugenio04}. In addition, the so-called bias 
+problem affects the Cohen's Kappa, but not S\&C's. The bias problem arises as one 
+annotator prefers one particular category more than another annotator.
+\cite{ Eugenio04} advised to compute the S\&C's Kappa and the specific agreements along
+with the Cohen's Kappa in order to handle these problems.
+
+Despite the problem mentioned above, the Cohen's Kappa remains a popular IAA measure. 
+Kappa can be used for more than two annotators based on pair-wise figures, e.g. the mean
+of all the pair-wise Kappa as an overall Kappa measure. The Cohen's Kappa can also be
+extended to the case of more than two annotators by using the following single 
+formula  \cite{Davies82}
+\begin{equation}
+\kappa = 1-\frac{IJ^{2}-\sum_{i}\sum_{c}Y_{ic}^{2}}
+{I(J(J-1)\sum_{c}(p_{c}(1-p_{c}))+ \sum_{c}\sum_{j}(p_{cj}-p_{c})^2)}
+\end{equation}
+Where $I$ and $J$ are the number of instances and annotators, respectively; $Y_{ic}$ 
+is the number of annotators who assigns the category $c$ to the instance $I$; $p_{cj}$ 
+is the probability of the annotator $j$ assigning category $c$; $p_{c}$ is the 
+probability of assigning category by all annotators (i.e. averaging $p_{cj}$  
+over all annotators).
+
+S\&C's Kappa is applicable for any number of annotators. S\&C's Kappa
+for two annotators is also known as Scott's Pi (see \cite{Lombard02}). The Krippendorff's 
+alpha, another variant of Kappa, differs only slightly from the S\&C's Kappa 
+on nominal category problem (see \cite{Carletta96, Eugenio04}).
+
+However, note that the Kappa (and the observed agreement) is not applicable to some
+tasks. Named entity annotation is  one such task
+\cite{Hripcsak05}. In the named entity annotation task, annotators are given 
+some text and are asked to annotate some named entities (and possibly their 
+categories) in the text. Different annotators may annotate different instances
+of the named entity. So, if one annotator annotates one named entity in the text but
+another annotator does not annotate it, then that named entity is a non-entity
+for the latter. However, generally the non-entity in the text is not a well-defined 
+term, e.g. we don't know how many words should be contained in the non-entity. On the 
+other hand, if we want to compute Kappa for named entity annotation, we need
+the non-entities. This is why people don't compute Kappa for the named entity task.
+
+
+%\bibliography{../big}
+%\bibliographystyle{plain}
+%\end{document}

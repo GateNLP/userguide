@@ -1,0 +1,43 @@
+The GATE User Guide
+-------------------
+
+GG August 09: This is currently the branched version of the user guide while we
+work on it in time for Sept 09 release.
+
+This directory contains the GATE User Guide.  The main file for the user guide
+is tao_main.tex, look at this file to see what other files are included for the
+various chapters.
+
+The HTML and PDF versions of the guide are rebuilt from the .tex sources by a
+nightly cron job at Sheffield, so you only need to check in your changes to the
+.tex sources.  However, if you want to build the guide yourself for whatever
+reason, you must download
+
+http://gate.ac.uk/sale/big.bib
+http://gate.ac.uk/sale/utils.tex
+
+and put it in the directory above this one, i.e. if you are reading this file
+in /home/me/gatestuff/userguide then put it at /home/me/gatestuff/big.bib.  You
+will also require pdflatex to build the PDF version and tex4ht (htlatex) for
+the HTML version, as well as a suitable POSIX shell and GNU Make.  On Windows
+the relevant tools are available as part of Cygwin, on Mac OS X you will need
+the XCode developer tools and a suitable LaTeX installation (e.g. from Fink),
+and for Linux you'll have to refer to the documentation for your distribution.
+
+To build the one page HTML user guide:
+make index.html
+
+To build the one page per chapter HTML user guide:
+make split.html
+
+To build the tao.pdf PDF file of the user guide:
+make tao.pdf
+
+To delete the generated files in case of trouble:
+make clean
+
+To do all of the previous:
+make
+
+Ian Roberts, 30/10/2006
+Thomas Heitz, 2008

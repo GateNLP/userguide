@@ -1,0 +1,364 @@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapt[sec:misc-creole:language-plugins]{Non-English Language Support}
+\markboth{Non-English Language Support}{Non-English Language Support}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\nnormalsize
+
+There are plugins available for processing the following languages:
+French, German, Italian, Danish, Chinese, Arabic, Romanian, Hindi, Russian,
+Welsh and Cebuano. Some of the applications are quite basic and just contain
+some useful processing resources to get you started when developing a full
+application. Others (Cebuano and Hindi) are more like toy systems built as
+part of an exercise in language portability.
+
+Note that if you wish to use individual language processing resources
+without loading the whole application, you will need to load the
+relevant plugin for that language in most cases. The plugins all
+follow the same kind of format. Load the plugin using the plugin
+manager in GATE Developer, and the relevant resources will be
+available in the Processing Resources set.
+
+Some plugins just contain a list of resources which can be added ad
+hoc to other applications. For example, the Italian plugin simply
+contains a lexicon which can be used to replace the English lexicon in
+the default English POS tagger: this will provide a reasonable basic
+POS tagger for Italian.
+
+In most cases you will also find a directory in the relevant plugin
+directory called data which contains some sample texts (in some cases,
+these are annotated with NEs).
+
+There are also a number of plugins, documented elsewhere in this manual that
+while they default to processing English can be configured to support other
+languages. These include the TaggerFramework
+(Section~\ref{sec:parsers:taggerframework}), the OpenNLP plugin
+(Section~\ref{sec:misc-creole:opennlp}), the Numbers Tagger
+(Section~\ref{sec:misc-creole:numbers:numbers}), and the Snowball based stemmer
+(Section~\ref{sec:parsers:stemmer}).  The LingPipe POS Tagger PR
+(Section~\ref{sec:misc-creole:lingpipe:postagger}) now includes two models for
+Bulgarian.
+
+\sect[sec:misc-creole:language-identification]{Language Identification}
+
+A common problem when handling multiple languages is determining the language of a
+document or section of document. For example, patent documents often contain
+the abstract in more than one language. In such cases you may want
+to only process those sections written in English, or you may want to
+run different processing resources over the different sections dependent upon
+the language they are written in. Once documents or sections are annotated with
+their language then it is easy to apply different processing resources to the
+different sections using either a Conditional Corpus Pipeline or via the
+Section-By-Section PR (Section \ref{sec:alignment:segment-processing}).
+The problem is, of course, identifying the language.
+
+The \texttt{Language\_Identification} plugin contains a
+\htlink{http://textcat.sourceforge.net/}{TextCat} based PR for
+performing language identification. The choice of languages used for
+categorization is specified through a configuration file, the URL of which
+is the PRs only initialization parameter.
+
+
+The PR has the following runtime parameters.
+%%
+\begin{description}
+\item[annotationType] If this is supplied, the PR classifies the text underlying
+  each annotation of the specified type and stores the result as a feature on
+  that annotation.  If this is left blank (null or empty), the PR classifies the
+  text of each document and stores the result as a document feature.
+\item[annotationSetName] The annotation set used for input and output; ignored
+  if \emph{annotationType} is blank.
+\item[languageFeatureName] The name of the document or annotation feature used
+  to store the results.
+\end{description}
+
+Unlike most other PRs (which produce annotations), this one adds either document
+features or annotation features.  (To classify both whole documents and spans
+within them, use two instances of this PR.)  Note that classification accuracy
+is better over long spans of text (paragraphs rather than sentences, for
+example).
+
+\textit{Note that an alternative language identification PR is available in the LingPipe plugin,
+which is documented in Section \ref{sec:misc-creole:lingpipe:langid}.}
+
+\subsect[sec:misc-creole:language-identification:fingerprints]{Fingerprint Generation}
+Whilst the TextCat based PR supports a number of languages (not all of which are enabled in the default
+configuration file), there may be occasiosn where you need to support a new language, or where the
+language of domain specific documents affects the classification. In these situations you can use the
+Fingerprint Generation PR included in the \texttt{Language\_Identification} to build new fingerprints
+from a corpus of documents.
+
+The PR has no initialization parameters and is configured through the following runtime parameters:
+%%
+\begin{description}
+\item[annotationType] If this is supplied, the PR uses only the text underlying
+  each annotation of the specified type to build the language fingerprint.
+  If this is left blank (null or empty), the PR will instead use the whole of
+  each document to create the fingerprint.
+\item[annotationSetName] The annotation set used for input; ignored
+  if \emph{annotationType} is blank.
+\item[fingerprintURL] The URL to a file in which the fingerprint should be
+  stored -- note that this must be a file URL.
+\end{description}
+
+\sect[sec:misc-creole:language-plugins:french]{French Plugin}
+
+The French plugin contains two applications for NE recognition: one
+which includes the TreeTagger for POS tagging in French
+(french+tagger.gapp) , and one which does not (french.gapp). Simply
+load the application required from the plugins/Lang\_French directory. You
+do not need to load the plugin itself from the GATE Developer's Plugin
+Management Console. Note that the TreeTagger must first be installed and set up
+correctly (see Section \ref{sec:parsers:taggerframework} for
+details). Check that the runtime parameters are set correctly for your
+TreeTagger in your application. The applications both contain
+resources for tokenisation, sentence splitting, gazetteer lookup, NE
+recognition (via JAPE grammars) and orthographic coreference. Note
+that they are not intended to produce high quality results, they are
+simply a starting point for a developer working on French. Some sample
+texts are contained in the plugins/Lang\_French/data directory.
+
+Additionally, a more sophisticated application for French NE recognition is
+available at \htlinkplain{https://github.com/GateNLP/gateapplication-French}.
+This is designed to be flexible in the choice of POS tagger, by mapping the output POS 
+tags to the \htlink{http://universaldependencies.org/u/pos/}{universal tagset}, 
+which is used in the JAPE grammars. The application uses the Stanford POS tagger, 
+but this can be easily replaced with any other tagger.
+
+\sect[sec:misc-creole:language-plugins:german]{German Plugin}
+
+The German plugin contains two applications for NE recognition: one
+which includes the TreeTagger for POS tagging in German
+(german+tagger.gapp) , and one which does not (german.gapp). Simply
+load the application required from the plugins/Lang\_German/resources
+directory. You do not need to load the plugin itself from the GATE
+Developer's Plugin Management Console. Note that the TreeTagger must first be
+installed and set up correctly (see
+Section \ref{sec:parsers:taggerframework} for details). Check that the
+runtime parameters are set correctly for your TreeTagger in your
+application. The applications both contain resources for tokenisation,
+sentence splitting, gazetteer lookup, compound analysis, NE
+recognition (via JAPE grammars) and orthographic coreference. Some
+sample texts are contained in the plugins/Lang\_German/data directory. We
+are grateful to Fabio Ciravegna and
+the \htlink{http://nlp.shef.ac.uk/dot.kom/}{Dot.KOM} project for use
+of some of the components for the German plugin. 
+
+Additionally, a more sophisticated application for German NE recognition is
+available at \htlinkplain{https://github.com/GateNLP/gateapplication-German}.
+This is designed to be flexible in the choice of POS tagger, by mapping the output POS 
+tags to the \htlink{http://universaldependencies.org/u/pos/}{universal tagset}, 
+which is used in the JAPE grammars. The application uses the Stanford POS tagger, 
+but this can be easily replaced with any other tagger.
+
+
+\sect[sec:misc-creole:language-plugins:romanian]{Romanian Plugin}
+
+The Romanian plugin contains an application for Romanian NE
+recognition (romanian.gapp). Simply load the application from the
+plugins/Lang\_Romanian/resources directory. You do not need to load the
+plugin itself from the GATE Developer's Plugin
+Management Console. The application
+contains resources for tokenisation, gazetteer lookup, NE recognition
+(via JAPE grammars) and orthographic coreference. Some sample texts
+are contained in the plugins/romanian/corpus directory.
+
+
+\sect[sec:misc-creole:language-plugins:arabic]{Arabic Plugin}
+
+The Arabic plugin contains a simple application for Arabic NE
+recognition (arabic.gapp). Simply load the application from the
+plugins/Lang\_Arabic/resources directory. You do not need to load the plugin
+itself from the GATE Developer's Plugin
+Management Console. The application contains
+resources for tokenisation, gazetteer lookup, NE recognition (via JAPE
+grammars) and orthographic coreference. Note that there are two types
+of gazetteer used in this application: one which was derived
+automatically from training data (Arabic inferred gazetteer), and one
+which was created manually. Note that there are some other
+applications included which perform quite specific tasks (but can
+generally be ignored). For example, arabic-for-bbn.gapp and
+arabic-for-muse.gapp make use of a very specific set of training data
+and convert the result to a special format. There is also an
+application to collect new gazetteer lists from training data
+(arabic\_lists\_collector.gapp). For details of the gazetteer list
+collector please see Section \ref{sec:gazetteers:listscollector}.
+
+
+\sect[sec:misc-creole:language-plugins:chinese]{Chinese Plugin}
+
+The Chinese plugin contains two components: a simple application for Chinese 
+NE recognition (chinese.gapp) and a component called ``Chinese Segmenter''.
+
+In order to use the former, simply load the application from the\linebreak 
+plugins/Lang\_Chinese/resources directory. You do not need to load the plugin 
+itself from the GATE Developer's Plugin
+Management Console. The application contains resources 
+for tokenisation, gazetteer lookup, NE recognition (via JAPE grammars) and 
+orthographic coreference. The application makes use of some gazetteer lists (and
+a grammar to process them) derived automatically from training data, as well as 
+regular hand-crafted gazetteer lists. There are also applications
+(listscollector.gapp, adj\_collector.gapp and
+nounperson\_collector.gapp) to create such lists, and various other
+application to perform special tasks such as coreference evaluation
+(coreference\_eval.gapp) and converting the output to a different
+format (ace-to-muse.gapp).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:misc-creole:chineseSeg]{Chinese Word Segmentation}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Unlike English, Chinese text does not have a symbol (or delimiter)
+ such as blank space to explicitly separate a word from the
+ surrounding words.  Therefore, for automatic Chinese text processing,
+ we may need a system to recognise the words in Chinese text, a
+ problem known as Chinese word segmentation. The plugin described in
+ this section performs the task of Chinese word segmentation. It is
+ based on our work using the Perceptron learning algorithm for the Chinese
+ word segmentation task of the Sighan 2005\footnote{See
+ http://www.sighan.org/bakeoff2005/ for the Sighan-05 task}.
+\cite{Yaoyong05b}. Our Perceptron based system has achieved very good
+performance in the Sighan-05 task.
+
+The plugin is called {\em Lang\_Chinese} and is available in the GATE
+distribution. The corresponding processing resource's name is {\em Chinese
+  Segmenter PR}. Once you load the PR into GATE, you may put it into a {\em
+  Pipeline} application. Note that it does not process a corpus of documents,
+but a directory of documents provided as a parameter (see description of
+parameters below). The plugin can be used to learn a model from segmented
+Chinese text as training data. It can also use the learned model to segment
+Chinese text.  The plugin can use different learning algorithms to learn
+different models.  It can deal with different character encodings for
+Chinese text, such as UTF-8, GB2312 or BIG5.  These options can
+be selected by setting the run-time parameters of the plugin.
+
+The plugin has five run-time parameters, which are described in the following.
+\begin{itemize}
+\item {\bf learningAlg} is a String variable, which specifies the learning
+  algorithm used for producing the model. Currently it has two values, {\em
+    PAUM} and {\em SVM}, representing the two popular learning algorithms
+  Perceptron and SVM, respectively. The default value is {\em PAUM}.\\
+  Generally speaking, SVM may perform better than Perceptron, in particular
+  for small training sets. On the other hand, Perceptron's learning is much
+  faster than SVM's. Hence, if you have a small training set, you may want to
+  use SVM to obtain a better model. However, if you have a big training set
+  which is typical for the Chinese word segmentation task, you may want to use
+  Perceptron for learning, because the SVM's learning may take too long
+  time. In addition, using a big training set, the performance of the
+  Perceptron model is quite similar to that of the SVM model. See
+  \cite{Yaoyong05b} for the experimental comparison of SVM and Perceptron on
+  Chinese word segmentation.
+
+\item {\bf learningMode} determines the two modes of using the plugin, either
+  learning a model from training data or applying a learned model to segment
+  Chinese text.  Accordingly it has two values, {\em SEGMENTING} and {\em
+    LEARNING}. The default value is
+  {\em SEGMENTING}, meaning segmenting the Chinese text.\\
+  Note that you first need to learn a model and then you can use the learned
+  model to segment the text. Several models using the training data used in
+  the Sighan-05 Bakeoff are available for this plugin, which you can use to
+  segment your Chinese text. More descriptions about the provided models will
+  be given below.
+\item {\bf modelURL} specifies an URL referring to a directory containing the
+  model. If the plugin is in the {\em LEARNING} runmode, the model learned
+  will be put into the directory. If it is in the {\em SEGMENTING} runmode,
+  the plugin will use the model stored in the directory to segment the
+  text. The models learned from the Sighan-05 bakeoff training data will be
+  discussed below.
+\item {\bf textCode} specifies the encoding of the text used. For example it can
+  be UTF-8, BIG5, GB2312 or any other encoding for Chinese text. Note that, when
+  you segment some Chinese text using a learned model, the Chinese text should
+  use the same encoding as the one used by the training text for obtaining the
+  model.
+\item {\bf textFilesURL} specifies an URL referring to a directory containing
+  the Chinese documents. All the documents contained in this directory (but
+  not those documents contained in its sub-directory if there is any) will be
+  used as input data. In the {\em LEARNING} runmode, those documents contain
+  the segmented Chinese text as training data. In the {\em SEGMENTING}
+  runmode, the text in those documents will be segmented. The segmented text
+  will be stored in the corresponding documents in the sub-directory called
+  {\em segmented}.
+\end{itemize}
+
+The following PAUM models are distributed with plugins and are available as
+compressed zip files under the plugins/Lang\_Chinese/resources/models 
+directory. Please unzip them to use. In detail, those models were learned using 
+the PAUM learning algorithm from the corpora provided by Sighan-05 bakeoff task.
+\begin{itemize}
+\item the PAUM model learned from PKU training data, using the PAUM
+  learning algorithm and the {\em UTF-8} encoding, is available as 
+  model-paum-pku-utf8.zip.
+\item the PAUM model learned from PKU training data, using the PAUM
+  learning algorithm and the {\em GB2312} encoding, is available as 
+  model-paum-pku-gb.zip.
+\item the PAUM model learned from AS training data, using the PAUM
+  learning algorithm and the {\em UTF-8} encoding, is available as 
+  model-as-utf8.zip.
+\item the PAUM model learned from AS training data, using the PAUM
+  learning algorithm and the {\em BIG5} encoding, is available as
+  model-as-big5.zip.
+\end{itemize}
+
+As you can see, those models were learned using different training data and
+different Chinese text encodings of the same training data. The PKU training data
+are news articles published in mainland China and use simplified Chinese,
+while the AS training data are news articles published in Taiwan and use
+traditional Chinese. If your text are in simplified Chinese, you can use the
+models trained by the PKU data. If your text are in traditional Chinese, you
+need to use the models trained by the AS data. If your data are in GB2312 encoding
+or any compatible encoding, you need use the model trained by the corpus in GB2312
+encoding.
+
+Note that the segmented Chinese text (either used as training data or produced
+by this plugin) use the blank space to separate a word from its surrounding
+words. Hence, if your data are in Unicode such as UTF-8, you can use the {\em
+  GATE Unicode Tokeniser} to process the segmented text to add the Token
+annotations into your text to represent the Chinese words.  Once you get the
+annotations for all the Chinese words, you can perform further processing such
+as POS tagging and named entity recognition.
+
+\sect[sec:misc-creole:language-plugins:hindi]{Hindi Plugin}
+
+The Hindi plugin (`Lang\_Hindi') contains a set of resources for basic Hindi NE
+recognition which mirror the ANNIE resources but are customised to the Hindi
+language. You need to have the ANNIE plugin loaded first in order to load any of
+these PRs. With the Hindi, you can create an application similar to ANNIE but
+replacing the ANNIE PRs with the default PRs from the plugin.
+
+\sect[sec:misc-creole:language-plugins:russian]{Russian Plugin}
+
+The Russian plugin (\verb|Lang_Russian|) contains a set of resource for a Russian
+IE application which mirrors the construction of ANNIE. This includes custom
+components for part-of-speech tagging, morphological analysis and gazetteer
+lookup. A number of ready-made applications are also available which combine
+these resources together in a number of ways.
+
+\sect[sec:misc-creole:language-plugins:bulgarian]{Bulgarian Plugin}
+The Bulgarian plugin (\verb|Lang_Bulgarian|) containts a GATE PR which 
+integrates the \htlink{http://lml.bas.bg/~nakov/bulstem/index.html}{BulStem stemmer}
+into GATE. Currently no other Bulgarian specific PRs are available so
+the stemmer should be used with the Unicode tokenizer and a sentence splitter
+to process Bulgarian language documents.
+
+\sect[sec:misc-creole:language-plugins:danish]{Danish Plugin}
+The Danish plugin (\verb|Lang_Danish|) contains resources for a Danish IE
+application. As well as a set of tokeniser rules and gazetteer lists tuned for
+Danish, the plugin includes models for the Stanford CoreNLP POS tagger and
+named entity recogniser trained on the Danish PAROLE corpus and the Copenhagen
+Dependency Treebank respectively.  Full details can be found in the EACL 2014
+paper \cite{Derczynski2014d}.
+
+The Java code in this plugin (the tokeniser and gazetteer) is released under
+the same LGPL licence as GATE itself, but the POS tagger and NER models are
+subject to the full GPL as this is the licence of the data used for training.
+
+\sect[sec:misc-creole:language-plugins:welsh]{Welsh Plugin}
+The Welsh plugin (\verb|Lang_Welsh|) is the result of the Welsh Natural
+Language Toolkit
+project\footnote{\htlinkplain{http://hypermedia.research.southwales.ac.uk/kos/wnlt/}},
+funded by the Welsh Government.  It contains a set of resources that mirror the
+English-language ANNIE application, but adapted to the Welsh language.  The
+plugin includes a tokeniser, sentence splitter, POS tagger, morphological
+analyser, gazetteers and named entity JAPE grammars, with a ready-made
+application called \emph{CYMRIE} to combine them all.

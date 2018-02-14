@@ -1,0 +1,310 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapt[chap:obsolete-plugins]{Obsolete CREOLE Plugins}
+\markboth{Obsolete CREOLE Plugins}{Obsolete CREOLE Plugins}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+These plugins should not be needed for new development with GATE, but are documented here
+in case they are required by an old application.  Note that the obsolete plugins do not
+appear in GATE's plugin manager by default.
+
+% The remainder of this appendix is maintained simply by moving the documentation of
+% obsolete plugins from where they were originally included to here. Note that you
+% must ensure that section labels etc. are maintained so that help URLs are not
+% broken when the documentation is moved here.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:misc-creole:japec]{Ontotext JapeC Compiler}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\textit{Note: the JapeC compiler does not currently support the new JAPE
+language features introduced in July--September 2008.  If you need to use
+negation, the \texttt{@length} and \texttt{@string} accessors, the contextual
+operators \texttt{within} and \texttt{contains}, or any comparison operators
+other than \texttt{==}, then you will need to use the standard JAPE
+transducer instead of JapeC.}
+
+JapeC is an alternative implementation of the JAPE language which works by
+compiling JAPE grammars into Java code.  Compared to the standard
+implementation, these compiled grammars can be several times faster to run.  At
+Ontotext, a modified version of the ANNIE sentence splitter using compiled
+grammars has been found to run up to five times as fast as the standard
+version.  The compiler can be invoked manually from the command line, or used
+through the `Ontotext Japec Compiler' PR in the {\it Jape\_Compiler} plugin.
+
+The `Ontotext Japec Transducer' (com.ontotext.gate.japec.JapecTransducer) is
+a processing resource that is designed to be an alternative to the original
+Jape Transducer. You can simply replace gate.creole.Transducer with
+com.ontotext.gate.japec.JapecTransducer in your gate application and it should
+work as expected.
+
+The Japec transducer takes the same parameters as the standard JAPE transducer:
+\begin{description}
+\item[grammarURL] the URL from which the grammar is to be loaded.  Note that
+the Japec Transducer will {\it only} work on {\tt file:} URLs.  Also, the
+alternative {\it binaryGrammarURL} parameter of the standard transducer is not
+supported.
+\item[encoding] the character encoding used to load the grammars.
+\item[ontology] the ontology used for ontolog-aware transduction.
+\end{description}
+
+Its runtime parameters are likewise the same as those of the standard
+transducer:
+\begin{description}
+\item[document] the document to process.
+\item[inputASName] name of the AnnotationSet from which input annotations to
+the transducer are read.
+\item[outputASName] name of the AnnotationSet to which output annotations from
+the transducer are written.
+\end{description}
+
+The Japec compiler itself is written in Haskell.  Compiled binaries are
+provided for Windows, Linux (x86) and Mac OS X (PowerPC), so no Haskell
+interpreter is required to run Japec on these platforms.  For other platforms,
+or if you make changes to the compiler source code, you can build the compiler
+yourself using the Ant build file in the Jape\_Compiler plugin directory.  You
+will need to install the latest version of the Glasgow Haskell
+Compiler\footnote{GHC version 6.4.1 was used to build the supplied binaries for
+Windows, Linux and Mac} and associated libraries.  The japec compiler can then
+be built by running:
+\begin{verbatim}
+../../bin/ant japec.clean japec
+\end{verbatim}
+from the Jape\_Compiler plugin directory.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:misc-creole:google]{Google Plugin}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+This plugin is no longer operational because the functionality, provided by
+Google, on which it depends, is no longer available.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:misc-creole:yahoo]{Yahoo Plugin}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The Yahoo API is now integrated with GATE, and can be used as a PR-based
+plugin.  This plugin, `Web\_Search\_Yahoo', allows the user to query Yahoo and
+build a document corpus that contains the search results returned by Yahoo for
+the query.  For more information about the Yahoo API please refer to
+\htlinkplain{http://developer.yahoo.com/search/}. In order to use the Yahoo
+PR, you need to obtain an application ID.
+
+The Yahoo PR can be used for a number of different application scenarios. For
+example, one use case is where a user wants to find the different named
+entities that can be associated with a particular individual. In this example,
+the user could build a collection of documents by querying Yahoo with the
+individual's name and then running ANNIE over the collection. This would
+annotate the results and show the different Organization, Location and other
+entities that are associated with the query.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect{Using the YahooPR}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+In order to use the PR, you first need to load the plugin using the
+GATE Developer plugin manager. Once the PR is loaded, it can be
+initialized by creating an instance of a new PR. Here you need to
+specify the Yahoo Application ID. Please use the license key assigned
+to you by registering with Yahoo.
+
+Once the Yahoo PR is initialized, it can be placed in a pipeline 
+or a conditional pipeline application. This pipeline would contain the instance 
+of the Yahoo PR just initialized as above. There are a number of
+parameters to be set at runtime:
+
+\begin{itemize}
+\item \verb|corpus|: The corpus used by the plugin to add or append
+documents from the Web.
+
+\item \verb|corpusAppendMode|: If set to \verb|true|, will append documents
+to the corpus. If set to \verb|false|, will remove preexisting
+documents from the corpus, before adding the documents newly fetched by the PR
+
+\item \verb|limit|: A limit on the results returned by the search. Default set to
+10.
+
+\item \verb|pagesToExclude|: This is an optional parameter. It is a list with
+URLs not to be included in the search.
+
+\item \verb|query|: The query sent to Yahoo. It is in the format
+accepted by Yahoo.
+
+\end{itemize}
+
+Once the required parameters are set we can run the pipeline. This
+will then download all the URLs in the results and create a document
+for each. These documents would be added to the corpus.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:gazetteers:gaze]{Gazetteer Visual Resource - GAZE}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Gaze is a tool for editing the gazetteer lists , definitions and mapping to
+ontology. It is suitable for use both for Plain/Linear Gazetteers (Default and
+Hash Gazetteers) and Ontology-enabled Gazetteers (OntoGazetteer). The Gazetteer
+PR associated with the viewer is reinitialised every time a save operation is
+performed. Note that GAZE does not scale up to very large lists (we suggest not
+using it to view over 40,000 entries and not to copy inside more than 10, 000
+entries).
+
+Gaze is part of and provided by the ANNIE plugin. To make it possible
+to visualize gazetteers with the Gaze visualizer, the ANNIE plugin must
+be loaded first.
+Double clicking on a gazetteer PR that uses a gazetteer definition (index)
+file  will display
+the contents of the gazetteer in the main window. The first pane will
+display the definition file, while the right pane will display
+whichever gazetteer list has been selected from it.
+
+A gazetteer list can be modified simply by typing in it. it can be
+saved by clicking the Save button. When a list is saved, the whole
+gazetteer is automatically reinitialised (and will be ready for use in
+GATE immediately).
+
+To edit the definition file, right click inside the pane and choose
+from the options (Inset, Edit, Remove). A pop-up menu will appear to
+guide you through the remaining process. Save the definition file by
+selecting Save. Again, the gazetteer will be reinitialised
+automatically.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect{Display Modes}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ The display mode depends on the type of gazetteer loaded in the VR. The mode in
+ which Linear/Plain Gazetteers are loaded is called Linear/Plain Mode. In
+ this mode, the Linear Definition is displayed in the left pane, and the
+ Gazetteer List is displayed in the right pane. The Ontology/Extended
+ mode is on when the displayed gazetteer is ontology-aware, which means that
+ there exists a mapping between classes in the ontology and lists of phrases.
+ Two more panes are displayed when in this mode. On the top in the left-most
+ pane there is a tree view of the ontology hierarchy, and at the bottom the
+ mapping definition is displayed. This section describes the Linear/Plain
+ display mode, the Ontology/Extended mode is described in 
+ section~\ref{sec:gazetteers:onto_gaze}.
+	
+Whenever a gazetteer PR that uses a gazetteer definition (index) file is loaded, 
+the Gaze gazetteer visualisation  will
+appear on double-click over the gazetteer in the Processing Resources branch of
+the Resources Tree.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect{Linear Definition Pane}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+This pane displays the nodes of the linear definition, and allows manipulation
+of the whole definition as a file, as well as the single nodes. Whenever a
+gazetteer list is modified, its node in the linear definition is coloured in red.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect{Linear Definition Toolbar}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+All the functionality explained in this section (New, Load, Save, Save As) is
+accessible also via File | Linear Definition in the menu bar of Gaze.
+
+\textbf{New} -- Pressing New invokes a file dialog where the location of the new
+definition is specified.
+
+\textbf{Load} -- Pressing Load invokes a file dialog, and after locating the new
+definition it is loaded by pressing Open.
+
+\textbf{Save} -- Pressing Save saves the definition to the location from which it has
+been read.
+	
+\textbf{Save As} -- Pressing Save As allows another location to be chosen, and
+the definition saved there.
+		
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect{Operations on Linear Definition Nodes}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\textbf{Double-click node} -- Double-clicking on a definition node forces
+the displaying of the gazetteer list of the node in the right-most pane of the
+viewer.
+
+\textbf{Insert} -- On right-click over a node and choosing Insert, a dialog is
+displayed, requesting List, Major Type, Minor Type and Languages. The mandatory
+fields are List and Major Type. After pressing OK, a new linear node is added to
+the definition.
+
+\textbf{Remove} -- On right-click over a node and choosing Remove, the selected
+linear node is removed from the definition.
+
+\textbf{Edit} -- On right-click over a node and choosing Edit a dialog is
+displayed allowing changes of the fields List, Major Type, Minor Type and
+Languages. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect{Gazetteer List Pane}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The gazetteer list pane has a toolbar with similar to the linear definition's
+buttons (New, Load, Save, Save As). They work as predicted by their names and as
+explained in the Linear Definition Pane section, and are also accessible from
+File / Gazetteer List in the menu bar of Gaze. The only addition is Save All
+which saves all modified gazetteer lists. The editing of the gazetteer list is
+as simple as editing a text file. One could use Ctrl+A to select the whole list,
+Ctrl+C to copy the selected, Ctrl+V to paste it, Del to delete the selected text
+or a single character, etc.
+	
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect{Mapping Definition Pane}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The mapping definition is displayed one mapping node per row. It consists of a
+gazetteer list, ontology URL, and class id. The content of the gazetteer list in
+the node is accessible through double-clicking. It is displayed in the Gazetteer
+List Pane. The toolbar allows the creation of a new definition (New), the
+loading of an existing one (Load), saving to the same or new location (Save/Save
+As). The functionality of the toolbar buttons is also available via File.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:misc-creole:google-translate]{Google Translator PR}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The Google Translator PR allows users to translate their documents into many 
+other languages using the Google translation service. It is based on the library
+called {\tt google-translate-api-java} which is distributed under the LGPL 
+licence and is available to download from 
+\htlinkplain{http://code.google.com/p/google-api-translate-java/}.
+
+The PR is included in the plugin called Web\_Translate\_Google and depends on 
+the Alignment plugin. (chapter \ref{chap:alignment}).
+
+If a user wants to translate an English document into French using the Google 
+Translator PR. The first thing user needs to do is to create an instance of 
+CompoundDocument with the English document as a member of it.  The 
+CompoundDocument in GATE provides a convenient way to group parallel documents 
+that are translations of one other (see chapter \ref{chap:alignment} for more
+information).  The idea is to use text from one of the members of the provided 
+compound document, translate it using the Google translation service and create
+another member with the translated text.  In the process, the PR also aligns the
+chunks of parallel texts.  Here, a chunk could be a sentence, paragraph, section
+or the entire document.
+
+{\tt siteReferrer} is the only init-time parameter required to instantiate the
+PR. It has to be a valid website address. The value of this parameter is 
+required to inform Google about the users using their service. There are seven
+run-time parameters:
+
+\begin{itemize}
+\item document - an instance of the compound document with a member document 
+containing source text.
+\item sourceDocumentId - id of the source member document that needs to be 
+translated.
+\item targetDocumentId - id of the target member document. This document is 
+created by the PR and contains the translated text.
+\item sourceLanguage - the language of the source document.
+\item targetLanguage - the language into which the source document should be 
+translated.
+\item unitOfTranslation - annotation type used for identifying chunks of texts 
+to be translated and aligned.
+\item inputASName - name of the annotation set which contains unit of 
+translations.
+\item alignmentFeatureName - name of the alignment feature used for storing the
+alignment information.  The alignment feature is a document feature stored on
+the compound document.
+\end{itemize}

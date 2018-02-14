@@ -1,0 +1,1978 @@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapt[chap:ontologies]{Working with Ontologies}
+\markboth{Working with Ontologies}{Working with Ontologies}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+GATE provides an API for modeling and manipulating ontologies and 
+comes with two plugins that provide implementations for the API  
+and several tools for 
+editing ontologies and using ontologies for document annotation. 
+
+
+Ontologies in GATE are classified as language resources. In order to create 
+an ontology language resource, the user must first  
+\emph{load
+one of the two plugins containing an ontology implementation}.
+
+The following implementations and ontology related tools are provided 
+as plugins:
+\begin{itemize}
+ \item Plugin \texttt{Ontology\_OWLIM2} provides an implementation that is fully
+backwards-compatible with the implementation that was part of GATE 
+prior to version 5.1 (see Section~\ref{sec:ontologies:pluginowlim2compat}). 
+\item Plugin \texttt{Ontology} provides a modified and current implementation
+(see Section~\ref{sec:ontologies:pluginontology}).
+Unless noted otherwise, all information in this \chapthing\ applies to this
+implementation.
+\item Plugin \texttt{Ontology\_Tools} provides a simple graphical ontology 
+editor (see Section~\ref{sec:ontologies:vr}) and OCAT, a tool for interactive ontology based
+document annotation (see Section~\ref{sec:ontologies:ocat}). It also provides a gazetteer
+processing resource, OntoGaz, that allows the mapping of linear 
+gazetteers to classes in an ontology (see Section~\ref{sec:gazetteers:ontogaz}).
+\item Plugin \texttt{Gazetteer\_Ontology\_Based} provides the `Onto Root
+Gazetteer' for the automatic creating of a gazetteer from an ontology 
+(see Section~\ref{sec:gazetteers:ontoRootGaz})
+\item Plugin \texttt{Ontology\_BDM\_Computation} can be used to compute BDM
+scores (see Section~\ref{sec:eval:bdmplugin}).
+\item Plugin \texttt{Gazetteer\_LKB} provides a processing resource for
+creating annotations based on the contents of a large ontology.
+\end{itemize}
+
+GATE ontology support aims to simplify the use of ontologies both 
+within the set of GATE tools and for programmers using the GATE ontology
+API. The GATE ontology API hides the details of the actual backend
+implementation and allows a simplified manipulation of 
+ontologies by modeling ontology resources as easy-to-use Java objects.
+Ontologies can be loaded from and saved to various serialization 
+formats. 
+
+The GATE ontology support roughly conforms to the representation, 
+manipulation and inference that conforms to what is supported in
+OWL-Lite (see~\url{http://www.w3.org/TR/owl-features/}).
+This means that a user can represent information in an ontology that
+conforms to OWL-Lite and that the GATE ontology model will provide
+inferred information equivalent to what an OWL-Lite reasoner 
+would provide. The GATE ontology model makes an attempt to also
+to some extend provide useful information for ontologies that do
+not conform to OWL-Lite: RDFS, OWL-DL, OWL-Full or OWL2 ontologies
+can be loaded but GATE might ignore part of all contents of
+those ontologies, or might only provide part of, or incorrect 
+inferred facts for such ontologies. If an ontology is loaded that 
+contains a restriction not supported by OWL-Lite, like \texttt{oneOf},
+\texttt{unionOf}, \texttt{intersectionOf}, or \texttt{complementOf},
+the classes to which such restrictions apply will not be found in 
+some sitations because the Ontology API has not way of representing
+such restrictions. For example, such classes will not show up when
+requesting the direct subclasses of a given class. In other situations,
+e.g. when retrieved directly using the URI, the class will be found.
+Using the Ontology plugin with ontologies that do not conform to 
+OWL-Lite should be avoided to avoid such confusing behavior.
+
+The GATE API tries to prevent clients from modifying an ontology
+that conforms to OWL-Lite to become OWL-DL or OWL-Full and also
+tries to prevent or warn about some of the most common errors that
+would make the ontology inconsistent. However, the current implementation
+is not able to prevent all such errors and has no way of finding out
+if an ontology conforms to OWL-Lite or is inconsistent.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect{Data Model for Ontologies}
+
+
+\subsect{Hierarchies of Classes and Restrictions}
+
+Class hierarchy (or taxonomy) plays the central role in the ontology data model. This consists of a set of ontology classes 
+(represented by \verb!OClass! objects in the ontology API)
+linked by \texttt{subClassOf},
+\texttt{superClassOf} and \texttt{equivalentClassAs} relations. Each ontology class 
+is identified by an URI 
+(unless it is a restriction or an anonymous class, see below).
+The URI of each ontology resource must be unique.
+
+Each class can have a set of superclasses and a set of subclasses;
+these are used to build the class hierarchy. The \texttt{subClassOf} and
+\texttt{superClassOf} relations are transitive and methods are provided by the
+API for calculating the transitive closure for each of these relations
+given a class. The transitive closure for the set of superclasses for
+a given class is a set containing all the superclasses of that class,
+as well as all the superclasses of its direct superclasses, and so on
+until no more are found. This calculation is finite, the upper bound
+being the set of all the classes in the ontology. A class that has no
+superclasses is called a \emph{top class}. An ontology can have several top
+classes. Although the GATE ontology API can deal with cycles
+in the hierarchy graph, these can cause problems for processes using
+the API and probably indicate an error in the definition of the
+ontology. Also other components of GATE, like the ontology editor 
+cannot deal with cyclic class structures and will terminate with an 
+error. Care should be taken to avoid such situations.
+
+A pair of ontology classes can also have an \texttt{equivalentClassAs} relation, 
+which indicates that the two
+classes are virtually the same and all their properties and instances
+should be shared.
+
+A restriction (represented by \verb!Restriction! objects in the GATE
+ontology API) is an anonymous class (i.e., the class is not identified by
+an URI/IRI) and is set on an object or a
+datatype property to restrict some instances of the specified domain
+of the property to have only certain values (also known as value
+constraint) or certain number of values (also known as cardinality
+restriction) for the property. Thus for each restriction there exists
+at least three triples in the repository. One that defines resource as
+a restriction, another one that indicates on which property the
+restriction is specified, and finally the third one that indicates what
+is the constraint set on the cardinality or value on the property.
+There are six types of restrictions:
+
+\begin{enumerate}
+\item \emph{Cardinality} Restriction (\verb!owl:cardinalityRestriction!): the only valid values for this restriction in OWL-Lite are 0 and 1. A cardinality restriction set to either 0 or 1 implies both a \emph{MinCardinality} Restriction and a \emph{MaxCardinality} Restriction
+ set to the same value. 
+\item \emph{MinCardinality} Restriction (\verb!owl:minCardinalityRestriction!)
+\item \emph{MaxCardinality} Restriction (\verb!owl:maxCardinalityRestriction!)
+\item \emph{HasValue} Restriction (\verb!owl:hasValueRestriction!)
+\item \emph{AllValuesFrom} Restriction (\verb!owl:allValuesFromRestriction!)
+\item \emph{SomeValuesFrom} Restriction (\verb!owl:someValuesFromRestriction!)
+\end{enumerate}
+
+Please visit the \htlink{http://www.w3.org/TR/owl-ref/}{OWL Reference} for more
+detailed information on restrictions.
+
+
+\subsect{Instances}
+
+Instances, also often called \emph{individuals} are objects that belong 
+to classes. Like named classes, each
+instance is identified by an URI. Each instance can belong to one or more
+classes and can have properties with values. 
+Two instances can  have the \texttt{sameInstanceAs} relation, which
+indicates that the property values assigned to both instances should
+be shared and that all the properties applicable to one instance are
+also valid for the other. In addition, there is a \texttt{differentInstanceAs}
+relation, which declares the instances as disjoint.
+
+Instances are represented by \texttt{OInstance} objects in the API.
+API methods are provided
+for getting all the instances in an ontology, all the ones that belong to
+a given class, and all the property values for a given instance. There
+is also a method to retrieve a list of classes that the instance
+belongs to, using either transitive or direct closure. 
+
+
+\subsect{Hierarchies of Properties}
+
+The last part of the data model is made up of hierarchies of
+properties that can be associated with objects in the ontology. 
+%Unlike
+%some other representation models, in GATE, properties do not `belong'
+%to ontology classes and they are instead first-class citizens of the data
+%model. 
+The specification of the type of objects that properties apply
+to is done through the means of domains. Similarly, the types of
+values that a property can take are restricted through the definition
+of a range. A property with a domain that is an empty set can apply to
+instances of any type (i.e. there are no restrictions given). Like
+classes, properties can also have \texttt{superPropertyOf}, \texttt{subPropertyOf} and
+\texttt{equivalentPropertyAs} relations among them.
+
+GATE supports the following property types:
+
+\begin{enumerate}
+\item \textbf{Annotation Property:}
+
+An annotation property is associated with an ontology resource (i.e.~a
+class, property or instance) and can have a \emph{Literal} as
+value. A Literal is a Java object that can refer to the URI of any
+ontology resource or a string
+(http://www.w3.org/2001/XMLSchema\#string) with the specified language
+or a data type (discussed below) with a compatible value. Two
+annotation properties can \emph{not} be declared as equivalent. It is also not
+possible to specify a domain or range for an annotation property or a
+super or subproperty relation between two annotation properties. Five
+annotation properties, predefined by OWL, are made available to the user
+whenever a new ontology instance is created: 
+\begin{itemize}
+ \item owl:versionInfo,
+ \item rdfs:label,
+ \item rdfs:comment,
+ \item rdfs:seeAlso, and 
+  \item rdfs:isDefinedBy. 
+\end{itemize}
+In other
+words, even when the user creates an empty ontology, these annotation
+properties are created automatically and available to users.
+
+\item \textbf{Datatype Property:}
+
+A datatype property is associated with an ontology instance and can
+have a Literal value that is compatible with its data type . 
+A data type can be one of
+the pre-defined data types in the GATE ontology API:
+
+\begin{small}\begin{verbatim}
+http://www.w3.org/2001/XMLSchema#boolean
+http://www.w3.org/2001/XMLSchema#byte
+http://www.w3.org/2001/XMLSchema#date
+http://www.w3.org/2001/XMLSchema#decimal
+http://www.w3.org/2001/XMLSchema#double
+http://www.w3.org/2001/XMLSchema#duration
+http://www.w3.org/2001/XMLSchema#float
+http://www.w3.org/2001/XMLSchema#int
+http://www.w3.org/2001/XMLSchema#integer
+http://www.w3.org/2001/XMLSchema#long
+http://www.w3.org/2001/XMLSchema#negativeInteger
+http://www.w3.org/2001/XMLSchema#nonNegativeInteger
+http://www.w3.org/2001/XMLSchema#nonPositiveInteger
+http://www.w3.org/2001/XMLSchema#positiveInteger
+http://www.w3.org/2001/XMLSchema#short
+http://www.w3.org/2001/XMLSchema#string
+http://www.w3.org/2001/XMLSchema#time
+http://www.w3.org/2001/XMLSchema#unsignedByte
+http://www.w3.org/2001/XMLSchema#unsignedInt
+http://www.w3.org/2001/XMLSchema#unsignedLong
+http://www.w3.org/2001/XMLSchema#unsignedShort
+\end{verbatim}\end{small}
+
+A set of ontology classes can be specified as a property's domain; in that case the
+property can be associated with the instance belonging to all of the classes
+specified in that domain only (the intersection of the set of domain classes).
+
+Datatype properties can have other datatype properties as subproperties.
+
+\item \textbf{Object Property:}
+
+An object property is associated with an ontology instance and has an instance as
+value. A set of ontology classes can be specified as property's domain and
+range. Then the property can only be associated with the instances belonging to all
+of the classes specified as the domain. Similarly, only the instances that
+belong to all the classes specified in the range can be set as values. %Symmetric
+%and Transitive properties are the two subtypes of Object properties.  
+%A symmetric property's domain and range are the same.
+
+Object properties can have other object properties as subproperties.
+
+\item \textbf{RDF Property:}
+
+RDF properties are more general than datatype or object properties. 
+The GATE ontology API uses \texttt{RDFProperty} objects to hold
+datatype properties, object properties, annotation properties or
+actual RDF properties (\texttt{rdf:Property}). 
+
+\textbf{Note:} The use of RDFProperty objects for creating, or manipulating RDF properties is carried over from previous
+implementations for compatibility reasons but should be avoided.
+
+\end{enumerate}
+
+All properties (except the annotation properties) can be marked as functional
+properties, which means that for a given instance in their domain, they can only
+take at most one value, i.e. they define a function in the algebraic sense.
+Properties inverse to functional properties are marked as \emph{inverse functional}. If
+one likes ontology properties with algebraic relations, the semantics of these
+become apparent.
+
+
+\subsect{URIs}
+
+URIs are used to identify resources (instances, classes, properties)
+in an ontology. All URIs that identify classes, instances, or 
+properties in an ontology must consist of two parts: 
+\begin{itemize}
+ \item a name part: this is the part after the last slash (\verb!/!) or the
+first hash (\verb!#!) in the URI. This part of the URI is often used 
+as a shorthand name for the entity (e.g. in the ontology editor)
+and is often called a \emph{fragment identifier}
+ \item a namespace part: the part that precedes the name, including the
+trailing slash or hash character.
+\end{itemize}
+URIs uniquely identify resources: each resource can have at most one 
+URI and each URI can be associated with at most one resource.
+
+URIs are represented by OURI objects in the API. The Ontology object provides
+factory methods to create OURIs from a complete URI string or by appending a
+name to the default namespace of the ontology.  However it is the
+responsibility of the caller to ensure that any strings that are passed to
+these factory methods do in fact represent valid URIs.  GATE provides some
+helper methods in the {\tt OUtils} class to help with encoding and decoding URI
+strings.
+
+%% TODO: more on URIs vs. IRIs, validation, translation stuff
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect{Ontology Event Model}
+An Ontology Event Model (OEM) is implemented and incorporated into the
+new GATE ontology API. Under the new OEM, events are fired
+when a resource is added, modified or deleted from the ontology.
+
+An interface called \texttt{OntologyModificationListener} is created with five methods
+(see below) that need to be implemented by the listeners of ontology events.
+\begin{small}\begin{verbatim}
+public void resourcesRemoved(Ontology ontology, String[] resources);
+\end{verbatim}\end{small}
+This method is invoked whenever an ontology resource (a class, property
+or instance) is removed from the ontology. Deleting one resource can also
+result into the deletion of the other dependent resources. For example, deleting a
+class should also delete all its instances (more details on how deletion works
+are explained later). The second parameter, an array of strings, provides a list
+of URIs of resources deleted from the ontology.
+\begin{small}\begin{verbatim}
+public void resourceAdded(Ontology ontology, OResource resource);
+\end{verbatim}\end{small}
+This method is invoked whenever a new resource is added to the ontology. The
+parameters provide references to the ontology and the resource being added to it.
+\begin{small}\begin{verbatim}
+public void ontologyRelationChanged(Ontology ontology, OResource resource1, 
+                                   OResource resource2, int eventType);
+\end{verbatim}\end{small}
+This method is invoked whenever a relation between two resources (e.g. OClass and 
+OClass, RDFPRoeprty, RDFProeprty, etc) is changed. Example events are addition
+or removal of a subclass or a subproperty, two classes or properties being set as
+equivalent or different and two instances being set as same or different. The first parameter
+is the reference to the ontology, the next two parameters are the resources being affected and
+the final parameters is the event type. Please refer to the list of events specified below for
+different types of events.
+\begin{small}\begin{verbatim}
+public void resourcePropertyValueChanged(Ontology ontology, 
+                                         OResource resource, RDFProperty
+                                       property, Object value, int eventType)
+\end{verbatim}\end{small}
+This method is invoked whenever any property value is added or removed to a resource.
+The first parameter provides a reference to the ontology in which the event took
+place. The second provides a reference to the resource affected, the third parameter provides
+a reference to the property for which the value is added or removed, the fourth parameter is
+the actual value being set on the resource and the fifth parameter identifies the type of event.
+\begin{small}\begin{verbatim}
+public void ontologyReset(Ontology ontology)
+\end{verbatim}\end{small}
+This method is called whenever ontology is reset.  In other words when all resources of the 
+ontology are deleted using the ontology.cleanup method.
+
+The \texttt{OConstants} class defines the static constants, listed below, for various event types.
+\begin{small}\begin{verbatim}
+public static final int OCLASS_ADDED_EVENT;
+public static final int ANONYMOUS_CLASS_ADDED_EVENT;
+public static final int CARDINALITY_RESTRICTION_ADDED_EVENT;
+public static final int MIN_CARDINALITY_RESTRICTION_ADDED_EVENT;
+public static final int MAX_CARDINALITY_RESTRICTION_ADDED_EVENT;
+public static final int HAS_VALUE_RESTRICTION_ADDED_EVENT;
+public static final int SOME_VALUES_FROM_RESTRICTION_ADDED_EVENT;
+public static final int ALL_VALUES_FROM_RESTRICTION_ADDED_EVENT;
+public static final int SUB_CLASS_ADDED_EVENT;
+public static final int SUB_CLASS_REMOVED_EVENT;
+public static final int EQUIVALENT_CLASS_EVENT;
+public static final int ANNOTATION_PROPERTY_ADDED_EVENT;
+public static final int DATATYPE_PROPERTY_ADDED_EVENT;
+public static final int OBJECT_PROPERTY_ADDED_EVENT;
+public static final int TRANSTIVE_PROPERTY_ADDED_EVENT;
+public static final int SYMMETRIC_PROPERTY_ADDED_EVENT;
+public static final int ANNOTATION_PROPERTY_VALUE_ADDED_EVENT;
+public static final int DATATYPE_PROPERTY_VALUE_ADDED_EVENT;
+public static final int OBJECT_PROPERTY_VALUE_ADDED_EVENT;
+public static final int RDF_PROPERTY_VALUE_ADDED_EVENT;
+public static final int ANNOTATION_PROPERTY_VALUE_REMOVED_EVENT;
+public static final int DATATYPE_PROPERTY_VALUE_REMOVED_EVENT;
+public static final int OBJECT_PROPERTY_VALUE_REMOVED_EVENT;
+public static final int RDF_PROPERTY_VALUE_REMOVED_EVENT;
+public static final int EQUIVALENT_PROPERTY_EVENT;
+public static final int OINSTANCE_ADDED_EVENT;  
+public static final int DIFFERENT_INSTANCE_EVENT;
+public static final int SAME_INSTANCE_EVENT;
+public static final int RESOURCE_REMOVED_EVENT;
+public static final int RESTRICTION_ON_PROPERTY_VALUE_CHANGED;
+public static final int SUB_PROPERTY_ADDED_EVENT;
+public static final int SUB_PROPERTY_REMOVED_EVENT;
+\end{verbatim}\end{small}
+
+An ontology is responsible for firing various ontology events. Object wishing to
+listen to the ontology events must implement the methods above and must be
+registered with the ontology using the following method.
+\begin{small}\begin{verbatim}
+addOntologyModificationListener(OntologyModificationListener oml);
+\end{verbatim}\end{small}
+The following method cancels the registration.
+\begin{small}\begin{verbatim}
+removeOntologyModificationListener(OntologyModificationListener oml);
+\end{verbatim}\end{small}
+
+\subsect{What Happens when a Resource is Deleted?}
+
+Resources in an ontology are connected with each other. For example,
+one class can be a sub or superclass of another classes. A resource can
+have multiple properties attached to it. Taking these various
+relations into account, change in one resource can affect other
+resources in the ontology. Below we describe what happens (in terms
+of what does the GATE ontology API do) when a resource is
+deleted.
+\begin{itemize}
+\item When a class is deleted
+\begin{itemize}
+\item A list of all its super classes is obtained. For each class in this list,
+a list of its subclasses is obtained and the deleted class is removed from it.
+\item All subclasses of the deleted class are removed from the ontology. A list
+of all its equivalent classes is obtained. For each class in this list, a list
+of its equivalent classes is obtained and the deleted class is removed from it.
+\item All instances of the deleted class are removed from the ontology.
+\item All properties are checked to see if they contain the deleted class as a
+member of their domain or range. If so, the respective property is also deleted
+from the ontology.
+\end{itemize}
+\item When an instance is deleted
+\begin{itemize}
+\item A list of all its same instances is obtained. For each instance in this
+list, a list of its same instances is obtained and the deleted instance is
+removed.
+\item A list of all instances set as different from the deleted instance is
+obtained. For each instance in this list, a list of instances set as different
+from it is obtained and the deleted instance is removed.
+\item All the instances of ontology are checked to see if any of their set
+properties have the deleted instance as value. If so, the respective set
+property is altered to remove the deleted instance.
+\end{itemize}
+\item When a property is deleted
+\begin{itemize}
+\item A list of all its super properties is obtained. For each property in this
+list, a list of its sub properties is obtained and the deleted property is
+removed.
+\item All sub properties of the deleted property are removed from the ontology. 
+\item A list of all its equivalent properties is obtained. For each property in
+this list, a list of its equivalent properties is obtained and the deleted
+property is removed.
+\item All instances and resources of the ontology are checked to see if they
+have the deleted property set on them. If so the respective property is
+deleted.
+\end{itemize}
+\end{itemize}
+
+%% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+%% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+%% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:ontologies:pluginontology]{The Ontology Plugin: Current Implementation}
+
+The plugin \texttt{Ontology} contains the current ontology API implementation. This
+implementation provides the additions and enhancements introduced into the GATE
+ontology API as of release 5.1. It is based on a backend that uses Sesame version 2
+and OWLIM version 3. 
+
+Before any ontology-based functionality can be used, the plugin must be loaded into
+GATE. To do this in the GATE Developer GUI, select the `Manage CREOLE Plugins' 
+option from the `File' menu and check the `Load now' checkbox for the `Ontology'
+plugin, then click OK. After this, the context menu for Language Resources will
+include the following ontology language resources:
+\begin{itemize}
+ \item \emph{OWLIMOntology}: this is the standard language resource to use in most situations.
+ It allows the user to create a new ontology backed by files in a local directory
+ and optionally load ontology data into it.
+ \item \emph{OWLIMOntology DEPRECATED}: this language resource has the same functionality 
+ as \emph{OWLIMOntology} but uses the exactly same package and class name as the 
+ language resource in the plugin \verb!Ontology_OWLIM2!. This LR is provided to 
+ allow an easier upgrade of existing pipelines to the new implementation but
+ users should move the the \emph{OWLIMOntology LR} as soon as possible.
+ \item \emph{ConnectSesameOntology}: This language resources allows the use of ontologies
+ that are already stored in a Sesame2 repository which is either stored in a 
+ directory or accessible from a server. This is useful for quickly re-using a
+ very large ontology that has been previously created as a persistent \emph{OWLIMOntology}
+ language resource.
+ \item \emph{CreateSesameOntology}: This language resource allows the user to create a 
+ new empty ontology by specifying the repository configuration for creating 
+ the sesame repository. \textbf{Note:}\emph{This is for advanced uses only!}
+\end{itemize}
+
+Each of these language resources is explained in more detail in the following sections.
+
+To make the plugin available to your GATE Embedded application, load the plugin
+prior to creating one of the ontology language resources using the following 
+code:
+\begin{lstlisting}
+// Find the directory for the Ontology plugin
+File pluginHome = 
+ new File(new File(Gate.getGateHome(), "plugins"), "Ontology");
+// Load the plugin from that directory
+Gate.getCreoleRegister().registerDirectories(pluginHome.toURI().toURL());
+\end{lstlisting}
+
+\subsect[sec:ontologies:ontoplugin:owlim]{The OWLIMOntology Language Resource}
+
+The \verb!OWLIMOntology! language resource is the main ontology language 
+resource provided by the plugin and provides a similar functionality
+to the \verb!OWLIMOntologyLR! language resource provided by the pre-5.1
+implementation and provided by the \verb!Ontology_OWLIM2! plugin from
+version 5.1 on. This language resource creates an in-memory store backed
+by files in a directory on the file system to hold the ontology
+data.
+
+To create a new OWLIM Ontology resource, select `OWLIM Ontology' from
+the right-click `New' menu for language resources. A dialog as 
+shown in Figure~\ref{fig:ontology_lrowlim_new} appears with the following 
+parameters to fill in or change:
+\begin{itemize}
+ \item \emph{Name} (optional): if no name is given, a default name will be generated, if an
+  ontology is loaded from an URL, based on that URL, otherwise based on
+  the language resource name.
+ \item \emph{baseURI} (optional): the URI to be used for resolving relative URI references 
+    in the ontology during loading.
+ %% TODO: explain more automatic setting of default name space, ontology
+ %% URI etc. once this has actually been properly implemented!
+ \item \emph{dataDirectoryName} (optional): the name of an existing directory on the file 
+   system where the directory will be created that backs the ontology store.
+  The name of the directory that will be created within the data directory
+  will be \verb!GATE_OWLIMOntology_! followed by a string representation
+  of the system time. If this parameter is not specified, the value for 
+  system property \texttt{java.io.tmpdir} is used, if this is not set either
+  an error is raised.
+ \item \emph{loadImports} (optional): either true or false. If set to false all ontology
+ import specifications found in the loaded ontology are ignored. This
+  parameter is ignored if no ontology is loaded when the language 
+  resource is created. 
+  \item \emph{mappingsURL} (optional): the URL of a text file containing import mappings 
+  specifications. See section~\ref{sec:ontologies:ontoplugin:mappings} 
+  for a description of the mappings file.
+  If no URL is specified, the GATE will interpret each import URI found
+  as an URL and try to import the data from that URL. If the URI is not absolute 
+  it will get resolved against the base URI.
+  \item \emph{persistent} (optional): true or false: if false, the directory created inside
+  the data directory is removed when the language resource is closed, 
+  otherwise, that directory is kept. The \verb!ConnectSesameOntology! language
+  resource can be used at a later time to connect to such a directory and
+  create an ontology language resource for it (see Section~\ref{sec:ontologies:ontoplugin:connect}).
+  \item \emph{rdfXmlUrl} (optional): an URL specifying the location of an ontology in
+  RDF/XML serialization format (see \url{http://www.w3.org/TR/rdf-syntax-grammar/}) from which
+  to load initial ontology data from. The parameter name can be changed
+  from \texttt{rdfXmlUrl} to \texttt{n3Url} to indicate N3 serialization
+  format (see \url{http://www.w3.org/DesignIssues/Notation3.html}), 
+  to \texttt{ntriplesUrl}  to indicate N-Triples format 
+  (see \url{http://www.w3.org/TR/2004/REC-rdf-testcases-20040210/#ntriples}), 
+  and to \texttt{turtleUrl} to indicate TURTLE serialization format
+  (see \url{http://www.w3.org/TeamSubmission/turtle/}).
+  If this is left blank, no ontology is loaded and an empty ontology
+  language resource is created.
+\end{itemize}
+
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=0.6\textwidth]{ontology_lrowlim_new.png}
+\caption{The New OWLIM Ontology Dialog}
+\label{fig:ontology_lrowlim_new}
+\end{center}
+\end{figure}
+
+\textbf{Note:} you could create a language resource such as 
+\emph{OWLIM Ontology} from GATE Developer successfully, but you 
+will not be able to browse/edit the ontology unless you loaded 
+\emph{Ontology Tools} plugin beforehand.
+
+Additional ontology data can be loaded into an existing ontology
+language resource by selecting the `Load' option from the 
+language resource's context menu. This will show the 
+dialog shown in figure~\ref{fig:ontology_lr_load}.
+The parameters in this dialog correspond to the parameters in the 
+dialog for creating a new ontology with the addition of one new
+parameter: `load as import'. If this parameter is checked, the
+ontology data is loaded specifically as an ontology import. Ontology
+imports can be excluded from what is saved at a later time.
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=0.6\textwidth]{ontology_lr_load.png}
+\caption{The Load Ontology Dialog}
+\label{fig:ontology_lr_load}
+\end{center}
+\end{figure}
+
+Figure~\ref{fig:ontology_lr_save} shows the ontology save 
+dialog that is shown when the option `Save as\dots' is selected from
+the language resource's context menu. 
+The parameter `include imports' allows the user to specify if the data 
+that has been loaded through imports should be included in the saved data or not.
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=0.6\textwidth]{ontology_lr_save.png}
+\caption{The Save Ontology Dialog}
+\label{fig:ontology_lr_save}
+\end{center}
+\end{figure}
+
+
+\subsect[sec:ontologies:ontoplugin:connect]{The ConnectSesameOntology Language Resource}
+
+This ontology language resource can be created from either 
+a directory on the local file system that holds an ontology backing store
+(as created in the `data directory' for the `OWLIM Ontology' language resource),
+or from a sesame repository on a server that holds an OWLIM ontology 
+store.
+
+This is very useful when using very large ontologies with GATE. Loading a 
+very large ontology from a serialized format takes a significant amount
+of time because the file has to be deserialized and all implied facts
+have to get generated. Once an ontology has been loaded into a persisting
+\texttt{OWLIMOntology} language resource, the \texttt{ConnectSesameOntology} language resource can
+be used with the directory created to re-connect to the already de-serialized
+and inferred data much faster.
+
+Figure~\ref{fig:ontology_lrconn_new} shows the dialog for creating a
+\texttt{ConnectSesameOntology} language resource.
+\begin{itemize}
+ \item \emph{repositoryID}: the name of the sesame repository holding the ontology store.
+ For a backing store created with the `OWLIM Ontology' language resource, this
+ is always `owlim3'. 
+ \item \emph{repositoryLocation}: the URL of the location where to find the repository
+ holding the ontology store. The URL can either specify a local directory or 
+ an HTTP server. For a backing store created with the `OWLIM Ontology'
+ language resource this is the directory that was created inside the data directory
+ (the name of the directory starting with \verb!GATE_OWLIMOntology_!). 
+ If the URL specifies a HTTP server which requires authentification, the user-ID
+ and password have to be included in the URL (e.g. \verb!http://userid:passwd@localhost:8080/openrdf-sesame!).
+
+\end{itemize}
+
+Note that this ontology language resource is only supported when connected with
+an OWLIM3 repository configured to use the \texttt{owl-max ruleset} and with
+\texttt{partialRDFS} optimizations disabled! Connecting to any other repository
+is experimental and for expert users only! Also note that connecting to a
+repository that is already in use by GATE or any other application is not
+supported and might result in unwanted or erroneous behavior!
+
+\begin{figure}[htbp]
+\begin{center}
+\includegraphics[width=0.6\textwidth]{ontology_lrconn_new.png}
+\caption{The New ConnectSesameOntology Dialog}
+\label{fig:ontology_lrconn_new}
+\end{center}
+\end{figure}
+
+
+\subsect[sec:ontologies:ontoplugin:create]{The CreateSesameOntology Language Resource}
+
+This ontology language resource can be directly created from a Sesame2
+repository configuration file. This is an experimental language resource 
+intended for expert users only. This can be used to create any kind 
+of Sesame2 repository, but the only repository configuration supported 
+by GATE and the GATE ontology API is an OWLIM repository configured to use 
+the \texttt{owl-max ruleset} and with \texttt{partialRDFS} optimizations
+disabled.  The dialog for creating this language resource is shown in
+Figure~\ref{fig:ontology_lrcreate_new}.
+
+\begin{figure}[htbp]
+\begin{center}
+\includegraphics[width=0.6\textwidth]{ontology_lrcreate_new.png}
+\caption{The New CreateSesameOntology Dialog}
+\label{fig:ontology_lrcreate_new}
+\end{center}
+\end{figure}
+
+\subsect[sec:ontologies:ontoplugin:owlim2compat]{The OWLIM2 Backwards-Compatible Language Resource}
+
+This language resource is shown as ``OWLIM Ontology DEPRECATED'' in the `New
+Language Resource' submenu from the `File' menu. It provides the
+``OWLIM Ontology'' language resource in
+a way that attempts maximum backwards-compatibility with the ontology language
+resource provided by prior versions or the \texttt{Ontology\_OWLIM2} 
+language resource. This means, the class name is identical to those
+language resources {\texttt{gate.creole.ontology.owlim.OWLIMOntologyLR}) and
+the parameters are made compatible. This means that the parameter
+\texttt{defaultNameSpace} is added as an alias for the parameter
+\texttt{baseURI} (also the methods \texttt{setPersistsLocation} and 
+\texttt{getPersistLocation} are available for legacy Java code that expects
+them, but the persist location set that way is not actually used).
+
+In addition, this language resource will still automatically add the resource
+name of a resource as the String value for the annotation property ``label''.
+
+\subsect[sec:ontologies:ontoplugin:mappings]{Using Ontology Import Mappings}
+
+If an ontology is loaded that contains the URIs of imported ontologies
+using \texttt{owl:imports}, the plugin will try to automatically resolve
+those URIs to URLs and load the ontology file to be imported from the location
+corresponding to the URL. 
+This is done transitively, i.e. import specifications contained in freshly
+imported ontologies are resolved too.
+
+In some cases one might want to suppress the import of certain ontologies or
+one might want to load the data from a different locatin, e.g. from a file
+on the local file system instead. With the OWLIMOntology language resource
+this can be achieved by specifying an import mappings file when creating 
+the ontology.
+
+An import mappings file (see figure~\ref{fig:importmappingsfile} for an example)
+is a plain file that maps specific import URIs to 
+URLs or to nothing at all. Each line that is not empty or does not start 
+with a hash (\verb|#|) indicating a comment line must contain a URI.
+If the URI is not followed by anything, this URI will be ignored when 
+processing imports. If the URI is followed by something, this is interpreted
+as a URL that is used for resolving the import of the URI. Local files
+can be specified as \texttt{file:} URLs or by just giving the absolute
+or relative pathname of the file in Linux path notation (forward slashes
+as path separators). At the moment, filenames with embedded whitespace
+are not supported. If a pathname is relative it will be resolved relative
+to the directory which contains the mappings file.
+
+\begin{figure}[htbp]
+\begin{center}
+{\footnotesize
+\begin{small}\begin{verbatim}
+
+# map this import to another web url
+http://proton.semanticweb.org/2005/04/protont http://mycompany.com/owl/protont.owl
+
+# map this import to a file in the same directory as the mappings file
+http://proton.semanticweb.org/2005/04/protons protons.owl
+
+# ignore this import
+http://somewhere.com/reallyhugeimport
+\end{verbatim}\end{small}
+}
+\caption{An example import mappings file}
+\label{fig:importmappingsfile}
+\end{center}
+\end{figure}
+
+
+\subsect[sec:ontologies:ontoplugin:bigowlim]{Using BigOWLIM}
+
+The GATE ontology plugin is based on SwiftOWLIM for storing the
+ontology and managing inference. SwiftOWLIM is an in-memory store
+and the maximum size of ontologies that can be stored is limited
+by the available memory.
+
+BigOWLIM (see \url{http://www.ontotext.com/owlim/big/}) 
+can handle huge ontologies and is not limited
+by available memory. BigOWLIM is a commercial product and needs
+to be separately obtained and installed for use with the GATE
+ontology plugin. See the BigOWLIM installation guide on how to 
+set up BigOWLIM on a Tomcat server and how to create BigOWLIM on 
+the server with the Sesame console program.
+
+The ontology plugin can easily and without any additional installation
+ be used with BigOWLIM repositories by
+using the ConnectSesameOntology LR (see section~\ref{sec:ontologies:ontoplugin:connect})
+to connect to a BigOWLIM repository on a remote Tomcat server. 
+
+\subsect[sec:ontologies:ontoplugin:sesamecli]{The sesameCLI command line interface}
+
+The script \texttt{sesameCLI} is located in the \texttt{bin} subdirectory
+of the Ontology plugin directory and provides basic functionality for 
+creating repositories, importing, exporting, querying and updating of GATE 
+ontologies, either on a saved local file repository (saved with the persistent
+  parameter of the OWLIM Ontology LR set to \texttt{true}) or a repository on a 
+server from the command line. It can be used on any machine that supports 
+bash scripts.
+
+To show usage information run the command with the \texttt{--help} option. Some
+options can be specified in a long form using double hyphens or a single-letter 
+form using a single hyphen, for example, \texttt{-e} can be used in place of
+\texttt{--do} or \texttt{-u} in place of \texttt{--serverURL}.
+
+The main option is \texttt{--do} which specifies which action should be carried
+out. For all actions the ontology must be specified as a combination of 
+either the URL of a Sesame web server with \texttt{serverURL} or the 
+directory of a local Sesame repository directory with \texttt{sesameDir} and the name 
+of the repository with \texttt{--id}.
+
+The \texttt{--do} option supports the following values:
+\begin{description}
+ \item [clear] Clear the repository and remove all triples from it.
+ \item [ask] Perform an ASK query. The result of the ASK query is printed to standard output.
+ \item [query] Perform a SELECT query. The result of the query is printed in tabular form to
+   standard output. The default column separation character is a tab and  
+   if the column separator or a new line character occurs in a value it is changed to 
+   a space.
+ \item [update] Perform a SPARQL update query (INSERT, DELETE)
+ \item [import] Import data into the repository from a file
+ \item [export] Export data from the repository into a filenames
+ \item [create] Create a new repository using a TURTLE repository configuration file.
+ \item [delete] Delete a repository. Note that due to a Sesame limitation, the actual
+   files for the repository may not be removed from the disk for remote ontologies
+   on a server.
+ \item [listids] Print the list of all repository names to standard output.
+\end{description}
+
+
+The \texttt{sesameCLI} command line tool is meant as an easy way to perform
+some basic operations from the command line and for basic testing. The functions
+it supports and its command line options may change in future versions.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:ontologies:pluginowlim2compat]
+ {The Ontology\_OWLIM2 plugin: backwards-compatible implementation}
+
+
+\subsect[sec:ontologies:lr]{The OWLIMOntologyLR Language Resource}
+
+This implementation is identical to the implementation that was part of 
+GATE core before version 5.1. It is based on SwiftOWLIM version 2 and 
+Sesame version 1.
+
+In order to load an ontology in an OWLIM repository, the user has to provide certain
+configuration parameters.  These include the name of the repository, the URL of the
+ontology, the default name space, the format of the ontology (RDF/XML, N3, NTriples and
+Turtle), the URLs or absolute locations of the other ontologies to be imported,
+their respective name spaces and so on. Ontology files, based on their format,
+are parsed and persisted in the NTriples format.
+
+In order to utilize the power of OWLIM and the simplicity of GATE
+ontology API, GATE provides an implementation of the OWLIM
+Ontology. Its basic purpose is to hide all the complexities of OWLIM
+and Sesame and provide an easy to use API and interface to create,
+load, save and update ontologies. Based on certain parameters that
+the user provides when instantiating the ontology, a configuration
+file is dynamically generated to create a dummy repository in memory
+(unless persistence is specified).
+
+When creating a new ontology, one can use an existing file to pre-populate it
+with data. If no such file is provided, an empty ontology is created. A detailed
+description for all the parameters that are available for new ontologies
+follows:
+
+\begin{enumerate}
+\item \emph{defaultNameSpace} is the base URI to be used for all new items that
+are only mentioned using their local name.  This can safely be left empty, in
+which case, while adding new resources to the ontology, users are asked to
+provide name spaces for each new resource.
+\item As indicated earlier, OWLIM supports four different formats: RDF/XML,
+NTriples, Turtle and N3.  According to the format of the ontology file, user should
+select one of the four URL options \emph{(rdfXmlURL, ntriplesURL, turtleURL and
+n3URL (not supported yet))} and provide a URL pointing to the
+ontology data.
+\end{enumerate}
+
+Once an ontology is created, additional data can be loaded that will
+be merged with the existing information. This can be done by
+right-clicking on the ontology in the resources tree in GATE Developer
+and selecting `Load ... data' where `...' is one of the supported
+formats.
+
+Other options available are cleaning the ontology (deleting all the information from
+it) and saving it to a file in one of the supported formats.
+ 
+%% This was originally part of the editor section but really belongs to the LR section
+
+Ontology can be saved in different formats (rdf/xml, ntriples, n3 and
+turtle) using the options provided in the context menu that can be
+invoked by right clicking on the instance of an ontology in GATE
+Developer. All the changes made to the ontology are logged and stored
+as an ontology feature. Users can also export these changes to a file
+by selecting the `Save Ontology Event Log' option from the context
+menu. Similarly, users can also load the exported event log and apply
+the changes on a different ontology by using the `Load Ontology Event
+Log' option. Any change made to the ontology can be described by a set
+of triples either added or deleted from the repository. For example,
+in GATE Embedded, addition of a new instance results into addition of
+two statements into the repository:
+
+%\begin{lstlisting}
+\begin{small}\begin{verbatim}
+
+// Adding a new instance "Rec1" of type "Recognized"
+// Here + indicates the addition
++ <http://proton.semanticweb.org/2005/04/protons#Rec1> 
+	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> 
+	<http://proton.semanticweb.org/2005/04/protons#Recognized>
+
+// Adding a label (annotation property) to the instance with 
+// value "Rec Instance"
++ <http://proton.semanticweb.org/2005/04/protons#Rec1> 
+	<http://www.w3.org/2000/01/rdf-schema#label> 
+	<Rec Instance> 
+	<http://www.w3.org/2001/XMLSchema#string>
+
+\end{verbatim}\end{small}
+%\end{lstlisting}
+
+
+The event log therefore contains a list of such triples, the latest change being at 
+the bottom of the change log. Each triple consists of a subject followed by a 
+predicate followed by an object.  Below we give an illustration explaining the 
+syntax used for recording the changes.
+
+%\begin{lstlisting}
+\begin{small}\begin{verbatim}
+
+// Adding a new instance "Rec1" of type "Recognized"
+// Here + indicates the addition
++ <http://proton.semanticweb.org/2005/04/protons#Rec1> 
+	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> 
+	<http://proton.semanticweb.org/2005/04/protons#Recognized>
+
+// Adding a label (annotation property) to the instance with 
+// value "Rec Instance"
++ <http://proton.semanticweb.org/2005/04/protons#Rec1> 
+	<http://www.w3.org/2000/01/rdf-schema#label> 
+	<Rec Instance> 
+	<http://www.w3.org/2001/XMLSchema#string>
+
+// Adding a new class called TrustSubClass
++ <http://proton.semanticweb.org/2005/04/protons#TrustSubClass> 
+	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> 
+	<http://www.w3.org/2002/07/owl#Class>
+
+// TrustSubClass is a subClassOf the class Trusted
++ <http://proton.semanticweb.org/2005/04/protons#TrustSubClass> 
+	<http://www.w3.org/2000/01/rdf-schema#subClassOf> 
+	<http://proton.semanticweb.org/2005/04/protons#Trusted>
+
+// Deleting a property called hasAlias and all relevant statements
+// Here - indicates the deletion
+// * indicates any value in place
+- <http://proton.semanticweb.org/2005/04/protons#hasAlias> <*> <*>
+- <*> <http://proton.semanticweb.org/2005/04/protons#hasAlias> <*>
+- <*> <*> <http://proton.semanticweb.org/2005/04/protons#hasAlias>
+
+// Deleting a label set on the instance Rec1
+- <http://proton.semanticweb.org/2005/04/protons#Rec1> 
+	<http://www.w3.org/2000/01/rdf-schema#label> 
+	<Rec Instance>
+	<http://www.w3.org/2001/XMLSchema#string>
+
+// Reseting the entire ontology (Deleting all statements)
+- <*> <*> <*>
+
+\end{verbatim}\end{small}
+%\end{lstlisting}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:ontologies:vr]{GATE Ontology Editor}
+
+
+GATE's ontology support also includes a viewer/editor that can be used
+within GATE Developer to navigate an ontology and quickly inspect the
+information relating to any of the objects defined in it---classes and
+restrictions, instances and their properties. Also, resources can be
+deleted and new resources can be added through the viewer.
+
+Before the ontology editor can be used, one of the ontology
+implementation plugins must be loaded. In addition the 
+\verb!Ontology_Tools! must be loaded.
+
+\texttt{Note:} To make it possible to show a loaded ontology in the ontology
+editor, the \verb!Ontology_Tools! plugin must be loaded
+\emph{before} the ontology language resource is created.
+
+
+\begin{figure}[htbp]
+\begin{center}
+\includegraphics[scale=0.5]{ontology-vr.png}
+\caption{The GATE Ontology Viewer}
+\label{fig:ontology-vr}
+\end{center}
+\end{figure}
+
+
+The viewer is divided into two areas. One on the left shows separate tabs for
+hierarchy of classes and instances and for (as of Gate 4) hierarchy of
+properties. The view on right hand side shows the details pertaining of the
+object currently selected in the other two.
+
+First tab on the left view displays a tree which shows all the classes and
+restrictions defined in the ontology. The tree can have several root
+nodes---one for each top class in the ontology. The same tree also shows each
+instances for each class. \textbf{Note}: Instances that belong to several classes are shown as children
+of all the classes they belong to.
+
+Second tab on the left view displays a tree of all the properties defined in the
+ontology. This tree can also have several root nodes---one for each top property
+in the ontology.  Different types of properties are distinguished by using
+different icons.
+
+Whenever an item is selected in the tree view, the right-hand view is populated with
+the details that are appropriate for the selected object. For an ontology class, the
+details include the brief information about the resource such as the URI of the
+selected class, type of the selected class etc., set of direct superclasses, the
+set of all superclasses using the transitive closure, the set of direct
+subclasses, the set of all the subclasses, the set of equivalent classes, the
+set of applicable property types, the set of property values set on the selected
+class, and the set of instances that belong to the selected class. For a
+restriction, in addition to the above information, it displays on which
+property the restriction is applicable to and  what type of the restriction
+that is.
+
+For an instance, the details displayed include the brief information about the
+instance, set of direct types (the list of classes this instance is known to
+belong to), the set of all types this instance belongs to (through the
+transitive closure of the set of direct types), the set of same instances, the
+set of different instances and the values for all the properties that are set.
+
+When a property is selected, different information is displayed in the right-hand
+view according to the property type. It includes the brief information about the
+property itself, set of direct superproperties, the set of all superproperties
+(obtained through the transitive closure), the set of direct subproperties, the
+set of all subproperties (obtained through the transitive closure), the set of
+equivalent properties, and domain and range information.
+
+As mentioned in the description of the data model, properties are not directly
+linked to the classes, but rather define their domain of applicability through a
+set of domain restrictions. This means that the list of properties should not
+really be listed as a detail for class objects but only for instances. It is
+however quite useful to have an indication of the types of properties that could
+apply to instances of a given class. Because of the semantics of property
+domains, it is not possible to calculate precisely the list of applicable
+properties for a given class, but only an estimate of it. If a property for
+instance requires its domain instances to belong to two different classes then
+it cannot be known with certitude whether it is applicable to either of the two
+classes---it does not apply to all instances of any of those classes, but only
+to those instances the two classes have in common. Because of this, such
+properties will not be listed as applicable to any class. 
+
+The information listed in the details pane is organised in sub-lists according
+to the type of the items. Each sub-list can be collapsed or expanded by
+clicking on the little triangular button next to the title. The ontology viewer
+is dynamic and will update the information displayed whenever the underlying
+ontology is changed through the API.
+
+When you double click on any resource in the details table, the respective
+resource is selected in the class or in the property tree and the selected
+resource's details are shown in the details table. To change a
+property value, user can double click on a value of the property (second column)
+and the relevant window is shown where user is asked to provide a new value.
+Along with each property value, a button (with red X caption) is provided.
+If user wants to remove a property value he or she can click on the button and
+the property value is deleted.
+
+A new toolbar has been added at the top of the ontology viewer, which contains
+the following buttons to add and delete ontology resources:
+\begin{itemize}
+\item Add new top class (TC)
+\item Add new subclass (SC)
+\item Add new instance (I)
+\item Add new restriction (R)
+\item Add new Annotation property (A)
+\item Add new Datatype property (D)
+\item Add new Object property (O)
+\item Add new Symmetric property (S)
+\item Add new Transitive property (T)
+\item Remove the selected resource(s) (X)
+\item Search
+\item Refresh ontology
+\end{itemize}
+
+The tree components allow the user to select more than one node, but
+the details table on the right-hand side of the GATE Developer GUI
+only shows the details of the first selected node. The buttons in the
+toolbar are enabled and disabled based on users' selection of nodes in
+the tree.
+
+\begin{enumerate}
+\item \textbf{Creating a new top class:}
+
+A window appears which asks the user to provide details for its namespace (default
+name space if specified), and class name. If there is already a class with same
+name in ontology, GATE Developer shows an appropriate message. 
+
+\item \textbf{Creating a new subclass:}
+
+A class can have multiple super classes.  Therefore, selecting multiple classes in
+the ontology tree and then clicking on the `SC' button, automatically considers
+the selected classes as the super classes.  The user is then asked for details for
+its namespace and class name.
+
+\item \textbf{Creating a new instance:}
+
+An instance can belong to more than one class.  Therefore, selecting multiple
+classes in the ontology tree and then clicking on the `I' button, automatically
+considers the selected classes as the type of new instance.  The user is then
+prompted to provide details such as namespace and instance name.
+
+\item \textbf{Creating a new restriction:}
+
+As described above, restriction is a type of an anonymous class and is specified
+on a property with a constraint set on either the number of values it can take
+or the type of value allowed for instances to have for that property.  User can
+click on the blue `R' square button which shows a window for creating a new
+restriction.  User can select a type of restriction, property and a value
+constraint for the same.  Please note that restrictions are considered as
+anonymous classes and therefore user does not have to specify any URI for the
+same but restrictions are named automatically by the system.
+
+\item \textbf{Creating a new property:}
+
+Editor allows creating five different types of properties:
+\begin{itemize}
+\item Annotation property: Since an annotation property cannot have any domain 
+or range constraints, clicking on the new annotation property button brings up a
+dialog that asks the user for information such as the namespace and the 
+annotation property name.
+\item Datatype property: A datatype property can have one or more ontology 
+classes as its domain and one of the pre-defined datatypes as its range. 
+Selecting one or more classes and clicking on the new Datatype property icon, 
+brings up a window where the selected classes in the tree are taken as the 
+property's domain. The user is then asked to provide information such as the 
+namespace and the property name.  A drop down box allows users to select one of 
+the data types from the list.
+\item Object, Symmetric and Transitive properties:  These properties can have 
+one or more classes as their domain and range.  For a symmetric property the 
+domain and range are the same.  Clicking on any of these options brings up a 
+window where user is asked to provide information such as the namespace and the 
+property name.  The user is also given two buttons to select one or more classes
+as values for domain and range.
+\end{itemize}
+
+\item \textbf{Removing the selected resources:}
+
+All the selected nodes are removed when user clicks on the `X' button.  Please
+note that since ontology resources are related in various ways,
+deleting a resource can affect other resources in the ontology;
+for example, deleting a resource can cause other resources
+in the same ontology to be deleted too.
+
+\item \textbf{Searching in ontology:}
+
+The Search button allows users to search for resources in the ontology. A window
+pops up with an input text field that allows incremental searching.  In other 
+words, as user types in name of the resource, the drop-down list refreshes itself
+to contain only the resources that start with the typed string. Selecting one of
+the resources in this list and pressing OK, selects the appropriate resource in 
+the editor.  The Search function also allows selecting resources by the property
+values set on them.
+
+\item \textbf{Refresh Ontology}
+
+The refresh button reloads the ontology and updates the editor.
+
+\item \textbf{Setting properties on instances/classes:}
+
+Right-clicking on an instance brings up a menu that provides a list of properties
+that are inherited and applicable to its classes.  Selecting a specific
+property from the menu allows the user to provide a value for that property. For
+example, if the property is an Object property, a new window appears which
+allows the user to select one or more instances which are compatible to the range
+of the selected property.  The selected instances are then set as property
+values.  For classes, all the properties (e.g.~annotation 
+and RDF properties) are listed on the menu.
+
+\item \textbf{Setting relations among resources:}
+
+Two or more classes, or two or more properties, can be set as equivalent;
+similarly two or more instances can be marked as the same. Right-clicking on a
+resource brings up a menu with an appropriate option (Equivalent Class for
+ontology classes, Same As Instance for instances and Equivalent Property for
+properties) which when clicked then brings up a window with a drop down box
+containing a list of resources that the user can select to specify them as
+equivalent or the same.
+\end{enumerate}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:ontologies:ocat]{Ontology Annotation Tool}
+
+The Ontology Annotation Tool (OAT) is a GATE plugin available from
+the Ontology Tools plugin set, which enables a user to manually annotate a text
+with respect to one or more ontologies. The required ontology must be selected
+from a pull-down list of available ontologies.
+
+The OAT tool supports annotation with information about the ontology classes,
+instances and properties.
+
+\subsect[sec:ontologies:ocat:view]{Viewing Annotated Text}
+
+Ontology-based annotations in the text can be viewed by selecting the desired classes or instances in the ontology tree in GATE Developer 
+(see Figure~\ref{fig:ocat:view}). By default, when a class is
+selected, all of its sub-classes and instances are also automatically
+selected and their mentions are highlighted in the text. There is an
+option to disable this default behaviour (see
+Section~\ref{sec:ontologies:ocat:options}).
+
+\begin{figure}
+\includegraphics[height=10cm]{ontology_ocat_view.png}
+\caption{Viewing Ontology-Based Annotations} \label{fig:ocat:view}
+\end{figure}
+
+Figure~\ref{fig:ocat:view} shows the mentions of each class and instance in a different
+colour. These colours can be customised by the user by clicking on
+the class/instance names in the ontology tree. It is also possible to expand
+and collapse branches of the ontology.
+
+\subsect[sec:ontologies:ocat:editing]{Editing Existing Annotations}
+
+\begin{figure}
+\includegraphics[height=10cm]{ontology_ocat_edit.png}
+\caption{Editing Existing Annotations} \label{fig:ocat:edit}
+\end{figure}
+
+In order to view the class/instance of a highlighted annotation in the text
+(e.g., United States - see Figure~\ref{fig:ocat:edit}), hover the mouse
+over it and an edit dialogue will appear. It shows the current class or instance
+(Country in our example) and allows the user to delete it or change
+it. To delete an existing annotation, press the Delete button.
+
+A class or instance can be changed by starting to type the name of the
+new class in the combo-box. Then it displays a list of available
+classes and instances, which start with the typed string. For example,
+if we want to change the type from Country to Location, we can type
+`Lo' and all classes and instances which names start with Lo will be
+displayed. The more characters are typed, the fewer matching classes
+remain in the list. As soon as one sees the desired class in the list,
+it is chosen by clicking on it.
+
+It is possible to apply the changes to all occurrences of the same
+string and the same previous class/instance, not just to the current
+one. This is useful when annotating long texts. The user needs to make
+sure that they still check the classes and instances of annotations
+further down in the text, in case the same string has a different
+meaning (e.g., bank as a building vs. bank as a river bank).
+
+The edit dialogue also allows correcting annotation offset boundaries.
+In other words, user can expand or shrink the annotation offsets'
+boundaries by clicking on the relevant arrow buttons.
+
+OAT also allows users to assign property values as annotation features
+to the existing class and instance annotations. In the case of class
+annotation, all annotation properties from the ontology are displayed
+in the table. In the case of instance annotations, all properties from
+the ontology applicable to the selected instance are shown in the
+table. The table also shows existing features of the selected
+annotation. User can then add, delete or edit any value(s) of the
+selected feature.  In the case of a property, user is allowed to
+provide an arbitrary number of values. User can, by clicking on the
+editList button, add, remove or edit any value to the property.  In
+case of object properties, users are only allowed to select values
+from a pre-selected list of values (i.e.  instances which satisfy the
+selected property's range constraints).
+ 
+\subsect[sec:ontologies:ocat:add]{Adding New Annotations}
+
+\begin{figure}[tbp]
+\includegraphics[height=10cm]{ontology_ocat_add-new.png}
+\caption{Add New Annotation} \label{fig:ocat:add_new}
+\end{figure}
+
+New annotations can be added in two ways: using a dialogue (see
+Figure~\ref{fig:ocat:add_new}) or by selecting the text and clicking on the
+desired class or instance in the ontology tree.
+
+When adding a new annotation using the dialogue, select a text and
+after a very short while, if the mouse is not moved, a dialogue will
+appear (see Figure~\ref{fig:ocat:add_new}). Start typing the name of
+the desired class or instance, until you see it listed in the
+combo-box, then select it with the mouse. This operation is the same,
+as in changing the class/instance of an existing annotation. One has
+the option of applying this choice to the current selection only or to
+all mentions of the selected string in the current document (Apply to
+All check box).
+
+User can also create an instance from the selected text. If user
+checks the `create instance' checkbox prior to selecting the class,
+the selected text is annotated with the selected class and a new
+instance of the selected class (with the name equivalent to the
+selected text) is created (provided there isn't any existing instance
+available in the ontology with that name).
+
+\subsect[sec:ontologies:ocat:options]{Options}
+
+\begin{figure}
+\includegraphics[height=10cm]{ontology_ocat_options.png}
+\caption{Tool Options} \label{fig:ocat:options}
+\end{figure}
+
+There are several options that control the OAT behaviour (see
+Figure~\ref{fig:ocat:options}):
+\begin{itemize}
+\item {\bf Disable child feature}: By default, when a class is
+selected, all of its sub-classes are also automatically selected and
+their mentions are highlighted in the text. This option disables that
+behaviour, so only mentions of the selected class are highlighted.
+
+\item {\bf Delete confirmation}: By default, OAT deletes ontological
+information without asking for confirmation, when the delete button
+is pressed. However, if this leads to too many mistakes, it is
+possible to enable delete confirmations from this option.
+
+\item {\bf Disable Case-Sensitive Feature}: When user decides to annotate all
+occurrences of the selected text (`apply to all' option) in the
+document and if the `disable case-sensitive feature' is selected,
+the tool, when searching for the identical strings in the document
+text, ignores the case-sensitivity.
+
+\item {\bf Setting up a filter to disable resources from the OAT GUI}: When
+user wants to annotate the text of a document with certain
+classes/instances of the ontology, s/he may disable the resources
+which s/he is not going to use.  This option allows users to select a
+file which contains class or instance names, one per line.  These
+names are case sensitive.  After selecting a file, when user turns on
+the `filter' check box, the resources specified in the filter file
+are disabled and removed from the annotation editor window. User can
+also add new resources to this list or remove some or all from the
+list by right clicking on the respective resource and by selecting the
+relevant option.  Once modified, the `save' button allows users to
+export this list to a file.
+
+\item {\bf Annotation Set}: GATE stores information in annotation
+sets and OAT allows you to select which set to use as input and
+output.
+
+\item {\bf Annotation Type}: By default, this is annotation of type
+Mention, but that can be changed to any other name. This option is
+required because OAT uses Gate annotations to store and read the
+ontological data. However, to do that, it needs a type (i.e. name) so
+ontology-based annotations can be distinguished easily from other
+annotations (e.g. tokens, gazetteer lookups).
+
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:ontologies:rat]{Relation Annotation Tool}
+
+This tool is designed to annotate a document with ontology instances and to
+create relations between annotations with ontology object properties. It is
+close and compatible with OAT but focus on relations between annotations, see
+section~\ref{sec:ontologies:ocat} for OAT.
+
+To use it you must load the Ontology Tools plugin, load a document and an
+ontology then show the document and in the document editor click on the
+button named `RAT-C' (Relation Annotation Tool Class view) which will also
+display the `RAT-I' view (Relation Annotation Tool Instance view).
+
+\subsection{Description of the two views}
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=0.6\textwidth]{relation-annotation-tool.png}
+\caption{Relation Annotation Tool vertical and horizontal document views}
+\label{fig:relation-annotation-tool-views}
+\end{center}
+\end{figure}
+
+The right vertical view shows the loaded ontologies as trees.
+
+To show/hide the annotations in the document, use the class checkbox. The
+selection of a class and the ticking of a checkbox are independent and work
+the same as in the annotation sets view.
+
+To change the annotation set used to load/save the annotations, use the drop
+down list at the bottom of the vertical view.
+
+To hide/show the classes in the tree in order to decrease the amount of
+elements displayed, use the context menu on classes selection. The setting
+is saved in the user preferences.
+
+The bottom horizontal view shows two tables: one for instances and one for
+properties. The instances table shows the instances and their labels for the
+selected class in the ontology trees and the properties table shows the
+properties values for the selected instance in the instances table.
+
+Two buttons allow to add a new instance from the text selection in the
+document or as a new label for the selected instance.
+
+To filter on instance labels, use the filter text field. You can clear the
+field with the X button at the end of the field.
+
+You can use `Show In Ontology Editor' on the context menu of an instance in
+the instance table. Then in the ontology editor you can add class or object
+properties.
+
+\subsection{Create new annotation and instance from text selection}
+
+\begin{itemize}
+\item select a class in the ontology tree at the right
+\item select some text in the document editor and hover the mouse over it
+\item use the button `New Inst.' in the view at the bottom
+\item in the bottom left table you have your new instance
+\item don't forget to save your document AND the ontology before to quit
+\end{itemize}
+
+\subsection{Create new annotation and add label to existing instance from text selection}
+
+\begin{itemize}
+\item select a class in the ontology tree at the right
+\item select some text in the document editor and hover the mouse on it
+\item if the instances table is empty then clear the filter text field
+\item select an existing instance in the instances table
+\item use the button `Add to Selected Inst.' in the view at the bottom
+\item in the bottom left table you have your new label
+\item don't forget to save your document AND the ontology before to quit
+\end{itemize}
+
+\subsection{Create and set properties for annotation relation}
+
+\begin{itemize}
+\item open an ontology with the ontology editor
+\item if not existing add at least an object property for one class
+\item set the domain and range accordingly to the type of annotation relation
+\item add an instance or label as explained previously for the same class
+\item in the bottom right table you have the properties for this instance
+\item click in the `Value' column cell to set the object property
+\item if the list of choices is empty, add first other instances
+\item don't forget to save your document AND the ontology before to quit
+\end{itemize}
+
+\subsection{Delete instance, label or property}
+
+\begin{itemize}
+\item select one or more instances or properties in their respective table
+\item right-click on the selection for the context menu and choose an item
+\end{itemize}
+
+\subsection{Differences with OAT and Ontology Editor}
+
+This tool is very close to OAT but without the annotation editor popup and
+instead a bottom tables view, with multiple ontologies support, with only
+instance annotation and no class annotation.
+
+To make OAT compatible with this tool you must use `Mention' as annotation
+type, `class' and `inst' as feature names. They are the defaults in OAT. You
+must also select the same annotation set in the drop down list at the bottom
+right corner.
+
+You should enable the option `Selected Text As Property Value' in the
+Options panel of OAT. So it will add a label from the selected text for each
+instance.
+
+The ontology editor is useful to check that an instance is correctly added
+to the ontology and to add new annotation relation as object property.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[ontology:use-api-current]{Using the ontology API}
+
+The following code demonstrates how to use the GATE API to create an instance of
+the OWLIM Ontology language resource. This example shows how to use the current
+version of the API and ontology implementation. 
+
+For an example of using the
+old API and the backwards compatibility plugin, see~\ref{ontology:use-api-owlim2}.
+
+\begin{lstlisting}
+// step 1: initialize GATE
+if(!Gate.isInitialized()) { Gate.init(); }
+
+// step 2: load the Ontology plugin that contains the implementation
+File ontoHome = new File(Gate.getPluginsHome(),"Ontology");
+Gate.getCreoleRegister().addDirectory(ontoHome.toURL());
+
+// step 3: set the parameters
+FeatureMap fm = Factory.newFeatureMap();
+fm.put("rdfXmlURL", urlOfTheOntology);
+fm.put("baseURI", theBaseURI);
+fm.put("mappingsURL", urlOfTheMappingsFile);
+// .. any other parameters
+
+// step 4: finally create an instance of ontology
+Ontology ontology = (Ontology)
+Factory.createResource("gate.creole.ontology.impl.sesame.OWLIMOntology",
+                   fm);
+
+// retrieving a list of top classes
+Set<OClass> topClasses = ontology.getOClasses(true);
+
+// for all top classes, printing their direct sub classes and print 
+// their URI or blank node ID in turtle format.
+for(OClass c : topClasses) {
+   Set<OClass> dcs = c.getSubClasses(OConstants.DIRECT_CLOSURE);
+   for(OClass sClass : dcs) {
+	System.out.println(sClass.getONodeID().toTurtle());
+   }
+}
+
+// creating a new class from a full URI
+OURI aURI1 = ontology.createOURI("http://sample.en/owlim#Organization");
+OClass organizationClass = ontology.addOClass(aURI1);
+
+// create a new class from a name and the default name space set for 
+// the ontology
+OURI aURI2 = ontology.createOURIForName("someOtherName");
+OClass someOtherClass = ontology.addOClass(aURI2);
+
+// set the label for the class
+someOtherClass.setLabel("some other name", OConstants.ENGLISH);
+
+// creating a new Datatype property called name
+// with domain set to Organization
+// with datatype set to string
+URI dURI = new URI("http://sample.en/owlim#Name", false);
+Set<OClass> domain = new HashSet<OClass>();
+domain.add(organizationClass);
+DatatypeProperty dp = 
+  ontology.addDatatypeProperty(dURI, domain, Datatype.getStringDataType());
+
+// creating a new instance of class organization called IBM
+OURI iURI = ontology.createOURI("http://sample.en/owlim#IBM");
+OInstance ibm = Ontology.addOInstance(iURI, organizationClass);
+
+// assigning a Datatype property, name to ibm
+ibm.addDatatypePropertyValue(dp, new Literal("IBM Corporation", 
+											 dp.getDataType());
+
+// get all the set values of all Datatype properties on the instance ibm
+Set<DatatypeProperty> dps = Ontology.getDatatypeProperties();
+for(DatatypeProperty dp : dps) {
+ List<Literal> values = ibm.getDatatypePropertyValues(dp);
+ System.out.println("DP : "+dp.getOURI());
+ for (Literal l : values) {
+   System.out.println("Value : "+l.getValue());
+   System.out.println("Datatype : "+ l.getDataType().getXmlSchemaURI());
+ }
+}
+
+// export data to a file in Turtle format
+BufferedWriter writer = new BufferedWriter(new FileWriter(someFile));
+ontology.writeOntologyData(writer, OConstants.OntologyFormat.TURTLE);
+writer.close();
+\end{lstlisting}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[ontology:use-api-owlim2]{Using the ontology API (old version)}
+
+The following code demonstrates how to use the GATE API to create an instance of
+the OWLIM Ontology language resource. \emph{This example shows how to use the 
+API with the backwards-compatibility plugin \texttt{Ontology\_OWLIM2}}
+
+For how to use the API with the current implementation plugin, 
+see~\ref{ontology:use-api-current}.
+
+%\begin{small}\begin{verbatim}[language=Java]
+\begin{lstlisting}
+// step 1: initialize GATE
+Gate.init();
+
+// step 2: load the plugin
+File ontoHome = new File(Gate.getPluginsHome(),"Ontology_OWLIM2");
+Gate.getCreoleRegister().addDirectory(ontoHome.toURL());
+
+// step 3: set the parameters
+FeatureMap fm = Factory.newFeatureMap();
+fm.put("rdfXmlURL", url-of-the-ontology);
+
+// step 4: finally create an instance of ontology
+Ontology ontology = (Ontology) 
+Factory.createResource("gate.creole.ontology.owlim.OWLIMOntologyLR", fm);
+
+// retrieving a list of top classes
+Set<OClass> topClasses = ontology.getOClasses(true);
+
+// for all top classes, printing their direct sub classes
+Iterator<OClass> iter = topClasses.iterator();
+while(iter.hasNext()) {
+   Set<OClass> dcs = iter.next().getSubClasses(OConstants.DIRECT_CLOSURE);
+   for(OClass aClass : dcs) {
+        System.out.println(aClass.getURI().toString());
+   }
+}
+
+// creating a new class
+// false indicates that it is not an anonymous URI
+URI aURI = new URI("http://sample.en/owlim#Organization", false);
+OClass organizationClass = ontology.addOClass(aURI);
+
+// creating a new Datatype property called name
+// with domain set to Organization
+// with datatype set to string
+URI dURI = new URI("http://sample.en/owlim#Name", false);
+Set<OClass> domain = new HashSet<OClass>();
+domain.add(organizationClass);
+DatatypeProperty dp = ontology.addDatatypeProperty(dURI, domain, 
+                                        Datatype.getStringDataType());
+
+// creating a new instance of class organization called IBM
+URI iURI = new URI("http://sample.en/owlim#IBM", false);
+OInstance ibm = Ontology.addOInstance(iURI, organizationClass);
+
+// assigning a Datatype property, name to ibm
+ibm.addDatatypePropertyValue(dp, new Literal("IBM Corporation", 
+                                        dp.getDataType());
+
+// get all the set values of all Datatype properties on the instance ibm
+Set<DatatypeProperty> dps = Ontology.getDatatypeProperties();
+for(DatatypeProperty dp : dps) {
+ List<Literal> values = ibm.getDatatypePropertyValues(dp);
+ System.out.println("DP : "+dp.getURI().toString());
+ for (Literal l : values) {
+   System.out.println("Value : "+l.getValue());
+   System.out.println("Datatype : " 
+                   + l.getDataType().getXmlSchemaURI().toString()); }
+}
+
+// export data to a file in the ntriples format
+BufferedWriter writer = new BufferedWriter(new FileWriter(someFile));
+String output = ontology.getOntologyData(
+                   OConstants.ONTOLOGY_FORMAT_NTRIPLES);
+writer.write(output);
+writer.flush();
+writer.close();
+\end{lstlisting}
+%\end{verbatim}\end{small}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:ontologies:ontology-aware-jape]{Ontology-Aware JAPE Transducer}
+
+One of the GATE components that makes use of the ontology support is the JAPE
+transducer (see \Chapthing~\ref{chap:jape}). Combining the power of ontologies
+with JAPE's pattern matching mechanisms can ease the creation of applications.
+
+In order to use ontologies with JAPE, one needs to load an ontology in GATE
+before loading the JAPE transducer. Once the ontology is known to the system, it
+can be set as the value for the optional {\tt ontology} parameter for the JAPE
+grammar. Doing so alters slightly the way the matching occurs when the grammar
+is executed. If a transducer is ontology-aware (i.e. it has a value set for the
+'ontology' parameter) it will treat all occurrences of the feature named {\tt
+class} differently from the other features of annotations.  The values for the
+feature {\tt class} on any type of annotation will be considered as referring
+to classes in the ontology as follows:
+\begin{itemize}
+\item if the {\tt class} feature value is a valid URI (e.g.
+  \verb|http://sample.en/owlim#Organization|) then it is treated as a reference
+  to the class (if any) with that URI in the ontology.
+\item otherwise, it is treated as a name in the ontology's default namespace.
+  The default namespace is prepended to the value to give a URI and the feature
+  is treated as referring to the class with that URI.
+\end{itemize}
+%
+For example, if the default namespace of the ontology is
+\verb|http://gate.ac.uk/example#| then a {\tt class} feature with the value
+``Person'' refers to the \verb|http://gate.ac.uk/example#Person| class in the
+ontology.  If the ontology imports other ontologies then it may be useful to
+define templates for the various namespace URIs to avoid excessive repetition.
+There is an example of this for the PROTON ontology in
+section~\ref{sec:jape:templates}.
+
+In ontology-aware mode the matching between two {\tt class} values will not
+be based on simple equality but rather hierarchical compatibility. For example
+if the ontology contains a class named `{\tt Politician}', which is a sub class
+of the class `{\tt Person}', then a pattern of \verb!{Entity.class == `Person'}!
+will successfully match an annotation of type {\tt Entity} with a feature {\tt
+class} having the value `{\tt Politician}'. If the JAPE transducer were not
+ontology-aware, such a test would fail. 
+
+This behaviour allows a larger degree of generalisation when designing a set of
+rules. Rules that apply several types of entities mentioned in the text can be
+written using the most generic class they apply to and need not be repeated for
+each subtype of entity. One could have rules applying to {\tt Location}s without
+needing to know whether a particular location happens to be a country or a city.
+
+If a domain ontology is available at the time of building an application, using
+it in conjunction with the JAPE transducers can significantly simplify the set
+of grammars that need to be written. 
+
+The ontology does not normally affect actions on the right hand side of JAPE
+rules, but when Java is used on the right hand side, then the ontology becomes
+accessible via a local variable named {\tt ontology}, which may be referenced 
+from within the right-hand-side code.
+
+In Java code, the {\tt class} feature should be referenced using the static
+final variable, {\tt LOOKUP\_CLASS\_FEATURE\_NAME}, that is defined in {\tt
+gate.creole.ANNIEConstants}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:ontologies:annotation]{Annotating Text with Ontological Information}
+
+The ontology-aware JAPE transducer enables the text to be linked to classes in
+an ontology by means of annotations. Essentially this means that each annotation
+can have a class and ontology feature. To add the relevant class feature to an
+annotation is very easy: simply add a feature `class' with the classname as its
+value. To add the relevant ontology, use \texttt {ontology.getURL()}.
+
+Below is a sample rule which looks for a location annotation and identifies it
+as a `Mention' annotation with the class `Location' and the ontology loaded with
+the ontology-aware JAPE transducer (via the runtime parameter of the
+transducer).
+
+\begin{small}\begin{verbatim}
+Rule: Location
+
+({Location}):mention
+
+-->
+:mention{
+  // create the ontology and class features
+  FeatureMap features = Factory.newFeatureMap();
+  features.put("ontology", ontology.getURL());
+  features.put("class", "Location");
+
+  // create the new annotation
+  try {
+    outputAS.add(mentionAnnots.firstNode().getOffset(),
+       mentionAnnots.lastNode().getOffset(), "Mention", features);
+  }
+  catch(InvalidOffsetException e) {
+    throw new JapeException(e);
+  }
+}
+\end{verbatim}\end{small}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:ontologies:api]{Populating Ontologies}
+
+Another typical application that combines the use of ontologies with NLP techniques 
+is finding mentions of entities in text. The scenario is that one has an 
+existing ontology and wants to use Information Extraction to populate it with 
+instances whenever entities belonging to classes in the ontology are mentioned 
+in the input texts. 
+
+Let us assume we have an ontology and an IE application that marks the input 
+text with annotations of type `{\tt Mention}' having a feature `{\tt class}' 
+specifying the class of the entity mentioned. The task we are seeking to solve 
+is to add instances in the ontology for every {\tt Mention} annotation.
+
+The example presented here is based on a JAPE rule that uses Java code on the 
+action side in order to access directly the GATE ontology API:
+
+\begin{lstlisting}
+Rule: FindEntities
+({Mention}):mention
+-->
+:mention{
+  //find the annotation matched by LHS
+  //we know the annotation set returned
+  //will always contain a single annotation
+  Annotation mentionAnn = mentionAnnots.iterator().next();
+  
+  //find the class of the mention
+  String className = (String)mentionAnn.getFeatures().
+    get(gate.creole.ANNIEConstants.LOOKUP_CLASS_FEATURE_NAME);
+  // should normalize class name and avoid invalid class names here!
+  OClass aClass = ontology.getOClass(ontology.createOURIForName(className));
+  if(aClass == null) { 
+    System.err.println("Error class \"" + className + "\" does not exist!");
+    return; 
+  } 
+    
+  //find the text covered by the annotation
+  String theMentionText = gate.Utils.stringFor(doc, mentionAnn);
+  
+  // when creating a URI from text that came from a document you must take care
+  // to ensure that the name does not contain any characters that are illegal
+  // in a URI.  The following method does this nicely for English but you may
+  // want to do your own normalization instead if you have non-English text.
+  String mentionName = OUtils.toResourceName(theMentionText);
+
+  // get the property to store mention texts for mention instances
+  DatatypeProperty prop =
+    ontology.getDatatypeProperty(ontology.createOURIForName("mentionText"));
+
+  OURI mentionURI = ontology.createOURIForName(mentionName);
+  // if that mention instance does not already exist, add it
+  if (!ontology.containsOInstance(mentionURI)) {
+    OInstance inst = ontology.addOInstance(mentionURI, aClass);
+    // add the actual mention text to the instance
+    try {
+      inst.addDatatypePropertyValue(prop, 
+        new Literal(theMentionText, OConstants.ENGLISH));
+    }
+    catch(InvalidValueException e) {
+      throw new JapeException(e);
+    }
+  }
+}
+\end{lstlisting}
+
+This will match each annotation of type {\tt Mention} in the input and
+assign it to a label `{\tt mention}'. That label is then used in the right
+hand side to find the annotation that was matched by the pattern (lines
+5--10); the value for the {\tt class} feature of the annotation is used to
+identify the ontological class name (lines 12--14); and the annotation span
+is used to extract the text covered in the document (lines 16--26). Once all
+these pieces of information are available, the addition to the ontology can
+be done. First the right class in the ontology is identified using the class
+name (lines 28--37) and then a new instance for that class is created (lines
+38--50).
+
+Beside JAPE, another tool that could play a part in this application is the
+Ontological Gazetteer, see Section~\ref{sec:gazetteers:ontogaz}, which can be useful in 
+bootstrapping the IE application that finds entity mentions.
+
+The solution presented here is purely pedagogical as it does not address
+many issues that would be encountered in a real life application solving the
+same problem. For instance, it is na\"{i}ve to assume that the name for the
+entity would be exactly the text found in the document. In many cases
+entities have several aliases -- for example the same person name can be
+written in a variety of forms depending on whether titles, first names, or
+initials are used. A process of name normalisation would probably need to be
+employed in order to make sure that the same entity, regardless of the
+textual form it is mentioned in, will always be linked to the same ontology
+instance.
+
+For a detailed description of the GATE ontology API, please
+consult the JavaDoc documentation.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:ontology:changes5.1]{Ontology API and Implementation Changes}
+
+This section describes the changes in the API and the implementation 
+made in GATE Developer version 5.1. The most important change is that
+\emph{the implementation of the ontology API has been removed from the 
+GATE core and is now being made available as plugins}. Currently 
+the plugin \texttt{Ontology\_OWLIM2} provides the implementation that
+was present in the GATE core previously and the plugin \texttt{Ontology}
+provides a new and upgraded implementation that also implements some
+new features that were added to the API. The \texttt{Ontology\_OWLIM2} 
+plugin is intended to provide maximum backwards compatibility but
+will not be developed further and be phased out in the future, while 
+the \texttt{Ontology} plugin provides the current actively developed
+implementation. 
+
+\emph{Before any ontology-related function can be used in GATE, one of the
+ontology implementation plugins must be loaded.}
+
+
+\subsection{Differences between the implementation plugins}
+
+The implementation provided in plugin \texttt{Ontology\_OWLIM2} is based
+on Sesame version 1 and OWLIM version 2, while the changed
+implementation provided in plugin \texttt{Ontology} is based  on Sesame 
+version 2 and OWLIM version 3. 
+
+The plugin \texttt{Ontology} provides the ontology language resource
+\texttt{OWLIM Ontology} with new and changed parameters. In addition,
+there are two language resources for advanced users, 
+\texttt{Create Sesame Ontology} and \texttt{Connect Sesame Ontology}.
+Finally the new implementation provides the language resource
+\texttt{OWLIM Ontology DEPRECATED} to make the move from the old to the
+new implementation easier: this language resource has the same name, 
+parameters and Java package as the language resource \texttt{OWLIMOntologyLR}
+in backwards-compatibility plugin \texttt{Ontology\_OWLIM2}. This allows
+to test existing pipelines and applications with the new implementation
+without the necessity to adapt the names of the language resource or
+parameters.
+
+The implementation in plugin \texttt{Ontology} makes various attempts to
+reduce the amount of memory needed to load an ontology. This will allow
+to load significantly larger ontologies into GATE. This comes at the 
+price of some methods needing more time than before, as the implementation
+does not cache all ontology entities in GATE's memory any more. 
+
+The new implementation does not provide access to any implementation 
+detail anymore, the method \texttt{getSesameRepository} will therefore
+throw an exception. The return type of this method in the old implementation
+has been changed to Object to remove the dependency on a Sesame
+class in the GATE API.
+
+\subsection{Changes in the Ontology API}
+The class \verb!gate.creole.ontology.URI! has been deprecated. Instead,
+the ontology API client must use objects that implement the new
+OURI, OBnodeID or ONodeID interfaces. An API client can only 
+directly create OURI objects and must use the ontology factory 
+methods \texttt{createOURI}, \texttt{createOURIFroName} or 
+\texttt{generateOURI} to create such objects. 
+
+Also, the intended way how ontologies are modeled has been changed:
+the API tries to prevent a user from adding anything to an 
+ontology that would make an ontology that conforms to OWL-Lite 
+go beyond that sublanguage (and e.g. become OWL-Full). However,
+if an ontology already is not conforming to OWL-Lite, the API
+tries to make as much information visible to the client as 
+possible. That means for instance that RDF classes will be included
+in the list of classes returned by method \texttt{getOClasses}, 
+but there is no support for adding RDF classes to an ontology.
+Similarly, all methods that already existed which would allow 
+to add entities to an ontology that do not conform to OWL-Lite
+have been deprecated.
+
+Most methods that use a constant from class \verb!OConstants! which
+is defined as a byte value have been deprecated and replaced by
+methods that use enums that replace the byte constants instead.
+(however, the byte constants used for literal string languages
+are still used).
+
+The API now supports the handling of ontology imports more flexibly.
+Ontology imports are internally kept in a named graph that is
+different from the named graph data from loaded ontologies is 
+kept in. Imported ontology data is still visible to the ontology
+API but can be ignored when storing (serializing) an ontology.
+The ontology API now also allows to explicitly resolve ontology
+imports and it allows the specification of mappings between 
+import URIs and URLs of either local files or substitute web 
+URLs. The import map can also specify patterns for substituting
+import URIs with replacement URLs (or ignoring them altogether).
+
+The default namespace URI is now set automatically from the ontology
+if possible and the API allows getting and setting the ontology URI.
+
+The ontology API now offers methods for getting an iterator when
+accessing some ontology resources, e.g. when getting all classes
+in the ontology. This helps to prevent the excessive use of 
+memory when retrieving a large number of such resources from
+a large ontology.
+
+Ontology objects do not internally store copies of all ontology
+resources in hash maps any more. This means that re-fetching 
+ontology resources will be a slower operation and old methods that
+rely on this mechanism are either deprecated (\verb!getOResourcesByName!, 
+\verb!getOResourceByName!) or do not work at all
+any more (\verb!getOResourceFromMap!, \verb!addOResourceToMap!, 
+\verb!removeOResourceFromMap!).
+
+
+
+%% \sect[sec:ontology:tipsandfaqs]{Various tipps, tricks and answers to FAQs}
+
+
+
+%% TODO: maybe strucutre this a bit better -- list changes in the 
+%% API vs. changes in the implementation vs. changes in the 
+%% language resources?
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% \sect[sec:howto:ontology]{Miscellaneous how-tos, recommendations and tips}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% TBD.
+
+%% TODO: the whole section needs to get worked over:
+%% mention 
+%% ontology-enabled JAPE transducing  se:jape:ontologyaware and sec:ontologies:ontology-aware-jape
+%% onto root gazetteer,
+%% ontology annotation tool
+% 
+
+%% THE FOLLOWING already is covered by the main chapter
+% Before you can work with ontologies you have to load one of the plugins
+% that provide an ontology implementation. Currently there are two such
+% plugins included in GATE:
+% \begin{itemize}
+%  \item \verb!Ontology_OWLIM2!: this plugin provides an implementation that is
+% based on Sesame version 1 and OWLIM version 2. This plugin is deprecated but
+% kept for backwards compatibility with the ontology implementation the
+% was included in GATE prior to version 5.1.
+%   \item \verb!Ontology!: this plugin is based on Sesame version 2 and OWLIM 
+% version 3. It includes new features, new ontology language resources and
+% implements the new methods that were added to the GATE ontology API in 
+% version 5.1. This implementation does not support some of the deprecated
+% functions in the API any more.
+% \end{itemize}
+% 
+% You can load the desired plugin via the plugin manabger from the File menu
+% and then Manage CREOLE plugins. Select either \verb!Ontology OWLIM2! or 
+% \verb!Ontology! (recommended) and the ontology language resources provided
+% by the plugin will be made available in the language resource menu.
+% 
+% Note that you cannot use both plugins in the same GATE session!
+% 
+% In order to make the graphical ontology editor or the ontology annotation
+% tool available in GATE you have to also load the \verb!Ontology Tools! 
+% plugin prior to loading or creating an ontology.
+% 
+
+%% TODO: see if any of this should get merged into the OntoGazetteer 
+%% section in the gazetteer chapter
+% \paragraph{OntoGazetteer
+% 
+% 
+% The OntoGazetteer is a Processing Resource in which lists of instances of
+% ontology concepts can be loaded. For the OntoGazetteer to function properly, it
+% needs one or more .lst files, and two .def files, usually called mappings.def,
+% and lists.def.
+% 
+% The .lst file is simply a file with an instance on every line. For instance
+% persons.lst will have, on every line, the name of a person.
+% 
+% The mappings.def file describes the relations between the .lst files and the
+% ontology concepts. The format is .lst file:ontology file:ontology concept.
+% 
+% The lists.def file states the relations between the .lst files and the
+% annotation feature the OntoGazetteer should generate. The format is: .lst
+% file:feature
+% 
+% The OntoGazetteer, when run, generates annotations for every instance mentioned
+% in the .lst files. All these instances will be annotated with the same
+% annotation type, called 'Lookup' ( in the 'default' Annotation Set). Every
+% Lookup annotation will have a feature, which is its majorType, which will differ
+% per .lst file.
+% 
+% This is not very useful, because every different concept from the ontology
+% will have the same annotation type (namely 'Lookup'). However, since the
+% 'majorType' feature differs, we can process them further. And to do that, we
+% need a Jape Transducer.
+
+
+
+

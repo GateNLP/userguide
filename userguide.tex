@@ -1,0 +1,758 @@
+% html: Beginning of file: `userguide.html'
+
+\section{Introduction}
+
+\label{f0}
+GATE, a General Architecture for Text Engineering
+\cite{Cun96b,Cun97a,Cun98,Cun99a,Cun00a,Cun01b},
+is a software architecture for Language Engineering \cite{Cun99b}.
+More specifically, it is three things: an {\bf architecture}; 
+a {\bf framework}; a {\bf development environment}.
+
+By architecture we mean an abstract description of how a language processing
+system may usefully be constructed, the types of component typically
+used and so on.
+By framework we mean an object-oriented class library that implements the
+architecture and provides a range of services that are useable in a variety
+of application contexts. One such application is a development environment
+built on top of the framework. The development environment is analogous to
+systems like Mathematica for Mathematicians, or JBuilder for Java
+programmers: it provides a convenient graphical environment for research and
+development of language processing software.
+
+Version 1 of GATE was released in 1996. It was written in C++ and Tcl, has
+been licensed by several hundred organisations, and used in a wide range of
+language analysis contexts including Information Extraction (IE -
+\cite{Gai98a,Cun99c}) in English, Greek, Spanish, Swedish, German, Italian and
+French.
+
+Version 2 of GATE was released in Spring 2001. It is written in Java,
+and is available as open source free software under the GNU licence
+at http://gate.ac.uk/\footnote{See URL http://gate.ac.uk/}.
+
+For more details about human language processing in general see
+Sheffield NLP group\footnote{See URL http://www.dcs.shef.ac.uk/nlp/}
+or this paper on
+Language
+Engineering\footnote{See URL http://www.dcs.shef.ac.uk/.hamish/LeIntro.html}.
+For more details about Information Extraction see this
+User Guide to IE\footnote{See URL http://www.dcs.shef.ac.uk/.hamish/IE/}
+or the Sheffield
+IE pages\footnote{See URL http://www.dcs.shef.ac.uk/nlp/extraction}.
+
+The rest of this section gives a general introduction to the system.
+The rest of the document then covers:
+\begin{itemize}
+\item 
+how to use the
+development environment (cf.\ Section~\ref{f0:the-development-environment})
+\item 
+how to use the framework (cf.\ Section~\ref{f0:the-framework})
+\item 
+the design principles (cf.\ Section~\ref{f0:design}) of the architecture and framework.
+\end{itemize}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Architectural principles}
+
+
+A central idea behind the GATE architecture is that there should be
+no requirement for users to commit to any particular theory of
+language processing: the architecture strives to be non-prescriptive and
+theory-neutral. Therefore there is a very general model of components and the
+data structures they share. This is, of course, both a strength and a
+weakness.
+
+(Almost) everything in GATE is a component. Components are
+reusable software chunks with well-defined interfaces
+that are conceptually separate from GATE itself.
+All component sets are user-extensible and together are called CREOLE - a
+Collection of REusable Objects for Language Engineering.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{GATE-based development}
+
+
+The framework is a backplane into which plug CREOLE components.
+The user gives the system a list of URLs to search when it starts up,
+and components at those locations are loaded by the system. (To be precise
+only their configuration data is loaded to begin with; the actual classes
+are loaded when the user requests the instantiation of a resource.)
+
+The backplane performs these functions:
+\begin{itemize}
+\item 
+component discovery, bootstrapping, loading and reloading;
+\item 
+native data structures for common information types;
+\item 
+generalised data storage and process execution.
+\end{itemize}
+
+A set of components plus the framework is a deployment unit which can be
+embedded in another application.
+
+The key task of the 
+development environment is to facilitate constructing components.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Component types}
+
+
+GATE components are one of three types of specialised Java Beans:
+
+{\bf Resource:}\newline
+The top-level interface, which describes all components. What all 
+components share in common is that they can be loaded at runtime,
+and that the set of components is extendable by clients. They
+have Features, which are represented externally to the system as
+{\tt{}"{}}meta-data{\tt{}"{}} in a format such as RDF, plain XML, or Java properties.
+Resources should probably all be Java beans.
+
+{\bf ProcessingResource:}\newline
+Is a resource that is runnable, may be invoked remotely (via RMI),
+and lives in class files. In order to load a PR the system just
+needs to know where to find the class or jar files (which will 
+also include the metadata).
+
+{\bf LanguageResource:}\newline
+Is a resource that consists of data, accessed via a Java abstraction
+layer. They live in relational databases.
+
+{\bf VisualResource:}\newline
+Is a visual Java bean, component of GUIs, including of the main GATE 
+gui.  Like PRs they live in .class or .jar files.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Bits and pieces}
+
+There are built in components for common processing and data visualisation
+tasks.
+There is a finite state transduction language operating over
+annotations on text, called JAPE, a Jolly Advanced Pattern Eater. JAPE 
+is based on Doug Appelt's TextPro language.
+There is automated measurement: precision, recall, diff over annotations
+on text.
+Support for documents in XML, SGML, HTML, RTF, email, PDF as well as
+support for documents from both Microsoft Office and OpenOffice.
+Full Unicode support including editing in a number of languages (not
+supported by native JDK; thanks to Mark Leisher for help with this).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Development Environment}
+
+\label{f0:the-development-environment}
+The GATE development environment is designed to facilitate the creation,
+development and testing of components for language processing R\&D.
+We describe here how to perform these tasks, and
+how to use the tools for named entity recognition and results evaluation.
+
+There are 6 main steps to using GATE.
+\begin{enumerate}
+\item Bootstrap the basic software for new resources
+\item Instantiate the desired language resource(s)
+\item Instantiate appropriate processing resource(s)
+\item Create and run an application (a set of components)
+\item View the results of the application
+\item Apply further tools, e.g. evaluation of the results.
+\end{enumerate}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Bootstrapping New Resources}
+
+GATE components may be implemented by a variety of programming languages and
+databases, but in each case they are represented to the system as a Java
+class. This class may do nothing other than call the underlying program, or
+provide an access layer to a database; on the other hand 
+it may implement the whole component.
+
+The development environment will dump out the basic form of a new resource
+Java class to disk for you: select `BootStrap Wizard' from the `Tools' menu.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Loading Language Resources}
+
+
+Load a language resource by right clicking on {\tt{}"{}}Language Resources{\tt{}"{}} and
+selecting {\tt{}"{}}Create Language Resource{\tt{}"{}}. Select {\tt{}"{}}GATE document{\tt{}"{}} and a
+pop-up window will appear. Choose a name for the resource, and select
+a file or url as the value of {\tt{}"{}}sourceUrl{\tt{}"{}}. Note that double clicking
+in the {\tt{}"{}}values{\tt{}"{}} box brings up a tree structure to enable selection of
+documents.
+ Make any
+changes to default settings as required (e.g. encoding type used) and
+click OK. The document name and icon should appear in the left hand
+pane, and can be viewed in the main window by double clicking on the
+icon. The right hand pane enables annotations to be selected and
+viewed. At this stage, the only annotations displayed will be those
+which are produced as a result of the text structure analysis which
+transforms a text into a GATE document, e.g. xml or html
+tags. Additional language resources can be loaded by repeating the
+procedure.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Loading Processing Resources}
+
+
+Right click on `Processing Resources' and select `Create processing
+resource'. Select the type of resource (e.g. tokeniser, gazetteer,
+etc.) from the list of options. In the pop-up box, choose a name for
+the resource, and either select the default value for the resource, or
+select a new one. Select any other values as appropriate
+(e.g. encoding). In the case where it is not indicated that a value is
+`required', the box may be left blank and the system default will be
+used. When all necessary boxes are completed, click `OK'. An icon should appear
+under `Processing Resources' in the left hand pane. Note that it may
+take a few seconds for the resource to be loaded. Repeat this
+procedure until all necessary resources have been loaded.
+
+The following individual processing resources are currently available: 
+\begin{itemize}
+\item Tokeniser
+\item Sentence Splitter
+\item Hepple POS Tagger
+\item Gazetteer
+\item JAPE Transducer
+\item Namematcher
+\end{itemize}
+
+Note that the resources must be run in this order (with the exception
+of the gazetteer, which, can be run at any point preceding the JAPE
+transducer). If not using all the PRs, some caution is advised, as
+certain modules rely on previous ones and may either not work as
+expected or fail completely. For example, the JAPE transducer requires
+all previous PRs for best performance, but can be run without the
+tagger, splitter, and gazetteer. The tagger, on the other hand, will
+fail to produce results if the splitter is not run first. 
+
+The first 5 of these PRs are also combined into an additional
+PR, the NERC (the Named Entity Recognition Component). This can be run
+as one unit instead of the individual PRs. The Namematcher can
+optionally be run following this. Note that while the default
+annotation set used for the individual PRs is the Default set, the
+default set for the NERC is the nercAS set. if the Namematcher is run
+following the NERC, nercAS must therefore be specified as the name of the AnnotationSet.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Running an Application}
+
+Once all the resources have been loaded, an application can be created
+and run. Right click on `Applications' and create a new
+one. Then double click on it and the `Design' tab will appear. Here you can
+select the resources needed to run the application (these may
+not be necessarily be all those which have been loaded). Transfer the
+necessary components from the set of `available components' displayed on
+the right hand side of the main window to the set of `used components'
+on the left, by selecting each component and clicking on the left and
+right arrows. Ensure that the components are listed on the left in the
+correct order for processing (starting from the top). If not, select a
+component and move it up or down the list using the up/down arrows at the
+bottom of the pane. Once this is complete, move to the left hand pane,
+select the language resource to be used (using a left click), and
+finally right click on the application and select `Run'.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Viewing the Results}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Once the system has run, open the document to be
+viewed with a double click on the icon in the left window (if it is
+not already displayed). Note that it may take a few seconds for the
+text to be displayed if it is long.
+The annotation types belonging to each annotation set are displayed to
+the right of the text. Select the annotation types to be viewed by
+clicking on the appropriate checkbox(es). The text segments
+corresponding to these annotations will be highlighted in the main text window.  
+
+Descriptions of the annotations are simultaneously displayed in the
+bottom pane. These lists can be sorted in ascending and descending
+order by any column, by clicking on the corresponding column
+heading. An arrow will appear indicating the direction of the sorting.
+Clicking on an entry in the table will also highlight the respective
+matching text portion.
+
+Right clicking on some part of the text in the main window will bring
+up a box containing a list of the annotations associated with
+it. Selecting one of these annotation types will highlight the
+relevant annotation description in the lower pane, if present. If not
+present (because the corresponding annotation on the right hand pane
+has not been selected), this annotation on the right will then be
+automatically selected and all relevant text in the main window will be
+appropriately highlighted.
+
+Although there is no cursor displayed in the various windows, they 
+can all be scrolled using the keyboard arrows, as well as by using the
+scrollbars.
+
+At any time, the main viewer can also be used to display other
+information, such as Messages, by clicking on the header
+at the top of the main window. If an error occurs in processing, the
+messages tab will flash red, and an additional popup error message
+may also occur.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Adding Annotations}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+In order to be able to add/edit annotations in GATE, the relevant
+Annotation Schemata must first be loaded. If only the Default
+annotation types are required, this is done automatically. If other
+types of annotation are required, an Annotation Schema (which is an
+xml file) must be selected from the Language Resources. This process
+must be repeated for each annotation type. It does not, however, need
+to be repeated for each document.
+
+Once the Annotation Schemata have been loaded, the annotation types that
+have a Schema present inside GATE can be added or edited. 
+To add a new annotation, select the text, right click, and select an
+annotation set. Then select the name of the
+annotation to be created. If the annotation can have features, another
+window will automatically open. Select a feature from the list of
+possible features, and click the arrow to transfer it to the list of
+current features. The feature values can be edited by clicking on
+them. The new annotation will be added to the annotation set, and will
+appear in the annotation description table.
+
+An existing annotation can be modified by selecting it from the table
+and double clicking on it to bring up the features
+window. If, however, the schema has no features defined,
+then the selected annotation cannot be edited (since there are no
+features to edit). All that can be done is to add or delete the
+annotation. An annotation can be deleted by selecting it from the
+table, right clicking on it, and selecting Delete.
+
+An annotated text can be saved in a datastore. Create a datastore  %
+by right clicking on `Datastores' and selecting the option
+`Create Datastore'. Select
+`Serial DataStore' as the datastore type. Create a directory to be
+used as the datastore (note that the datastore is a directory and
+not a file). Save the text to the datastore by right clicking on the
+document name and selecting the `Save to' option (giving the name of
+the datastore created earlier).
+
+A modified file can also be saved as an xml file, by right clicking on
+the document icon in the left window and choosing the
+option `Save as XML'. Once saved, it can be reloaded in the usual way,
+by selecting `New Language Resource' from the `File' menu or by
+selecting `New' and then `GATE Document' from the Language Resources icon.
+
+To load a document from a datastore, do not try to load it as a
+language resource. Instead, open the datastore, and double click on
+it to view its contents. Double click on the relevant file to display
+the text. Once the text has appeared in the main window, it can be
+treated in the same way as any other document.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{The Evaluation Tool (Annotation Diff)}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The annotation tool is activated by selecting it from the 
+`Tools' menu at the top of the window. It will appear in a new
+window. Select the key and response documents to be used (note that
+both must have been previously loaded into the system), the annotation
+sets to be used for each, and the annotation
+type to be evaluated. If false positives are to be measured, select
+the annotation type (and relevant annotation set) to be used as the
+denominator (normally, Token or Sentence). The weight for the
+F-Measure can also be changed - by default it is set to 0.5 (i.e. to
+give precision and recall equal weight). Finally, click
+on `Evaluate' to display the results. Note that the window may need to
+be resized manually, by dragging the window edges or internal bars
+as appropriate). 
+
+In the main window, the key and response annotations will be
+displayed. They can be sorted by any category by clicking on the
+relevant column header. The key and response annotations will be aligned if
+their indices are identical, and are colour coded according to the legend
+displayed. 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Evaluation metrics}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Precision, recall, F-measure and
+false positives are also displayed below the annotation tables, each
+according to 3 criteria - strict, lenient and average. The reason for
+these 3 criteria is to deal with partially correct responses in
+different ways.
+\begin{itemize}
+\item The Strict measure considers all partially correct
+responses as incorrect (spurious).
+\item The Lenient measure considers all partially correct
+responses as correct.
+\item The Average measure allocates a half weight to
+partially correct responses (i.e. it takes the average of strict and
+lenient).
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The Framework}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\label{f0:the-framework}
+This section gives documentation for the framework; see also the 
+JavaDoc pages. 
+The
+CookBook class gives example code for
+using the GATE API.
+
+The GATE framework models language processing components and the language
+data they operate on as Resources
+Resources. The set of all resources is
+known as CREOLE, a Collection or REusable Objects for Language Engineering.
+
+The terms component, resource and CREOLE object are largely synonymous.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{The Processing Model}
+
+
+Any resource whose primary characteristics are algorithmic, such as parsers,
+generators and so on, is modelled as a 
+ProcessingResource (PR).
+A PR is a Resource that implements the Java Runnable interface.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{The Visualisation Model}
+
+
+Resources whose task is to display and edit other resources are modelled as 
+VisualResources (VRs).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{The Corpus Model}
+
+
+A Corpus
+in GATE is a Java Set whose members are 
+Documents.
+Both Corpora and Documents are types of 
+LanguageResource (LR); all
+LRs have a 
+FeatureMap
+(a Java Map) associated with them that
+stored attribute/value information about the resource. FeatureMaps are also
+used to associate arbitrary information with ranges of documents (e.g. pieces
+of text) via the annotation model (see below).
+
+Documents have a
+DocumentContent which is
+a text at present (future versions may add support for audiovisual content)
+and one or more
+AnnotationSets which are Java
+Sets.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{The Annotation Model}
+
+
+Annotations are organised in graphs, which are modelled as 
+Java sets of 
+Annotation.
+Annotations may be considered as the arcs in the graph; they have a start 
+Node and an end Node, an ID, a type and a
+FeatureMap. Nodes have pointers into the sources document, e.g. character
+offsets.
+
+The rest of this section
+shows some simple examples of annotated documents.
+
+This material is adapted from \cite{Gri96b}, the TIPSTER Architecture Design
+document upon which GATE version 1 was based. Version 2 has a similar model,
+although annotations are now graphs, and instead of multiple spans per
+annotation each annotation now has a single start/end node pair. The current
+model is largely compatible with \cite{Bir99}, and roughly isomorphic with
+`stand-off markup' as latterly adopted by the SGML/XML community.
+
+Each example is shown in the form of a table. At the top of the table is the
+document being annotated; immediately below the line with the document is a
+ruler showing the position (byte offset) of each character.
+({\bf NOTE:} the ruler doesn't scale very well in HTML; for a better picture 
+see the original
+TIPSTER Architecture Design Document\footnote{See URL http://www.itl.nist.gov/div894/894.02/related.projects/tipster/docs/arch31.doc}.)
+Underneath this
+appear the annotations, one annotation per line. For each annotation is shown
+its Id, Type, Span (start/end offsets derived from the start/end nodes),
+and Features. Integers are used as the annotation Ids.  The
+features are shown in the form name = value.
+
+The first example shows a single sentence and the result of three
+annotation procedures: tokenization with part-of-speech assignment, name
+recognition, and sentence boundary recognition. Each token has a single
+feature, its part of speech (pos), using the tag set from the University of
+Pennsylvania Tree Bank; each name also has a single feature, indicating the
+type of name: person, company, etc.
+
+{\bf Table 1. Result of annotation on a single sentence}TextCyndi savored the
+            soup.\mbox{$|$}0...\mbox{$|$}5...\mbox{$|$}10..\mbox{$|$}15..\mbox{$|$}20AnnotationsIdTypeSpan
+            StartSpan
+            EndFeatures1token05pos=NP2token613pos=VBD3token1417pos=DT4token1822pos=NN5token2223~6name05name\_type=person7sentence023~
+
+Annotations will typically be organized to describe a hierarchical
+      decomposition of a text. A simple illustration would be the decomposition of a
+      sentence into tokens. A more complex case would be a full syntactic analysis,
+      in which a sentence is decomposed into a noun phrase and a verb phrase, a verb
+      phrase into a verb and its complement, etc. down to the level of individual
+      tokens. Such decompositions can be represented by annotations on nested sets of
+      spans. Both of these are illustrated in the second example, which is an
+      elaboration of our first example to include parse information. Each
+      non-terminal node in the parse tree is represented by an annotation of type
+      parse.
+
+{\bf Table 2. Result of annotations including parse information}TextCyndi savored the
+            soup.\mbox{$|$}0...\mbox{$|$}5...\mbox{$|$}10..\mbox{$|$}15..\mbox{$|$}20AnnotationsIdTypeSpan
+            StartSpan
+            EndFeatures1token05pos=NP2token613pos=VBD3token1417pos=DT4token1822pos=NN5token2223~6name05name\_type=person7sentence023constituents=\mbox{$[$}1\mbox{$]$},\mbox{$[$}2\mbox{$]$},\mbox{$[$}3\mbox{$]$}.\mbox{$[$}4\mbox{$]$},\mbox{$[$}5\mbox{$]$}8parse05symbol={\tt{}"{}}NP{\tt{}"{}},constituents=
+            \mbox{$[$}1\mbox{$]$}9parse1422symbol={\tt{}"{}}NP{\tt{}"{}},constituents=\mbox{$[$}3\mbox{$]$},\mbox{$[$}4\mbox{$]$}10parse622symbol={\tt{}"{}}VP{\tt{}"{}},constituents=\mbox{$[$}2\mbox{$]$},\mbox{$[$}9\mbox{$]$}11parse022symbol={\tt{}"{}}S{\tt{}"{}},constituents=\mbox{$[$}8\mbox{$]$},\mbox{$[$}10\mbox{$]$}
+
+In most cases, the hierarchical structure could be recovered from the
+      spans. However, it may be desirable to record this structure directly through a
+      constituents feature whose value is a sequence of annotations representing
+      the immediate constituents of the initial annotation. For the annotations of
+      type parse, the constituents are either non-terminals (other annotations in the
+      parse group) or tokens. For the sentence annotation, the constituents feature
+      points to the constituent tokens. A reference to another annotation is
+      represented in the table as {\tt{}"{}}\mbox{$[$} Annotation Id\mbox{$]$}{\tt{}"{}}; for example, {\tt{}"{}}\mbox{$[$}3\mbox{$]$}{\tt{}"{}} represents a
+      reference to annotation 3. Where the value of an feature is a sequence of
+      items, these items are separated by commas. No special operations are provided
+      in the current architecture for manipulating constituents. At a less esoteric
+      level, annotations can be used to record the overall structure of documents,
+      including in particular documents which have structured headers, as is shown in
+      the third example (Table 3).
+
+{\bf Table 3. Annotation showing overall document structure}TextTo: All Barnyard Animals\mbox{$|$}0...\mbox{$|$}5...\mbox{$|$}10..\mbox{$|$}15..\mbox{$|$}20.. From: Chicken
+            Little\mbox{$|$}25..\mbox{$|$}30..\mbox{$|$}35..\mbox{$|$}40..\mbox{$|$}45..  Date: November 10,1194....\mbox{$|$}50..\mbox{$|$}55..\mbox{$|$}60..\mbox{$|$}65.. Subject: Descending
+            Firmament\mbox{$|$}70..\mbox{$|$}75..\mbox{$|$}80..\mbox{$|$}85..\mbox{$|$}90..\mbox{$|$}95.. Priority :
+            Urgent.\mbox{$|$}100.\mbox{$|$}105.\mbox{$|$}110.\mbox{$|$}115. The sky is falling. The sky is
+            falling.
+            ....\mbox{$|$}120.\mbox{$|$}125.\mbox{$|$}130.\mbox{$|$}135.\mbox{$|$}140.\mbox{$|$}145.\mbox{$|$}150.AnnotationsIdTypeSpan
+            StartSpan
+            EndFeatures1Addressee424~2Source3145~3Date5369ddmmyy=1011944Subject7898~5Priority109115~6Body116155~7Sentence116135~8Sentence136155~
+
+ If the Addressee, Source, ... annotations are recorded when the
+      document is indexed for retrieval, it will be possible to perform retrieval
+      selectively on information in particular fields. Our final example (Table 4)
+      involves an annotation which effectively modifies the document. The current
+      architecture does not make any specific provision for the modification of the
+      original text. However, some allowance must be made for processes such as
+      spelling correction. This information will be recorded as a correction
+      feature on token annotations and possibly on name
+      annotations:
+
+{\bf Table 4. Annotation modifying the document}TextTopster tackles 2 terrorbytes.\mbox{$|$}0...\mbox{$|$}5...\mbox{$|$}10..\mbox{$|$}15..\mbox{$|$}20..\mbox{$|$}25..AnnotationsIdTypeSpan
+            StartSpan EndFeatures1token07pos=NP
+            correction=TIPSTER2token815pos=VBZ3token1617pos=CD4token1829pos=NNS correction=terabytes5token2930~%  END TEXT GENERATED WITH DOCBOOK
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Design}
+
+\label{f0:design}
+GATE is a backplane into which specialised Java Beans plug.
+These beans are loose-coupled with respect to each other - they communicate
+entirely by means of the GATE framework.
+Inter-component communication is handled by model components -
+LanguageResources, and events.
+
+Components are defined by conformance to various interfaces (e.g.
+LanguageResource), ensuring
+separation of interface and implementation.
+
+Distribution and parallelism (NOT fully working as yet)
+is handled by controller components (and by distributing data
+over HTTP and JDBC).
+
+The reason for adding to the normal bean initialisation mech is that
+LRs, PRs and VRs all have characteristic parameterisation
+phases; the GATE resources/components model makes explicit these phases.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Patterns}
+
+
+GATE is structured around a number of what we might call principles, or
+patterns, or alternatively, clever ideas stolen from better minds than
+mine. These patterns are:
+\begin{itemize}
+\item 
+modelling most things as extensible sets of components (cf.\ Section~\ref{f0:components});
+\item 
+separating components into
+model, view, or controller (cf.\ Section~\ref{f0:mvc}) types;
+\item 
+hiding implementation behind interfaces (cf.\ Section~\ref{f0:interfaces}).
+\end{itemize}
+
+Four interfaces in the top-level package describe the GATE view of
+components:
+Resource, ProcessingResource, LanguageResource and VisualResource.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Components}
+
+\label{f0:components}%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection{Architectural Principle}
+
+
+Wherever users of the architecture may wish to extend the set of a
+particular type of entity, those types should be expressed as components.
+
+Another way to express this is to say that the architecture is based on
+{\em agents}. I've avoided this in the past because of an association
+between this term and the idea of bits of code moving around between
+machines of their own volition. I take this to be somewhat pointless, and
+probably the result of an anthropomorphic obsession with mobility as a
+correlate of intelligence. If we drop this connotation, however, we can
+say that GATE is an agent-based architecture. If we want to, that is.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection{Framework Expression}
+
+
+Many of the classes in the framework are components, by which we mean
+classes that conform to an interface with certain standard properties. In
+our case these properties are based on the Java Beans component
+architecture, with the addition of component metadata, automated loading
+and standardised storage, threading and distribution.
+
+All components inherit from Resource, via one of:
+\begin{itemize}
+\item 
+LanguageResource (LR) represents entities such as lexicons, corpora or
+ontologies;
+\item 
+VisualResource (VR) represents visualisation and editing components that
+participate in GUIs;
+\item 
+ProcessingResource (PR) represents entities that are primarily algorithmic,
+such as parsers, generators or ngram modellers.
+\end{itemize}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Model, view, controller}
+
+\label{f0:mvc}
+According to Buschmann et al
+(Pattern-Oriented Software Architecture, 1996),
+the Model-View-Controller (MVC)
+pattern 
+\begin{quotation} 
+...divides an interactive application into three components. The model
+contains the core functionality and data. Views display information to the
+user. Controllers handle user input. Views and controllers together comprise
+the user interface. A change-propagation mechanism ensures consistency between
+the user interface and the model. \mbox{$[$}p.125\mbox{$]$}\end{quotation}
+A variant of MVC, the Document-View pattern, 
+\begin{quotation} 
+...relaxes the separation of view and controller... The View component of
+Document-View combines the responsibilities of controller and view in MVC, and
+implements the user interface of the system.\end{quotation}
+A benefit of both arrangements is that 
+\begin{quotation} 
+...loose coupling of the document and view components enables multiple
+simultaneous synchronized but different views of the same document.\end{quotation}
+
+Geary (Graphic Java 2, 3rd Edtn., 1999) gives a slightly different view:
+\begin{quotation} 
+MVC separates applications into three types of objects:
+\begin{itemize}
+\item 
+{\bf Models:} Maintain data and provide data accessor methods
+\item 
+{\bf Views:} Paint a visual representation of some or all of a model's data
+\item 
+{\bf Controllers:} Handle events
+... By encapsulating what other architectures intertwine, MVC applications are
+much more flexible and reusable than their traditional counterparts.
+\end{itemize}
+\mbox{$[$}pp. 71, 75\mbox{$]$}\end{quotation}
+Swing, the Java user interface framework, uses
+\begin{quotation} 
+a specialised version of the classic MVC meant to support pluggable look and
+feel instead of applications in general.
+\mbox{$[$}p. 75\mbox{$]$}\end{quotation}
+
+GATE may be regarded as an MVC architecture in two ways:
+\begin{itemize}
+\item 
+directly, because we use the Swing toolkit for the GUIs;
+\item 
+by analogy, where LRs are models, VRs are views and PRs are controllers.
+Of these, the latter sits least
+easily with the MVC scheme, as PRs may indeed be controllers but may also
+not be.
+\end{itemize}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Interfaces}
+
+\label{f0:interfaces}%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection{Architectural Principle}
+
+
+The implementation of types should generally be hidden from the clients of
+the architecture.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection{Framework Expression}
+
+
+With a few exceptions (such as for utility classes),
+clients of the framework work with the {\tt gate.*} package.
+This
+package is mostly composed of interface definitions.
+Instantiations of these interfaces are obtained via the {\tt Factory}
+class.
+
+The subsidiary packages of GATE provide the implementations of the
+{\tt gate.*} interfaces that are accessed via the factory. They
+themselves avoid directly constructing classes from other packages
+(with a few exceptions, such as JAPE's need for unattached annotation
+sets). Instead they use the factory.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\section{Development Notes}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Integrating Sicstus Prolog programs}
+
+
+Sicstus provide a nice interface for Java, called Jasper, based on a native
+code library that is available for different platforms as part of the
+Sicstus distribution.  Linking native code with Java is a slightly risky
+business - unlike the gentle degradation often available via Java
+exceptions, native code problems are likely to crash the whole application. 
+It is also difficult to get a bug-free implementation of this type of
+language mixing to work identically on different platforms. For example:
+
+In Sicstus 3.8.6 on NT,
+when calling Sicstus from Java, if the memory allocation directive
+{\tt -Xmx200m} is given to the JVM, the sicstus runtime throws
+this error:
+\begin{verbatim} 
+{ERROR: Memory allocation failed (upper 4 bits do not match MallocBase)}
+Signal 127
+\end{verbatim}
+
+Using a slightly different version of jasper.jar than the one in the 
+Sicstus distribution you're getting the native code from
+(e.g. NT version 3.8.4 vs. Linux version 3.8.6) can crash the
+system, unsurprisingly. But if we include jasper.jar in the GATE libraries
+then this is likely to happen quite often.
+
+For these reasons we don't include Sicstus support in GATE itself, but will
+be happy to supply example code from our own modules that integrate Sicstus
+code with GATE on request.
+\vspace{1mm}\hrule 
+% html: End of file: `userguide.html'

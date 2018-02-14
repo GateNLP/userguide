@@ -1,0 +1,15 @@
+How to Cite the GATE User Guide
+
+If you have made use of the GATE User Guide and want to cite it in a
+publication, please use the following reference:
+
+
+- Cunningham, et al. _Developing Language Processing Components with GATE Version 8_.  University of
+  Sheffield Department of Computer Science. 17 November 2014.
+
+
+%%- Cunningham, et al. _Text Processing with GATE (Version 6)_.  University of
+%%  Sheffield Department of Computer Science. 15 April 2011. ISBN 0956599311
+
+For details of other related publications, see
+%(http://gate.ac.uk/gate/doc/papers.html).
