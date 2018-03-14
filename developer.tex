@@ -774,18 +774,20 @@ CREOLE plugins. Then, in Section~\ref{sec:developer:loadpr}, we will talk about
 creating and using processing resources.
 
 The definitions of CREOLE resources (e.g. processing resources such as taggers
-and parsers, see \Chapthing\ \ref{chap:creole-model}) are stored in CREOLE
-directories (directories containing an XML file describing the resources, the
-Java archive with the compiled executable code and whatever libraries are
-required by the resources).
+and parsers, see \Chapthing\ \ref{chap:creole-model}) are stored in Maven central repository.
+
+
+%CREOLE
+%directories (directories containing an XML file describing the resources, the
+%Java archive with the compiled executable code and whatever libraries are
+%required by the resources).
 
 Plugins can have one or more of the following states in relation with GATE:
 \begin{description}
 \item[known] plugins are those plugins that the system knows about. These
-include all the plugins in the {\tt plugins} directory of the GATE installation
-and those installed in the user's own plugin directory
-(the so--called {\it installed} plugins) as well all the plugins that were
-manually loaded from the user interface.
+include all the plugins: 1. default plugins provided by Gate team. 2. The plugins 
+added by the user manually according to the Maven artifact id. 3. those installed in 
+the user's own plugin directory.
 \item[loaded] plugins are the plugins currently loaded in the system. All CREOLE
 resource types from the loaded plugins are available for use. All known plugins
 can easily be loaded and unloaded using the user interface.
@@ -796,15 +798,15 @@ automatically during initialisation which can be configured via the
 
 As hinted at above plugnis can be loaded from numerous sources:
 \begin{description}
-\item[core plugins] are distributed with GATE are found in the {\\t plugins}
-directory of the instillation, although the default location can be modified using the
-{\tt gate.plugins.home} system property.
+%\item[core plugins] are distributed with GATE are found in the {\\t plugins}
+%directory of the instillation, although the default location can be modified using the
+%{\tt gate.plugins.home} system property.
+\item[core plugins] are distributed with GATE to the Maven central repository.
+\item[maven plugins] are distributed with other parties to the Maven central repository.
 \item[user plugins] are plugins that have been installed by the user into their
 personal plugins folder. The location of this folder can be set either through the
 configuration tab of the CREOLE manager interface or via the {\tt gate.user.plugins}
 system property
-\item[local plugins] are those plugins located on disk but which aren't in either
-the core plugins or user plugin folder.
 \item[remote plugins] are plugins which are loaded via http from a remote machine.
 \end{description}
 
@@ -821,7 +823,7 @@ time GATE is launched.
 
 \begin{figure}[htb]
 \begin{center}
-\includegraphics[width=14cm]{plugin-manager.png}
+\includegraphics[width=14cm]{creole-manager85.png}
 \end{center}
 \caption{Plugin Management Console}
 \label{fig:plugin-manager}
@@ -844,6 +846,11 @@ Schema\_Annotation\_Editor (see
 Section~\ref{sec:developer:schemaannotationeditor}).
 
 
+
+Extract Plugin Resources  --- ?
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \sect[sec:developer:installplugins]{Installing and updating CREOLE Plugins}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -853,25 +860,25 @@ there are many more plugins developed and made available by other GATE users.
 Some of these additional plugins can easily be installed into your local copy of
 GATE through the CREOLE plugin manager.
 
-Plugin developers can offer their plugins by maintaining a plugin repository.
-The addresse of a plugin repository can then be added to your GATE installation
-through the configuration tab of the plugin manager. For example, in the following
-screenshot you can see that two plugin repositories have been added, although
-only one is currently enabled.
+%Plugin developers can offer their plugins by maintaining a plugin repository.
+%The addresse of a plugin repository can then be added to your GATE installation
+%through the configuration tab of the plugin manager. For example, in the following
+%screenshot you can see that two plugin repositories have been added, although
+%only one is currently enabled.
 
 \begin{figure}[htb]
 \begin{center}
-\includegraphics[width=14cm]{creole-manager.png}
+\includegraphics[width=14cm]{registernewplugin.png}
 \end{center}
 \caption{Installing New CREOLE Plugins Through The Manager}
 \label{fig:plugin-manager-config}
 \end{figure}
 
-References to a number of plugin repositories are provided within the GATE distribution,
-although they are initially disabled\footnote{Currently three plugin repositories are listed
-in the main distribution. To have your repository included in the list send an e-mail
-with the address to the GATE developers mailing list.}. Once a plugin repository
-is enabled the plugins which can be installed are listed on the `Available' tab.
+%References to a number of plugin repositories are provided within the GATE distribution,
+%although they are initially disabled\footnote{Currently three plugin repositories are listed
+%in the main distribution. To have your repository included in the list send an e-mail
+%with the address to the GATE developers mailing list.}. Once a plugin repository
+%is enabled the plugins which can be installed are listed on the `Available' tab.
 
 Installing new plugins is simply a case of checking the box and clicking `Apply All'.
 Note that plugins are installed into the user plugins directory, which must have been
@@ -881,6 +888,14 @@ Once a plugin is installed it will appear in the list of `Installed Plugins' and
 loaded in the same way as any other CREOLE plugin (see Section \ref{sec:developer:loadpr}).
 If a new version of a plugin you have installed becomes available the new version
 will be offered as an update. These updates can be installed in the same way as a new plugin.
+
+To register a new plugin just need simply click the `+' button located at the top right corner of Plugin Manager
+Then you can either register a new plugin by provide the Maven Group and Artifact ID for maven plugins or provide the Dirctory URL 
+for local or remote plugins.
+
+
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1364,6 +1379,43 @@ There are a few important points to note about the export process:
 If you require more flexibility than this option provides you should read
 Section~\ref{sec:ant:packagegapp}, which describes the underlying Ant task that
 the exporter uses.
+
+\subsect[sec:developer:convertxgapp]{Load Application Saved from Previous Version}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Gate 8.5 dose not comparale to load old version of xgapp file. If you have error message
+like Figure \ref{fig:oldxgapp}, then you are loading application created from old version(pre-8.5) of Gate
+
+In order to load to Gate 8.5, you need first to upgrade the application compatible to new version. To do this first load 
+'tools' from plugin manger. Then from tool bar select `Tools' --> `Upgrade Xgapp', and select the application file you wish to upgrade.
+
+After upgrade, the old version will renamed with suffix  '.bak'
+
+
+\begin{figure}[htb]
+\begin{center}
+\includegraphics[scale=0.5]{old-xgapp-error.png}
+\end{center}
+\caption{Old xgapp version Loading Error}
+\label{fig:oldxgapp}
+\end{figure}
+
+\begin{figure}[htb]
+\begin{center}
+\includegraphics[scale=0.5]{plugin-manager-tools.png}
+\end{center}
+\caption{Old xgapp version Loading Error}
+\label{fig:pr-init-params}
+\end{figure}
+
+
+\begin{figure}[htb]
+\begin{center}
+\includegraphics[scale=0.5]{upgradexgapp.png}
+\end{center}
+\caption{Choose upgrade xgapp}
+\label{fig:pr-init-params}
+\end{figure}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \sect[sec:developer:keyboard]{Keyboard Shortcuts}
