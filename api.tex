@@ -25,31 +25,39 @@ Embedded (the GATE API) is straightforward:
 \begin{flushleft}
 \sloppy
 \begin{itemize}
-\item add \verb!$GATE_HOME/bin/gate.jar! and the JAR files in 
-\verb!$GATE_HOME/lib! to the Java \texttt{CLASSPATH} 
-(\verb!$GATE_HOME! is the GATE root directory)
-\item tell Java that the GATE Unicode Kit is an extension: \linebreak
-\verb!-Djava.ext.dirs=$GATE_HOME/lib/ext!\linebreak
-N.B. This is only necessary for GUI applications that need to support Unicode
-text input; other applications such as command line or web applications don't
-generally need GUK.
+\item add the GATE libraries to your application's classpath.
+  \begin{itemize}
+  \item if you use a build tool with dependency management, such
+    as Maven or Gradle, add a dependency on the right version of
+    \texttt{uk.ac.gate:gate-core} -- this is the recommended way
+    to build against the GATE APIs.
+  \item if you can't use a dependency manager, you can instead add
+    all the JAR files from the \texttt{lib} directory of a GATE
+    installation to your compile classpath in your build tool.
+  \end{itemize}
 \item initialise GATE with \texttt{gate.Gate.init();}
 \item program to the framework API.
 \end{itemize}
 \fussy
 \end{flushleft}
 %
-For example, this code will create the ANNIE extraction system:
+For example, this code will create the default ANNIE extraction system,
+the same as the ``load ANNIE'' button in GATE Developer:
 %
 \begin{lstlisting}
   // initialise the GATE library
   Gate.init();
 
-  // load ANNIE as an application from a gapp file
+  // load the ANNIE plugin
+  Plugin anniePlugin = new Plugin.Maven(
+        "uk.ac.gate.plugins", "annie", gate.Main.version);
+  Gate.getCreoleRegister().registerPlugin(anniePlugin);
+
+  // load ANNIE application from inside the plugin
   SerialAnalyserController controller = (SerialAnalyserController)
-    PersistenceManager.loadObjectFromFile(new File(new File(
-      Gate.getPluginsHome(), ANNIEConstants.PLUGIN_DIR),
-        ANNIEConstants.DEFAULT_FILE));
+    PersistenceManager.loadObjectFromUrl(new ResourceReference(
+      anniePlugin, "resources/" + ANNIEConstants.DEFAULT_FILE)
+        .toURL());
 \end{lstlisting}
 %
 If you want to use resources from any plugins, you need to
@@ -58,9 +66,8 @@ load the plugins before calling \verb|createResource|:
   Gate.init();
 
   // need Tools plugin for the Morphological analyser
-  Gate.getCreoleRegister().registerDirectories(
-    new File(Gate.getPluginsHome(), "Tools").toURL()
-  );
+  Gate.getCreoleRegister().registerPlugin(new Plugin.Maven(
+    "uk.ac.gate.plugins", "tools", gate.Main.version));
 
   ...
 
@@ -80,8 +87,6 @@ manually.
 
   CorpusController controller = (CorpusController)
     PersistenceManager.loadObjectFromFile(new File("savedState.xgapp"));
-
-  // loadObjectFromUrl is also available
 \end{lstlisting}
 There are many examples of using GATE Embedded available at:\\
 \htlinkplain{http://gate.ac.uk/wiki/code-repository/}.
@@ -110,13 +115,12 @@ graphical interfaces. }
 These resources are collectively named \textbf{CREOLE}\footnote{CREOLE
 stands for Collection of REusable Objects for Language Engineering} resources.
 
-All CREOLE resources have some associated meta-data in the form of an entry in a
-special XML file named {\tt creole.xml}. The most important role of that
+All CREOLE resources have some associated meta-data in the form of annotations
+on the resource class and some of its methods.  The most important role of that
 meta-data is to specify the set of parameters that a resource understands, which
 of them are required and which not, if they have default values and what those
-are. The valid parameters for a resource are described in the resource's section
-of its {\tt creole.xml} file or in Java annotations on the resource class -- see
-Section \ref{sec:creole-model:config}.
+are. See Section \ref{sec:creole-model:config} for full details of the
+configuration mechanism.
 
 All resource types have creation-time parameters that are used during the
 initialisation phase. Processing Resources also have run-time parameters
@@ -204,8 +208,8 @@ So, for example, the following code creates a default ANNIE part-of-speech
 tagger:
 %
 \begin{lstlisting}
-Gate.getCreoleRegister().registerDirectories(new File(
-  Gate.getPluginsHome(), ANNIEConstants.PLUGIN_DIR).toURI().toURL());
+Gate.getCreoleRegister().registerPlugin(new Plugin.Maven(
+      "uk.ac.gate.plugins", "annie", gate.Main.version));
 FeatureMap params = Factory.newFeatureMap(); //empty map:default params
 ProcessingResource tagger = (ProcessingResource)
   Factory.createResource("gate.creole.POSTagger", params);
@@ -213,34 +217,14 @@ ProcessingResource tagger = (ProcessingResource)
 %
 Note that if the resource created here had any parameters that were both
 mandatory and had no default value, the {\tt createResource} call would throw
-an exception. In this case, all the information needed to create a tagger is
-available in default values given in the tagger's XML definition (in
-{\tt plugins/ANNIE/creole.xml}):
-%
-\begin{small}\begin{verbatim}
-<RESOURCE>
-  <NAME>ANNIE POS Tagger</NAME>
-  <COMMENT>Mark Hepple's Brill-style POS tagger</COMMENT>
-  <CLASS>gate.creole.POSTagger</CLASS>
-  <PARAMETER NAME="document"
-    COMMENT="The document to be processed"
-    RUNTIME="true">gate.Document</PARAMETER>
-....
-  <PARAMETER NAME="rulesURL" DEFAULT="resources/heptag/ruleset"
-    COMMENT="The URL for the ruleset file"
-    OPTIONAL="true">java.net.URL</PARAMETER>
-</RESOURCE>
-\end{verbatim}\end{small}
-%
-Here the two parameters shown are either `runtime' parameters, which are set
-before a PR is executed, or have a default value (in this case the default
-rules file is distributed with GATE itself).
+an exception.  In the case of the POS tagger, all the required parameters have
+default values so no \texttt{params} need to be passed in.
 
 When creating a Document, however, the URL of the source for the document must be
 provided\footnote{Alternatively a string giving the document source may be
 provided.}. For example:
 \begin{lstlisting}
-URL u = new URL("http://gate.ac.uk/hamish/");
+URL u = new URL("https://gate.ac.uk/");
 FeatureMap params = Factory.newFeatureMap();
 params.put("sourceUrl", u);
 Document doc = (Document)
@@ -323,34 +307,30 @@ do not need to first load a plugin. The following API calls listed in table
 \hline
 \textbf{Method} & \textbf{Purpose}\\
 \hline
-{\tt public static void {\bf addKnownPlugin}(URL pluginURL)} & adds the plugin
+{\tt public static void {\bf addKnownPlugin}(Plugin plugin)} & adds the plugin
 to the list of known plugins.\\
 \hline
-{\tt public static void {\bf removeKnownPlugin}(URL pluginURL)} & tells the
-system to `forget' about one previously known directory. If the specified directory 
+{\tt public static void {\bf removeKnownPlugin}(Plugin plugin)} & tells the
+system to `forget' about one previously known directory. If the specified plugin 
 was loaded, it will be unloaded as well - i.e. all the metadata relating to 
-resources defined by this directory will be removed from memory.\\
+resources defined by this plugin will be removed from memory.\\
 \hline
-{\tt public static void {\bf addAutoloadPlugin}(URL pluginUrl)} & adds a new 
-directory to the list of plugins that are loaded automatically at start-up.\\
+{\tt public static void {\bf addAutoloadPlugin}(Plugin plugin)} & adds a new 
+plugin to the list of plugins that are loaded automatically at start-up.\\
 \hline
-{\tt public static void {\bf removeAutoloadPlugin}(URL pluginURL)} & tells the 
-system to remove a plugin URL from the list of plugins that are loaded 
+{\tt public static void {\bf removeAutoloadPlugin}(Plugin plugin)} & tells the 
+system to remove a plugin from the list of plugins that are loaded 
 automatically at system start-up. This will be reflected in the user's 
 configuration data file.\\
 \hline
 \multicolumn{2}{|c|}{\textbf{Class \underline{gate.CreoleRegister}}}\\
 \hline
 \hline
-{\tt public void {\bf registerDirectories}(URL directoryUrl)} & loads a new
-CREOLE directory. The new plugin is added to the list of known plugins if not already
+{\tt public void {\bf registerPlugin}(Plugin plugin)} & loads a new
+CREOLE plugin. The new plugin is added to the list of known plugins if not already
 there.\\
 \hline
-{\tt public void {\bf registerComponent}(Class<? extends Resource> cls)} &
-registers a single {\tt @CreoleResource} annotated class without the need for a
-{\tt creole.xml} file.\\
-\hline
-{\tt public void {\bf removeDirectory}(URL directory)} & unloads a loaded CREOLE
+{\tt public void {\bf unregisterPlugin}(Plugin plugin)} & unloads a loaded CREOLE
 plugin.\\
 \hline
 \end{tabular}
@@ -360,16 +340,42 @@ plugin.\\
 \end{small}
 \end{table}
 
-If you are writing a GATE Embedded application and have a single resource class
-that will only be used from your embedded code (and so does not need to be
-distributed as a complete plugin), and all the configuration for that resource
-is provided as Java annotations on the class, then it is possible to register
-the class with the {\tt CreoleRegister} at runtime without needing to package
-it in a JAR and provide a {\tt creole.xml} file.  You can pass the {\tt Class}
-object representing your resource class to
-{\tt Gate.getCreoleRegister().registerComponent()} method and then create
-instances of the resource in the usual way using {\tt Factory.createResource}.
-Note that resources cannot be registered this way in the developer GUI, and
+There are several different subclasses of \texttt{Plugin} that can be passed
+to these methods.  The most common one is \texttt{Plugin.Maven}, as seen in the
+examples above, which is a plugin that is a single JAR file specified via its
+\texttt{group:artifact:version} ``coordinates'', and which is downloaded from a
+Maven repository at runtime by GATE the first time the plugin is loaded.  The
+vast majority of standard GATE plugins are of this type.  To load version 8.5
+of the ANNIE plugin, for example, you would use:
+\begin{lstlisting}
+Gate.getCreoleRegister().registerPlugin(new Plugin.Maven(
+      "uk.ac.gate.plugins", "annie", "8.5"));
+\end{lstlisting}
+
+In addition to Maven plugins, GATE still supports the style of plugins used in
+GATE version 8.4.1 and earlier where the plugin is a directory on disk
+which contains a \texttt{creole.xml} configuration file and optionally one or
+more JAR files containing the compiled classes of the plugin's CREOLE
+resources.  These plugins are represented by the class
+\texttt{Plugin.Directory}, with a \texttt{URL} pointing to the directory that
+contains the \texttt{creole.xml} file:
+\begin{lstlisting}
+Gate.getCreoleRegister().registerPlugin(new Plugin.Directory(
+      new URL("file:/home/example/my-plugins/FishCounter/"));
+\end{lstlisting}
+
+Finally, if you are writing a GATE Embedded application and have a single
+resource class that will only be used from your embedded code (and so does not
+need to be distributed as a complete plugin), and all the configuration for
+that resource is provided as Java annotations on the class, then it is possible
+to register the class as a special type of \texttt{Plugin} called a
+``component'':
+\begin{lstlisting}
+Gate.getCreoleRegister().registerPlugin(new Plugin.Component(
+      MySpecialPurposePR.class));
+\end{lstlisting}
+
+Note that components cannot be registered this way in the developer GUI, and
 cannot be included in saved application states (see
 section~\ref{sec:api:persistent} below).
 
@@ -930,8 +936,9 @@ plugin.  See section~\ref{sec:api:groovy:controller} for details.
 
 \begin{lstlisting}
 // load the ANNIE plugin
-Gate.getCreoleRegister().registerDirectories(new File(
- Gate.getPluginsHome(), "ANNIE").toURI().toURL());
+Plugin anniePlugin = new Plugin.Maven(
+      "uk.ac.gate.plugins", "annie", gate.Main.version);
+Gate.getCreoleRegister().registerPlugin(anniePlugin);
 
 // create a serial analyser controller to run ANNIE with
 SerialAnalyserController annieController =
@@ -941,6 +948,10 @@ SerialAnalyserController annieController =
      Factory.newFeatureMap(), "ANNIE");
 
 // load each PR as defined in ANNIEConstants
+// Note this code is for demonstration purposes only,
+// in practice if you want to load the ANNIE app you
+// should use the PersistenceManager as shown at the
+// start of this chapter
 for(int i = 0; i < ANNIEConstants.PR_NAMES.length; i++) {
   // use default parameters
   FeatureMap params = Factory.newFeatureMap();
