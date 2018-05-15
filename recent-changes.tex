@@ -19,44 +19,47 @@
   \def\rcSubsubsect#1{\subsubsect{#1}}
 \fi
 
-\rcSect[8.4.1]{Version 8.4.1 (June 2017)}
+\rcSect[8.5]{Version 8.5 (May 2018)}
 
-This is a minor release that fixes one rarely encountered but serious bug with
-the handling of CDATA sections within the text content of GATE XML format
-documents.  CDATA has always been handled correctly in annotation and document
-feature values, this bug would only affect a small number of documents where
-the text contains many less-than signs (\verb!<<<!) \emph{and} few annotations.
-In particular, \emph{annotated} documents that have been processed using the
-GATE tokeniser are extremely unlikely to be affected as each less-than sign is
-treated as a separate \texttt{Token} annotation.
-
-This release also includes one small improvement to the Twitter hashtag
-tokeniser so it recognises the names of some political parties when they occur
-within hashtags such as \verb!#VoteLabour!.
-
-\rcSect[8.4]{Version 8.4 (February 2017)}
-
-GATE Developer and Embedded 8.4 is mainly a bug fix release, with a small
-number of critical fixes compared to version 8.3.  This will be the final
-major release of GATE before major re-structuring of the codebase and the plugin
-system for version 8.5.
+GATE Developer and Embedded 8.5 introduces a number of significant internal
+changes to the way plugins are managed, but with the exception of the plugin
+manager most users will not see significant changes in the way they use GATE.
 
 \begin{itemize}
-\item Fixed an issue which had prevented the use of Java 8 lambda expressions
-  in the RHS of JAPE rules, even when running on Java 8.
-\item Removed OpenCalais and Zemanta plugins as the web services they depend on
-  have changed and the plugins no longer work.
-\item Fixed a bug that could cause the searchable datastore GUI to freeze.
-\item Fixes to the TermRaider and Hindi sample applications
+\item The GATE plugins are no longer bundled with the GATE Developer
+  distribution, instead each plugin is downloaded from a repository at runtime,
+  the first time it is used.  This means the distribution is much smaller than
+  previous versions.
+\item Most plugins are now distributed as a single JAR file through the
+  Java-standard ``Central Repository'', and resource files such as gazetteers
+  and JAPE grammars are bundled inside the plugin JAR rather than being
+  separate files on disk.  If you want to modify the resources of a plugin
+  then GATE provides a tool to extract an editable copy of the files from
+  a plugin onto your disk -- it is no longer possible to edit plugin grammars
+  in place.
+\item This makes dependencies between plugins much easier to manage -- a plugin
+  can specify its dependencies declaratively by name and version number rather
+  than by fragile relative paths between plugin directories.
 \end{itemize}
 
-\rcSubsect{Java compatibility}
+GATE 8.5 remains backwards compatible with existing third-party plugins, though
+we encourage you to convert your plugins to the new style where possible.
 
-For GATE 8.4 we recommend the use of the latest Java 8 from Oracle.  If you are
-still restricted to Java 7, most components will still work with the exception
-of the Stanford CoreNLP tools and the TwitIE application (which uses the
-Stanford POS tagger).  Future versions of GATE will require Java 8 as a
-minimum.
+Further details on these changes can be found in sections
+\ref{sec:developer:plugins} (the plugin manager in GATE Developer),
+\ref{sec:api:plugins} (loading plugins via the GATE Embedded API),
+\ref{sec:api:bootstrap} (creating a new plugin from scratch), and NOT YET
+WRITTEN (converting an existing plugin to the new style).
 
+If you have an existing saved application from GATE version 8.4.1 or earlier it
+will be necessary to ``upgrade'' it to use the new core plugins.  An upgrade
+tool is provided on the ``Tools'' menu of GATE Developer, and is described in
+section TODO.
+
+\rcSubsect{For developers}
+
+As part of this release, GATE development has moved from SourceForge to GitHub
+-- bug reports, patches and feature requests should now use the GitHub issue
+tracker as described in section~\ref{sec:development:bugs}.
 
 % vim:ft=tex

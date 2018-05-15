@@ -20,6 +20,45 @@ release. Changes in the documentation are also referenced here.
 %NEW CHANGES SHOULD BE ADDED IN `recent-changes.tex' NOT HERE!!!
 \input{recent-changes}
 
+\rcSect[8.4.1]{Version 8.4.1 (June 2017)}
+
+This is a minor release that fixes one rarely encountered but serious bug with
+the handling of CDATA sections within the text content of GATE XML format
+documents.  CDATA has always been handled correctly in annotation and document
+feature values, this bug would only affect a small number of documents where
+the text contains many less-than signs (\verb!<<<!) \emph{and} few annotations.
+In particular, \emph{annotated} documents that have been processed using the
+GATE tokeniser are extremely unlikely to be affected as each less-than sign is
+treated as a separate \texttt{Token} annotation.
+
+This release also includes one small improvement to the Twitter hashtag
+tokeniser so it recognises the names of some political parties when they occur
+within hashtags such as \verb!#VoteLabour!.
+
+\rcSect[8.4]{Version 8.4 (February 2017)}
+
+GATE Developer and Embedded 8.4 is mainly a bug fix release, with a small
+number of critical fixes compared to version 8.3.  This will be the final
+major release of GATE before major re-structuring of the codebase and the plugin
+system for version 8.5.
+
+\begin{itemize}
+\item Fixed an issue which had prevented the use of Java 8 lambda expressions
+  in the RHS of JAPE rules, even when running on Java 8.
+\item Removed OpenCalais and Zemanta plugins as the web services they depend on
+  have changed and the plugins no longer work.
+\item Fixed a bug that could cause the searchable datastore GUI to freeze.
+\item Fixes to the TermRaider and Hindi sample applications
+\end{itemize}
+
+\rcSubsect{Java compatibility}
+
+For GATE 8.4 we recommend the use of the latest Java 8 from Oracle.  If you are
+still restricted to Java 7, most components will still work with the exception
+of the Stanford CoreNLP tools and the TwitIE application (which uses the
+Stanford POS tagger).  Future versions of GATE will require Java 8 as a
+minimum.
+
 \rcSect[8.3]{Version 8.3 (January 2017)}
 
 GATE Developer and Embedded 8.3 is mainly a bug fix release, with several
