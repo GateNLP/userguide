@@ -1659,11 +1659,13 @@ to handle the pooling for you.
 \sect[sec:api:spring]{Using GATE Embedded within a Spring Application}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-GATE Embedded provides helper classes to allow GATE resources to be created and managed
-by the \htlink{http://www.springframework.org}{Spring framework}.  For Spring
-2.0 or later, GATE Embedded provides a custom namespace handler that makes them
-extremely easy to use.  To use this namespace, put the following declarations
-in your bean definition file:
+GATE Embedded provides helper classes to allow GATE resources to be created and
+managed by the \htlink{http://www.springframework.org}{Spring framework}.
+These helpers are provided by the
+\htlink{https://mvnrepository.com/artifact/uk.ac.gate/gate-spring}{gate-spring}
+module, which must be added as a dependency of your project alongside
+\verb!gate-core!.  To use the helpers in an XML bean definition file, add the
+following declarations to the top:
 \begin{small}\begin{verbatim}
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:gate="http://gate.ac.uk/ns/spring"
@@ -1677,69 +1679,75 @@ in your bean definition file:
 
 You can have Spring initialise GATE:
 \begin{small}\begin{verbatim}
-  <gate:init gate-home="WEB-INF" user-config-file="WEB-INF/user.xml">
-    <gate:preload-plugins>
-      <value>WEB-INF/ANNIE</value>
-      <value>http://example.org/gate-plugin</value>
-    </gate:preload-plugins>
-  </gate:init>
-\end{verbatim}\end{small}
-
-The gate-home, user-config-file, etc. and the \verb|<value>| elements under
-\verb|<gate:preload-plugins>| are interpreted as Spring ``resource'' paths.  If
-the value is not an absolute URL then Spring will resolve the path in an
-appropriate way for the type of application context --- in a web application
-they are taken as being relative to the web app root, and you would typically
-use locations within WEB-INF as shown in the example above.  To use an absolute
-path for gate-home it is not sufficient to use a leading slash (e.g.
-\verb|/opt/gate|), for backwards-compatibility reasons Spring will still
-resolve this relative to your web application.  Instead you must specify it as
-a full URL, i.e. \verb|file:/opt/gate|.
-
-The attributes \verb|gate-home|, \verb|plugins-home|, \verb|site-config-file|,
-\verb|user-config-file| and \verb|builtin-creole-dir| refer directly to the
-similarly-named setter methods on \verb|gate.Gate|.  Any of these that are not
-specified will take their usual GATE Embedded default values (i.e.
-\verb|gate-home| will be the parent of the directory containing gate.jar,
-\verb|plugins-home| will be the \verb|plugins| subdirectory of GATE home,
-\verb|user-config-file| will be \verb|.gate.xml| in the current user's home
-directory, etc.).  Therefore it is highly recommended to specify at least
-\verb|user-config-file| in order to isolate your application from the
-configuration used by GATE Developer.  Alternatively, you can specify
-\verb|run-in-sandbox="true"| (see the
-\htlink{http://jenkins.gate.ac.uk/job/GATE-Nightly/javadoc/gate/Gate.html\#runInSandbox(boolean)}{JavaDocs})
-which will tell GATE not to attempt to read any configuration from files at
-startup.
-
-\verb|<gate:preload-plugins>| specifies CREOLE plugins that should be loaded
-after GATE has been initialised.  An alternative way to specify extra plugins
-is to provide separate \verb|<gate:extra-plugin>| elements, for example:
-\begin{small}\begin{verbatim}
-  <gate:init gate-home="WEB-INF"
-             user-config-file="WEB-INF/user.xml" />
-
-  <gate:extra-plugin>WEB-INF/ANNIE</gate:extra-plugin>
+  <gate:init />
 \end{verbatim}\end{small}
 %
-You can freely mix the two styles -- nested \verb|<gate:preload-plugins>|
-definitions are processed first, followed by all the \verb|<gate:extra-plugin>|
-definitions found in the application context.  This is useful if, for example,
-you are providing additional configuration as a separate bean definition file
-from the one containing the main \verb|<gate:init>| definition and need to load
-extra plugins without editing this main definition.
+For backwards compatibility the \verb!<gate:init>! element accepts a number of
+attributes which were used in earlier versions of GATE to specify paths to
+GATE's ``home'' folder and configuration files, but as of GATE 8.5 these
+options do nothing by default.  If you \emph{do} want to load a user
+configuration file (for example to configure things like the ``add space on
+markup unpack'' feature) then you must explicitly turn off the sandbox mode:
+\begin{small}\begin{verbatim}
+  <gate:init run-in-sandbox="false" user-config-file="WEB-INF/user/xml" />
+\end{verbatim}\end{small}
+
+The user-config-file location is interpreted as a Spring ``resource''
+path.  If the value is not an absolute URL then Spring will resolve the path in
+an appropriate way for the type of application context --- in a web application
+it is taken as being relative to the web app root, and you would typically use
+a location within WEB-INF as shown in the example above.  To use an absolute
+path for gate-home it is not sufficient to use a leading slash (e.g.
+\verb|/opt/myapp/user.xml|), for backwards-compatibility reasons Spring will
+still resolve this relative to your web application.  Instead you must specify
+it as a full URL, i.e. \verb|file:/opt/myapp/user.xml|.
+
+You can specify CREOLE plugins that should be loaded after GATE has initialised
+using \verb|<gate:extra-plugin>| elements, for example:
+\begin{small}\begin{verbatim}
+  <gate:init />
+
+  <!-- load the standard ANNIE plugin from Maven Central -->
+  <gate:extra-plugin group-id="uk.ac.gate.plugins"
+                     artifact-id="annie"
+                     vesion="8.5" />
+
+  <!-- load a custom directory-based plugin from inside the webapp -->
+  <gate:extra-plugin>WEB-INF/plugins/FishCounter</gate:extra-plugin>
+\end{verbatim}\end{small}
+%
+The usual rules apply for the resolution of Maven plugins -- GATE will look in
+\verb!.m2/repository! under the home directory of the current user, as well as
+in the Central repository and the GATE team repository online, plus any
+repositories configured in the current user's \verb!.m2/settings.xml!.  As well
+as this you can specify a local ``cache'' directory which is a Maven repository
+that will be searched first before trying any remote repositories, as part of
+the \verb!<gate:init>! element:
+\begin{small}\begin{verbatim}
+<gate:init>
+  <gate:maven-caches>
+    <gate:url>WEB-INF/maven-cache</gate:url>
+  </gate:maven-caches>
+</gate:init>
+\end{verbatim}\end{small}
+%
+Note that due to restrictions within the Maven resolver this must be a real
+directory on disk, so in the web application case if you put a cache inside
+your WAR file it will only be used if the WAR is unpacked by the container, not
+if it attempts to run the application directly from the compressed WAR.
 
 To create a GATE resource, use the \verb|<gate:resource>| element.
 \begin{small}\begin{verbatim}
-  <gate:resource id="sharedOntology" scope="singleton"
-          resource-class="gate.creole.ontology.owlim.OWLIMOntologyLR">
+  <gate:resource id="referenceDocument" scope="singleton"
+          resource-class="gate.corpora.DocumentImpl">
     <gate:parameters>
-      <entry key="rdfXmlURL">
-        <gate:url>WEB-INF/ontology.rdf</gate:url>
+      <entry key="sourceUrl">
+        <gate:url>WEB-INF/reference.xml</gate:url>
       </entry>
     </gate:parameters>
     <gate:features>
-      <entry key="ontologyVersion" value="0.1.3" />
-      <entry key="mainOntology">
+      <entry key="documentVersion" value="0.1.3" />
+      <entry key="mainRef">
         <value type="java.lang.Boolean">true</value>
       </entry>
     </gate:features>
@@ -1771,16 +1779,17 @@ parameters (see the discussion of default parameter values in
 section~\ref{sec:creole-model:config:xml}).  So for parameter values you have a
 choice, you can either use an explicit \verb|<value type="...">| to make Spring
 do the conversion, or you can pass the parameter value as a string and let GATE
-do the conversion.  For resource parameters whose type is \verb|java.net.URL|,
-if you pass a string value that is not an absolute URL (starting file:, http:,
-etc.) then GATE will treat the string as a path relative to the creole.xml file
-of the plugin that defines the resource type whose parameter you are setting.
-If this is not what you intended then you should use \verb|<gate:url>| to cause
-Spring to resolve the path to a URL before passing it to GATE.  For example,
-for a JAPE transducer,
+do the conversion.  For resource parameters whose type is
+\verb|gate.creole.ResourceReference|, if you pass a string value that is not an
+absolute URL (starting file:, http:, etc.) then GATE will treat the string as a
+path relative to the plugin that defines the resource type whose parameter you
+are setting.  If this is not what you intended then you should use
+\verb|<gate:url>| to cause Spring to resolve the path to a URL (which GATE will
+then convert to a \verb!ResourceReference!) before passing it to GATE.  For
+example, for a JAPE transducer,
 \verb|<entry key="grammarURL" value="grammars/main.jape" />| would resolve to
-something like
-\verb|file:/path/to/webapp/WEB-INF/plugins/ANNIE/grammars/main.jape|, whereas
+the resource reference
+\verb!creole://uk.ac.gate.plugins;annie;8.5/grammars/main.jape!, whereas
 %
 \begin{small}\begin{verbatim}
 <entry key="grammarURL">
@@ -1801,12 +1810,12 @@ You can load a GATE saved application with
 \end{verbatim}\end{small}
 
 `Customisers' are used to customise the application after it is loaded.  In the
-example above, we load a singleton copy of an ontology which is then shared
-between all the separate instances of the (prototype) application.  The
-\verb|<gate:set-parameter>| customiser accepts all the same ways to provide a
-value as the standard Spring \verb|<property>| element (a "value" or "ref"
-attribute, or a sub-element - \verb|<value>|, \verb|<list>|, \verb|<bean>|,
-\verb|<gate:resource>| \ldots).
+example above, we assume we have loaded a singleton copy of an ontology which
+is then shared between all the separate instances of the (prototype)
+application.  The \verb|<gate:set-parameter>| customiser accepts all the same
+ways to provide a value as the standard Spring \verb|<property>| element (a
+"value" or "ref" attribute, or a sub-element - \verb|<value>|, \verb|<list>|,
+\verb|<bean>|, \verb|<gate:resource>| \ldots).
 
 The \verb|<gate:add-pr>| customiser provides support for the case where most of
 the application is in a saved state, but we want to create one or two extra PRs
@@ -1963,15 +1972,9 @@ GATE.
 \subsect[sec:api:spring:furtherreading]{Further reading}
 
 These custom elements all define various factory beans.  For full details, see
-the JavaDocs for \texttt{\htlink{http://gate.ac.uk/gate/doc/javadoc/gate/util/spring/package-summary.html}{gate.util.spring}}
-(the factory beans) and \texttt{\htlink{http://gate.ac.uk/gate/doc/javadoc/gate/util/spring/xml/package-summary.html}{gate.util.spring.xml}}
-(the \texttt{gate:} namespace handler).  The main Spring framework API
-documentation is the best place to look for more detail on the pooling
-facilities provided by Spring AOP.
-
-\emph{Note:} the former approach using factory methods of the
-\texttt{gate.util.spring.SpringFactory} class will still work, but should be
-considered deprecated in favour of the new factory beans.
+the JavaDocs for \texttt{\htlink{https://jenkins.gate.ac.uk/job/gate-components/job/gate-spring/job/master/javadoc/index.html}{the gate-spring module}}.
+The main Spring framework API documentation is the best place to look for more
+detail on the pooling facilities provided by Spring AOP.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \sect[sec:api:tomcat]{Using GATE Embedded within a Tomcat Web Application}
