@@ -22,36 +22,52 @@ for information on becoming a committer.
 \sect[sec:development:bugs]{Reporting Bugs and Requesting Features}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The GATE bug tracker can be found on
-SourceForge, \htlink{http://sourceforge.net/projects/gate/support}{here}. When
-reporting bugs, please give as much detail as possible. Include the GATE
-version number and build number, the platform on which you observed the bug,
-and the version of Java you were using (1.6.0\_03, etc.). Include
-steps to reproduce the problem, and a full stack trace of any exceptions,
-including `Caused by \ldots'. You may wish to first check whether the bug is
-already fixed in the latest nightly build. You may also request new features.
+The source code and issue trackers for GATE can be found on
+\htlink{https://github.com/GateNLP}{GitHub}.  The code is split across many
+repositories:
+\begin{description}
+\item[gate-core] the core GATE Embedded library and GATE Developer GUI.
+\item[gate-top] miscellaneous small components including
+  \begin{description}
+  \item[gate-plugin-base] Maven parent POM shared by all GATE plugins (ours and
+    those developed by third parties)
+  \item[gate-maven-plugin] Maven plugin used by the base POM to build the
+    artifacts required for a JAR to be a GATE plugin
+  \item[gate-plugin-test-utils] utilities used in plugin unit tests
+  \item[archetypes] to simplify the generation of new plugins
+  \end{description}
+\item[gate-spring] the helper classes for using GATE in the Spring Framework
+  (see section~\ref{sec:api:spring})
+\item[gateplugin-*] the standard GATE plugins
+\end{description}
+
+Use the GitHub issue tracker for the appropriate repository to report bugs or
+submit feature requests -- \verb!gate-core! for bugs in the core library or
+which cut across many plugins, or the relevant \verb!gateplugin-! repository
+for bugs in a specific plugin.  When reporting bugs, please give as much detail
+as possible. Include the GATE version number and build number, the platform on
+which you observed the bug, and the version of Java you were using (8u171,
+10.0.1, etc.). Include steps to reproduce the problem, and a full stack trace
+of any exceptions, including `Caused by \ldots'. You may wish to first check
+whether the bug is already fixed in the latest snapshot build (available from
+\htlinkplain{https://jenkins.gate.ac.uk}). You may also
+request new features.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \sect[sec:development:patches]{Contributing Patches}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Patches may be submitted on
-\htlink{http://sourceforge.net/projects/gate/support}{SourceForge}. The best
-format for patches is an SVN diff against the latest subversion. The diff can be
-saved as a file and attached; it should not be pasted into the bug report. Note
-that we generally do not accept patches against earlier versions of GATE. Also,
-GATE is intended to be compatible with Java 6, so if you regularly develop
-using a later version of Java it is very important to compile and test your
-patches on Java 6.  Patches that use features from a later version of Java and
-do not compile and run on Java 6 will not be accepted.
+Patches may be submitted via the usual GitHub pull request mechanism. Create a
+fork of the relevant GitHub repository, commit your changes there, then submit
+a pull request.  Note that gate-core is intended to be compatible with Java 8,
+so if you regularly develop using a later version of Java it is very important
+to compile and test your patches on Java 8.  Patches that use features from a
+later version of Java and do not compile and run on Java 8 will not be
+accepted.
 
-If you intend to submit larger changes, you might prefer to become a committer!
-We welcome input to the development process of GATE. The code is hosted on
-\htlink{http://sourceforge.net/projects/gate/}{SourceForge}, providing anonymous
-Subversion access (see Section \ref{sec:gettingstarted:svn}). We're happy to
-give committer privileges to anyone with a track record of contributing good
-code to the project. We also make the current version available nightly on the
-ftp site.
+When you submit a pull request you will be asked to sign a contributor licence
+agreement if you do not already have one on file.  This is to ensure that we at
+the University of Sheffield have permission to use the code you contribute.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \sect[sec:development:creatingplugins]{Creating New Plugins}
@@ -63,28 +79,28 @@ Resource (PR) and Visual Resource (VR). In the following subsections we describe
 the necessary steps to write new PRs and VRs, and to add plugins to the nightly
 build. The guide on writing new LRs will be available soon.
 
+You can quickly create a new plugin project structure using the Maven archetype
+described in section~\ref{sec:api:bootstrap}.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsect[sec:development:plugin-naming]{What to Call your Plugin}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The plugins are many and the list is constantly expanding. The naming convention
-aims to impose order and group plugins in a readable manner. When naming new
-plugins, please adhere to the following guidelines:
+Plugins in GATE have two types of ``name'', the Maven artifact ID (which is
+what you use when adding the plugin to the plugin manager or loading it via the
+API) and the \verb!<name>! in the POM file (which is what is displayed in the
+plugin manager).  The artifact ID should follow normal Maven conventions and be
+named in ``lower-case-with-hyphens'', the human readable name in the POM file
+can be anything but conventionally we use the form ``Function: Detail'', for
+example ``Language: Arabic'' or ``Tagger: Numbers''.  This naturally groups
+similar plugins together in the plugin manager list when it is sorted
+alphabetically.  Before naming your plugin, look at the existing plugins and
+see where it might group well.
 
-\begin{itemize}
-
-\item Words comprising plugin names should be capitalized and separated by
-underscores Like\_So. This means that they will format nicely in GATE
-Developer. For example, `Inter\_Annotator\_Agreement'.
-
-\item Plugin names should begin with the word that best describes their function.
-Practically, this means that words are often reversed from the usual order, for
-example, the Chemistry Tagger plugin should be called `Tagger\_Chemistry'. This
-means that for example parsers will group together alphabetically and thus will
-be easy to find when someone is looking for parsers. Before naming your plugin,
-look at the existing plugins and see where it might group well.
-
-\end{itemize}
+Core GATE plugins use the Maven group ID \verb!uk.ac.gate.plugins!.  If you are
+not part of the core GATE development team you should use your own group ID,
+typically based on the reversed form of a DNS domain name you control (e.g.
+\verb!com.example! if you owned example.com).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsect[sec:development:newpr]{Writing a New PR}
@@ -181,10 +197,10 @@ public class NewPlugin extends AbstractLanguageAnalyser {
    }
 
    /** Init-time parameter */
-   URL rulesURL;
+   private ResourceReference rulesURL;
 
    // getter and setter methods
-   public URL getRulesURL() {
+   public ResourceReference getRulesURL() {
       return rulesURL;
    }
 
@@ -194,28 +210,19 @@ public class NewPlugin extends AbstractLanguageAnalyser {
    @CreoleParameter(
        comment = "example of an inittime parameter",
        defaultValue = "resources/morph/default.rul")
-   public void setRulesURL(URL rulesURL) {
+   public void setRulesURL(ResourceReference rulesURL) {
       this.rulesURL = rulesURL;
    }
 }
 \end{lstlisting}
 
-\subsubsect{PR Creole Entry}
-
-The creole.xml file simply needs to tell GATE which JAR file to look in to find
-the PR.
-
-\begin{small}\begin{verbatim}
-
-<?xml version="1.0"?>
-<CREOLE-DIRECTORY>
-   <JAR SCAN="true">newplugin.jar</JAR> 
-</CREOLE-DIRECTORY>
-\end{verbatim}\end{small}
-
-Alternatively the configuration can be given in the XML file directly instead
-of using source annotations.  Section~\ref{sec:creole-model:config} gives the
-full details.
+Use \verb!ResourceReference! for things like configuration files.  The
+\verb!defaultValue! is a path relative to the plugin's
+\verb!src/main/resources! folder, but users can use normal URLs to refer to
+files outside the plugin's JAR.  Resource files like this should be put into a
+\verb!resources! folder (i.e. \verb!src/main/resources/resources!) as GATE
+Developer has special support for copying the \verb!resources! folder out of a
+plugin to give the user an editable copy of the resource files.
 
 \subsubsect{Context Menu}
 
@@ -435,7 +442,7 @@ In essence such a subclass simply references a saved application and provides
 details that can be used to create a menu item to load the application.
 
 The following example shows how the example application in the
-{\tt Tagger\_Measurement} plugin is added to the menus in GATE Developer.
+{\tt tagger-measurements} plugin is added to the menus in GATE Developer.
 
 \begin{lstlisting}
 @CreoleResource(name = "ANNIE+Measurements",
@@ -460,80 +467,79 @@ for this application.
 \subsect[sec:development:disributingplugins]{Distributing Your New Plugins}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+Since GATE 8.5 plugins are distributed via the normal Maven repository
+mechanism.  Release versions of most core plugins are in the Central
+Repository and snapshot versions are released via our own Maven repository at
+\htlinkplain{http://repo.gate.ac.uk/content/groups/public}, along with releases
+of a few plugins whose dependencies are not in Central.
+
+There are several routes by which you can release your own plugins into the
+Central Repository, the simplest is to use the Sonatype
+\htlink{http://central.sonatype.org}{OSSRH} system (which is how we release
+\verb!gate-core! and the standard plugins).
+
+For snapshots you can host your own Maven repository, or use the OSSRH snapshot
+repository.  In order to use plugins from a repository other than Central or
+the GATE team repository mentioned above, you must tell Maven where to find it
+by creating a file called \verb!settings.xml! in the \verb!.m2! folder under
+your home directory -- GATE will respect any repositories you have configured
+in your Maven settings.
+\begin{lstlisting}[lang=XML]
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                      http://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+  <profiles>
+    <profile>
+      <id>my-custom-repo</id>
+      <repositories>
+        <repository>
+            <id>my-repo</id>
+            <name>My Personal Repo</name>
+            <url>http://repo.example.com/</url>
+            <layout>default</layout>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>true</enabled></snapshots>
+          </repository>
+      </repositories>
+    </profile>
+  </profiles>
+
+  <activeProfiles>
+    <activeProfile>my-custom-repo</activeProfile>
+  </activeProfiles>
+</settings>
+\end{lstlisting}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsect[sec:development:nightlybuild]{Adding Plugins to the Nightly Build}
+\sect[sec:development:defaultplugins]{Adding your plugin to the default list}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Each new resource added as a plugin should contain its own subfolder under the
-\%GATEHOME\%/plugins folder with an associated creole.xml file. A plugin can
-have one or more resources declared in its creole.xml file and/or using
-source-level annotations as described in section~\ref{sec:creole-model:config}.
+The GATE plugin manager has a list of ``default'' plugins that are
+automatically listed in the manager whenever GATE Developer is started.  This
+list is itself maintained in another GitHub repository
+\htlinkplain{https://github.com/GateNLP/gate-metadata}, with a separate file
+for each version of GATE.  If you have developed and released a plugin that you
+believe is of wider interest to the GATE user community you can request that it
+be added to the default list.  This is done through the normal GitHub pull
+request mechanism -- fork the \verb!gate-metadata! repository and commit your
+change to all the versioned \verb!plugins-NNN.tsv! files for versions of GATE
+with which your plugin is compatible, then submit a pull request asking us to
+merge your change into the master list.
 
-If you add a new plugin and want it to be part of the build process, you
-should create a build.xml file with targets `build', `test',
-`distro.prepare', `javadoc' and `clean'.  The build target should build
-the JAR file, test should run any unit tests, distro.prepare should clean up
-any intermediate files (e.g. the classes/ directory) and leave just what's
-in Subversion, plus the compiled JAR file and javadocs.  The clean target
-should clean up everything, including the compiled JAR and any generated
-sources, etc.  You should also add your plugin to
-`plugins.to.build' in the top-level build.xml to include it in the
-build.  This is by design - not all the plugins have build files, and of
-the ones that do, not all are suitable for inclusion in the nightly
-build (viz. SUPPLE, Section \ref{sec:parsers:supple}).
-
-Note that if you are currently building gate by doing `ant jar', be aware
-that this does not build the plugins.  Running just `ant' or `ant all' will
-do so.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsect[sec:development:pluginrepository]{Hosting A Plugin Repository}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-If you don't wish to add your new plugin to the main GATE distribution then
-the easiest way to distribute it to other GATE users is by hosting a plugin
-repository.
-
-A plugin repository is a simple XML file that points to one or more CREOLE
-plugins which can be downloaded and installed via the GATE plugin manager
-(see Section \ref{sec:developer:installplugins}). The XML is structured
-as follows:
-
-\begin{small}\begin{verbatim}
-<?xml version="1.0"?>
-<UpdateSite>
-   <CreolePlugin url="http://example.url.com/plugins/sample1/" />
-   <CreolePlugin url="sample2/" downloadURL="http://example.url.com/sample2.zip" />
-</UpdateSite>
-\end{verbatim}\end{small}
-
-Hopefully the structure of this file is fairly self explanatory. Each {\tt CreolePlugin}
-element must contain a {\tt url} attribute which points to a CREOLE directory, i.e. a
-directory which contains a creole.xml file as described in
-Section~\ref{sec:creole-model:config}: note that for plugins distributed via
-this method the {\tt ID} and {\tt VERSION} attributes of the {\tt CREOLE-DIRECTORY}
-element must be provided. The URL can be either absolute (as in the first
-example) or relative; relative URLs will be resolved against the location of the XML file.
-Each {\tt CreolePlugin} can also, optionally, contain a {\tt downloadURL} attribute. If present
-this should point to a zip file containing  a compiled copy of the plugin. If the {\tt downloadURL}
-is not present then we assume that it can be found as a file called creole.zip in the
-directory referenced by the {\tt url} attribute.
-
-Regardless of the location of the zip file containing the plugin, it should,
-at the top level, contain a single directory which in turn contains the full plugin
-including creole.xml etc.
+The same procedure applies when you release an updated version of your plugin
+-- update your forked copy of the TSV files and submit another pull request.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \sect[sec:development:userguide]{Updating this User Guide}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The GATE User Guide is maintained in the GATE subversion repository at
-SourceForge.  If you are a developer at Sheffield you do not need to check out
+The GATE User Guide is maintained on GitHub at
+\htlinkplain{https://github.com/GateNLP/userguide}.  If you are a developer at
+Sheffield you do not need to check out
 the userguide explicitly, as it will appear under the \texttt{tao} directory
-when you check out \texttt{sale}.  For others, you can check it out as follows:
-\\
-{\small\tt svn checkout https://svn.sourceforge.net/svnroot/gate/userguide/trunk userguide}
+when you check out \texttt{sale}.
 
 The user guide is written in \LaTeX\ and translated to PDF using
 \texttt{pdflatex} and to HTML using \texttt{tex4ht}.  The main file that ties
@@ -561,8 +567,8 @@ Mac OS X, or your choice of package for Unix.
 \item
 The BibTeX database \texttt{big.bib}.  It must be located in the directory
 \textbf{above} where you have checked out the userguide, i.e. if the guide
-sources are in \verb|/home/bob/svn/userguide| then \texttt{big.bib} needs to go
-in \verb|/home/bib/svn|.  Sheffield developers will find that it is already in
+sources are in \verb|/home/bob/github/userguide| then \texttt{big.bib} needs to go
+in \verb|/home/bib/github|.  Sheffield developers will find that it is already in
 the right place, under \texttt{sale}, others will need to download it from
 \htlinkplain{http://gate.ac.uk/sale/big.bib}.
 \item
@@ -588,7 +594,10 @@ To make changes to the guide simply edit the relevant \texttt{.tex} files, make
 sure the guide still builds (at least the PDF version), and check in your
 changes \textbf{to the source files only}.  Please do not check in your own
 built copy of the guide, the official user guide builds are produced by a
-Hudson continuous integration server in Sheffield.
+Jenkins continuous integration server in Sheffield.
+
+For non-Sheffield developers we welcome documentation patches through the
+normal GitHub pull request mechanism.
 
 If you add a section or subsection you should use the \verb|\sect| or
 \verb|\subsect| commands rather than the normal LaTeX \verb|\section| or
