@@ -1361,186 +1361,129 @@ To create a new resource you need to:
 \item
 write a Java class that implements GATE's beans model;
 \item
+annotate the class with the necessary CREOLE metadata;
+\item
 compile the class, and any others that it uses, into a Java Archive (JAR)
-file;
+file, including a creole.xml file to identify the JAR as a plugin;
 \item
-write some XML configuration data for the new resource;
-\item
-tell GATE the URL of the new JAR and XML files.
+tell GATE how to find the JAR.
 \end{itemize}
 %
-GATE Developer helps you with this process by creating a
-set of directories and files that implement a basic resource, including a
-Java code file and a Makefile. This process is called `bootstrapping'.
+The recommended way to build GATE plugins from version 8.5 onwards is to use
+the Apache Maven build tool.  A JAR file requires certain specific contents in
+order to be a valid GATE plugin, and GATE provides tools to automate the
+creation of these as part of a Maven build.  For best results you should use
+Maven 3.5.2 or later.
 
-For example, let's create a new component called GoldFish, which will be a
-Processing Resource that looks for all instances of the word `fish' in a
-document and adds an annotation of type `GoldFish'.
+GATE provides a Maven \emph{archetype} to create the skeleton of a new plugin
+including an example \texttt{AbstractLanguageAnalyser} processing resource you
+can use as a starting point for your own code.
+To create a new plugin project from the archetype, run the following Maven
+command (which has been split over several lines for clarity, but should be run
+as a single command):
+\begin{verbatim}
+mvn archetype:generate -DarchetypeGroupId=uk.ac.gate \
+                       -DarchetypeArtifactId=gate-pr-archetype \
+                       -DarchetypeVersion=8.5
+\end{verbatim}
+Replace ``8.5'' with the version of \texttt{gate-core} that you wish to depend
+on.  You will be prompted for several values by Maven:
+\begin{description}
+\item[groupId] the group ID to use in the generated project POM. In Maven terms
+  a ``group'' is a set of related JARs maintained and released by the same
+  developer or group -- conventionally this is based on the same convention as
+  Java \texttt{package} names, using a reversed form of a DNS domain you own.
+  You can use any value you like here, except that you should \emph{not} use
+  a group ID starting \texttt{uk.ac.gate}, as that is reserved for core plugins
+  from the GATE team.
+\item[artifactId] the artifact ID for the generated project POM -- this will be
+  used as the directory name for the new project on disk and as the first part
+  of the name of the final JAR file.
+\item[version] the initial version number for your new plugin -- this should
+  always end with \verb!-SNAPSHOT! in capital letters, which is a Maven
+  convention denoting work-in-progress code where the same version number can
+  refer to different JAR files over time.  The Maven dependency mechanism
+  assumes that \emph{only} \verb!-SNAPSHOT! versions can ever change, and
+  JAR files for non-SNAPSHOT versions are immutable and can be cached forever.
+\item[package] the Java package name.  Often this is the same as the group ID
+  but this is not strictly required.
+\item[prClass] the class name of the PR class to generate -- this must be a
+  valid Java identifier.
+\item[prName] the name of the PR as it will appear to users in the GATE
+  Developer GUI (e.g. in the ``new processing resource'' popup menu).
+\end{description}
 
-First start GATE Developer (see Section \ref{sec:gettingstarted:install}). From
-the `Tools' \begin{figure}[!htb]
-\begin{center}
-\includegraphics[scale=0.7]{bootstrap1.png}
-\end{center}
-\caption{BootStrap Wizard Dialogue}
-\label{fig:bootstrap1}
-\end{figure}
-menu select `BootStrap Wizard', which will pop up the dialogue in figure
-\ref{fig:bootstrap1}. The meaning of the data entry fields:
-%
-\begin{itemize}
-%
-\item
-The `resource name' will be displayed when GATE Developer loads the
-resource, and will be the name of the directory the resource lives in.
-For our example: {\tt GoldFish}.
-%
-\item
-`Resource package' is the Java package that the class representing the resource
-will be created in.
-For our example: {\tt sheffield.creole.example}.
-%
-\item
-`Resource type' must be one of Language, Processing or Visual Resource. In this
-case we're going to process documents (and add annotations to them), so we
-select {\tt ProcessingResource}.
-%
-\item
-`Implementing class name' is the name of the Java class that represents the
-resource.
-For our example: {\tt GoldFish}.
-%
-\item
-The `interfaces implemented' field allows you to add other interfaces (e.g.
-\texttt{\htlink{http://gate.ac.uk/gate/doc/javadoc/gate/creole/ControllerAwarePR.html}{gate.creole.ControllerAwarePR}}\footnote{See
-Section~\ref{sec:creole-model:applications}.})
-that you would like your new resource to implement.
-In this case we just leave the default (which is to implement the {\tt
-gate.ProcessingResource} interface).
-%
-\item
-The last field selects the directory that you want the new resource created
-in. For our example: {\tt z:/tmp}.
-\end{itemize}
-%
-Now we need to compile the class and package it into a JAR file.
-%(There's no reason not to use your own favourite alternative, e.g.
-%\htlink{http://jakarta.apache.org/ant/}{ANT}.)
-%For the pre-requisites of the build process
-%that we use (based on Makefiles, and the GNU shell tools) see section
-%\ref{sec:howto:build}. When you have these pre-requisites available
-%do the following from a command prompt (working from the {\tt
-%GoldFish/build} directory that the bootstrapper created for you):
-%\\ {\tt
-%./configure \\
-%make depend \\
-%make \\
-%make jar \\
-%}
-The bootstrap wizard creates an \htlink{http://ant.apache.org}{Ant} build file
-that makes this very easy -- so long as you have Ant set up properly, you can 
-simply run \verb|ant jar|
+Alternatively you can specify any of these values as extra \verb!-D! options to
+\verb!archetype:generate!, e.g. \verb!-DprClass=GoldfishTagger!.
 
-This will compile the Java source code and package the resulting classes into
-{\tt GoldFish.jar}.  If you don't have your own copy of Ant, you can use the
-one bundled with GATE - suppose your GATE is installed at
-{\tt /opt/gate-5.0-snapshot}, then you can use
-{\tt /opt/gate-5.0-snapshot/bin/ant jar} to build.
+The archetype will create a new directory named after the \texttt{artifactId},
+containing a few files:
+\begin{description}
+\item[pom.xml] the Maven project descriptor controlling the build process
+\item[src/main/java/\emph{package}/\emph{prClass}.java] the PR Java class.
+\item[src/main/resources/creole.xml] the \emph{plugin descriptor} that
+  identifies this project as a GATE plugin.
+\item[src/main/resources/resources] a directory into which you should put any
+  resource files that your PR requires (e.g. configuration files, JAPE
+  grammars, etc.).  The doubled ``resources'' is deliberate --
+  \verb!src/main/resources! is the Maven conventional location for non-Java
+  files that should be packaged in the JAR, and GATE requires a folder called
+  \verb!resources! inside that.
+\item[src/test] some simple tests.
+\end{description}
 
-You can now load this resource into GATE; see
-Section~\ref{sec:developer:loadpr}.
+The generated Java class in \texttt{src/main/java} contains some basic CREOLE
+metadata and an example of how you can configure parameters, and some
+boilerplate initialization and execution code that you can modify to your
+requirements.
+
+There is an alternative archetype available called
+\texttt{gate-plugin-archetype}, which creates the Maven project structure, POM
+file and creole.xml but not the example Java class.  This is useful if you
+already have an existing CREOLE plugin from an earlier version of GATE that you
+want to convert to the Maven style.  The process is exactly the same as
+described above, use the same \texttt{mvn archetype:generate} call as before
+but with \verb!-DarchetypeArtifactId=gate-plugin-archetype!.
+
+\subsection*{Dependencies}
+
+If you need to use other Java libraries in your PR code you should declare them
+in the \verb!<dependencies>! block of the \texttt{pom.xml}.  You can use
+\htlinkplain{https://search.maven.org} to find the appropriate XML snippet for
+each dependency.
+
+If your plugin requires another GATE plugin to operate (for
+example if it needs to internally create a JAPE transducer PR) then you
+should declare a dependency on the relevant plugin in
+\texttt{src/main/resources/creole.xml} and GATE will ensure that the other
+plugin is always loaded before this one, and that this plugin is unloaded
+whenever the other one is unloaded.
+
+If your plugin has a \emph{compile-time} dependency on another plugin then you
+will also need to declare this in \texttt{pom.xml} as well as in
+\texttt{creole.xml} -- the pom dependency should use ``provided'' scope:
+\begin{verbatim}
+<dependency>
+  <groupId>uk.ac.gate.plugins</groupId>
+  <artifactId>annie</artifactId>
+  <version>8.5</version>
+  <scope>provided</scope>
+</dependency>
+\end{verbatim}
 %
-%\begin{itemize}
-%\item
-%section \ref{sec:api:instant} for how to instantiate the resource from GATE
-%Embedded;
-%\item
-%section \ref{sec:developer:load} for how to load the resource into GATE
-%Developer;
-%\item
-%section \ref{sec:howto:creoleconfig} for how to configure and further
-%develop your resource (which will, by default, do nothing!).
-%\end{itemize}
-%
-The default Java code that was created for our GoldFish resource looks like
-this:
-%
-\nsmall
+Note that such dependencies are very rarely required, typically only if you
+need to write a PR class in one plugin that \texttt{extends} (in the Java
+sense) a PR defined in another plugin.  If you simply need to \emph{run}
+another plugin's PR as part of yours then the \texttt{creole.xml} dependency is
+sufficient as you would create and use the PR via the \texttt{Factory} in the
+normal way.
 \begin{lstlisting}
-/*
- *  GoldFish.java
- *
- *  You should probably put a copyright notice here. Why not use the
- *  GNU licence? (See http://www.gnu.org/.)
- *
- *  hamish, 26/9/2001
- *
- *  $Id: howto.tex,v 1.130 2006/10/23 12:56:37 ian Exp $
- */
-
-package sheffield.creole.example;
-
-import java.util.*;
-import gate.*;
-import gate.creole.*;
-import gate.util.*;
-
-/**
- * This class is the implementation of the resource GOLDFISH.
- */
-@CreoleResource(name = "GoldFish",
-        comment = "Add a descriptive comment about this resource")
-public class GoldFish extends AbstractProcessingResource
-  implements ProcessingResource {
-
-
-} // class GoldFish
+// here we assume \texttt{grammarLocation} is declared as a \texttt{@CreoleParameter}
+// of this PR and is of type \texttt{ResourceReference}
+FeatureMap params = Utils.featureMap("grammarUrl", grammarLocation);
+LanguageAnalyser jape = Factory.createResource(
+      "gate.creole.Transducer", params);
 \end{lstlisting}
-\nnormalsize
-%
-The default XML configuration for GoldFish looks like this:
-%
-\nsmall
-\begin{small}\begin{verbatim}
-<!-- creole.xml GoldFish -->
-<!--  hamish, 26/9/2001 -->
-<!-- $Id: howto.tex,v 1.130 2006/10/23 12:56:37 ian Exp $ -->
-
-<CREOLE-DIRECTORY>
-  <JAR SCAN="true">GoldFish.jar</JAR>
-</CREOLE-DIRECTORY>
-\end{verbatim}\end{small}
-\nnormalsize
-%
-The directory structure containing these files
-%
-\begin{figure}[!htb]
-\begin{center}
-\includegraphics[scale=0.7]{bootstrap2.png}
-\end{center}
-\caption{BootStrap directory tree}
-\label{fig:bootstrap2}
-\end{figure}
-%
-is shown in figure \ref{fig:bootstrap2}. {\tt GoldFish.java} lives in the
-{\tt src/sheffield/creole/example} directory.
-%{\tt creole.xml} is generated
-%in the {\tt build} directory from a source file called {\tt resource.xml}
-%which lives in the {\tt src} directory.
-{\tt creole.xml} and {\tt build.xml} are in the top {\tt GoldFish} directory.
-The {\tt lib} directory is for libraries;
-the {\tt classes} directory is where Java class files are placed;
-the {\tt doc} directory is for documentation.  These last two, plus
-{\tt GoldFish.jar} are created by Ant.
-
-This process has the advantage that it creates a complete source tree and
-build structure for the
-component, and the disadvantage that it creates a complete source tree and
-build structure for the component. If you already have a source tree, you
-will need to chop out the bits you need from the new tree (in this case {\tt
-GoldFish.java} and {\tt creole.xml}) and copy it into your existing one.
-
-See the example code at \htlinkplain{http://gate.ac.uk/wiki/code-repository/}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \sect[sec:api:format]{Adding Support for a New Document Format}
