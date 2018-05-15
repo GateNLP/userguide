@@ -1481,7 +1481,7 @@ normal way.
 // here we assume \texttt{grammarLocation} is declared as a \texttt{@CreoleParameter}
 // of this PR and is of type \texttt{ResourceReference}
 FeatureMap params = Utils.featureMap("grammarUrl", grammarLocation);
-LanguageAnalyser jape = Factory.createResource(
+LanguageAnalyser jape = (LanguageAnalyser)Factory.createResource(
       "gate.creole.Transducer", params);
 \end{lstlisting}
 
