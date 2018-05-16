@@ -1977,137 +1977,6 @@ The main Spring framework API documentation is the best place to look for more
 detail on the pooling facilities provided by Spring AOP.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\sect[sec:api:tomcat]{Using GATE Embedded within a Tomcat Web Application}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-Embedding GATE in a Tomcat web application involves several steps.
-\begin{enumerate}
-\item
-Put the necessary JAR files (gate.jar and all or most of the jars in
-{\tt gate/lib}) in your {\tt webapp/WEB-INF/lib}.
-\item
-Put the plugins that your application depends on in a suitable location (e.g.
-{\tt webapp/WEB-INF/plugins}).
-\item
-Create suitable gate.xml configuration files for your environment.
-\item
-Set the appropriate paths in your application before calling {\tt Gate.init()}.
-\end{enumerate}
-
-This process is detailed in the following sections.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsect{Recommended Directory Structure}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-You will need to create a number of other files in your web application to
-allow GATE to work:
-\begin{itemize}
-\item
-Site and user gate.xml config files - we highly recommend defining these
-specifically for the web application, rather than relying on the default files
-on your application server.
-\item
-The plugins your application requires.
-\end{itemize}
-
-In this guide, we assume the following layout:
-\begin{small}
-\begin{verbatim}
-webapp/
-  WEB-INF/
-    gate.xml
-    user-gate.xml
-    plugins/
-      ANNIE/
-      etc.
-\end{verbatim}
-\end{small}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsect{Configuration Files}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-Your {\tt gate.xml} (the `site-wide configuration file') should be as simple
-as possible:
-\begin{small}
-\begin{verbatim}
-<?xml version="1.0" encoding="UTF-8" ?>
-<GATE>
-  <GATECONFIG Save_options_on_exit="false"
-              Save_session_on_exit="false" />
-</GATE>
-\end{verbatim}
-\end{small}
-
-Similarly, keep the {\tt user-gate.xml} (the `user config file') simple:
-\begin{small}
-\begin{verbatim}
-<?xml version="1.0" encoding="UTF-8" ?>
-<GATE>
-  <GATECONFIG Known_plugin_path=";"
-              Load_plugin_path=";" />
-</GATE>
-\end{verbatim}
-\end{small}
-
-This way, you can control exactly which plugins are loaded in your webapp code.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsect{Initialization Code}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-Given the directory structure shown above, you can initialize GATE in your web
-application like this:
-\begin{lstlisting}
-// imports
-...
-public class MyServlet extends HttpServlet {
-  private static boolean gateInited = false;
-
-  public void init() throws ServletException {
-    if(!gateInited) {
-      try {
-        ServletContext ctx = getServletContext();
-
-        // use /path/to/your/webapp/WEB-INF as gate.home
-        File gateHome = new File(ctx.getRealPath("/WEB-INF"));
-        
-        Gate.setGateHome(gateHome);
-        // thus webapp/WEB-INF/plugins is the plugins directory, and
-        // webapp/WEB-INF/gate.xml is the site config file.
-
-        // Use webapp/WEB-INF/user-gate.xml as the user config file,
-        //  to avoid confusion with your own user config.
-        Gate.setUserConfigFile(new File(gateHome, "user-gate.xml"));
-
-        Gate.init();
-        // load plugins, for example...
-        Gate.getCreoleRegister().registerDirectories(
-          ctx.getResource("/WEB-INF/plugins/ANNIE"));
-
-        gateInited = true;
-      }
-      catch(Exception ex) {
-        throw new ServletException("Exception initialising GATE",
-                                   ex);
-      }
-    }
-  }
-}
-\end{lstlisting}
-
-Once initialized, you can create GATE resources using the Factory in
-the usual way (for example, see Section~\ref{sec:api:embed} for an
-example of how to create an ANNIE application).  You should also read
-Section~\ref{sec:api:multithread} for important notes on using GATE
-Embedded in a multithreaded application.
-
-Instead of an initialization servlet you could also consider doing your
-initialization in a \texttt{ServletContextListener}, or using Spring (see
-Section~\ref{sec:api:spring}).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \sect[sec:api:groovy]{Groovy for GATE}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -2788,9 +2657,8 @@ the Resource Helper in the Fast Infoset plugin (see Section
 \begin{lstlisting}
 // initialise GATE and load the plugin (which creates an autoinstance of the Resource Helper)
 Gate.init();
-Gate.getCreoleRegister().registerDirectories(
-  (new File(Gate.getGateHome(), "plugins/Format_FastInfoset")).toURI()
-    .toURL());
+Gate.getCreoleRegister().registerPlugin(new Plugin.Maven(
+      "uk.ac.gate.plugins", "format-fastinfoset", "8.5"));
 
 // get the autoinstance of the Resource Helper
 ResourceHelper rh =
