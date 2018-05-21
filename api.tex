@@ -2748,3 +2748,8 @@ and so do not need to be transfered over from the old plugin but should be detai
 the Maven \verb!pom.xml! file. See Section \ref{sec:api:bootstrap} for full details
 on developing a Maven based plugin, all of which applies to upgrading a plugin once
 the source and resources have been copied into the correct directory structure.
+
+One other recommendation when converting a plugin is to switch from using \verb!URL!
+as a parameter type to using \verb!ResourceReference! as these allow users to easily
+access resources inside plugins. See Section \ref{sec:development:newpr} for details
+on how to use \verb!ResourceReference! values within your plugins.
