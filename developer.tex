@@ -1406,7 +1406,23 @@ Figure \ref{fig:upgrade-tool}.
 \label{fig:upgrade-tool}
 \end{figure}
 
+One the application has been analysed the tool will show you a table in which each row signifies a plugin used by the app. In the left most
+column it lists the plugin currently referenced by the application. This is followed by details of the new plugin. While in most cases
+the tool can correctly determine the right plugin to offer in this column you can correct any mistakes by double-clicking the incorrect
+plugin and then specifying the correct plugin location. The final two columns determine if the plugin is upgraded and to which version.
+The versions offered are all those which are available and known to be compatible with the version of GATE you are running. By default the
+latest available version will be selected, although -SNAPSHOT versions are only selected by default if you are also running a -SNAPSHOT version
+of GATE.
 
+The `Upgrade' column allows you to determine if and how a plugin will be upgraded. The three possible choices are Upgrade, Plugin Only, and Skip.
+Skip is fairly self explanatory but upgrade and plugin only require a little more explanation. Upgrade means that not only will the plugin location
+be upgraded, but also any resources that reside within the plugin will also be changed to reference those within the new plugin. This is the only
+upgrade option when considering a plugin which was originally part of the GATE distribution. The plugin only option allows you to change the application
+to load a new version of the plugin which leaving the resource locations untouched. This is useful for cases where you have edited the resources inside a
+plugin rather than having created a separate copy specific to the application.
+
+The two buttons at the top of the dialog allow you save and restore the mappings defined in the table. This makes it easier to upgrade a set of
+related applications which should all be upgraded in a similar fashion.
 
 After upgrade, the old version of the application file will still be available but will have been renamed by adding the '.bak' suffix.
 
