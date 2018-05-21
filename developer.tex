@@ -1380,42 +1380,38 @@ If you require more flexibility than this option provides you should read
 Section~\ref{sec:ant:packagegapp}, which describes the underlying Ant task that
 the exporter uses.
 
-\subsect[sec:developer:convertxgapp]{Load Application Saved from Previous Version}
+\subsect[sec:developer:convertxgapp]{Upgrade An Application to use Newer Versions of Plugins}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Gate 8.5 dose not comparale to load old version of xgapp file. If you have error message
-like Figure \ref{fig:oldxgapp}, then you are loading application created from old version(pre-8.5) of Gate
-
-In order to load to Gate 8.5, you need first to upgrade the application compatible to new version. To do this first load 
-'tools' from plugin manger. Then from tool bar select `Tools' --> `Upgrade Xgapp', and select the application file you wish to upgrade.
-
-After upgrade, the old version will renamed with suffix  '.bak'
-
+Some of the changes introduced in GATE 8.5 mean that applications saved with a previous version of GATE might not
+load without being updated. Loading such an application is likely to result in errors similar to those seen in Figure \ref{fig:oldxgapp}.
 
 \begin{figure}[htb]
 \begin{center}
-\includegraphics[scale=0.5]{old-xgapp-error.png}
+\includegraphics[width=\textwidth]{old-xgapp-error.png}
 \end{center}
 \caption{Old xgapp version Loading Error}
 \label{fig:oldxgapp}
 \end{figure}
 
-\begin{figure}[htb]
-\begin{center}
-\includegraphics[scale=0.5]{plugin-manager-tools.png}
-\end{center}
-\caption{Old xgapp version Loading Error}
-\label{fig:pr-init-params}
-\end{figure}
-
+In order to load such application into GATE 8.5 (or above), you need first upgrade them to use compatible versions of the relevant plugins.
+In most cases this process can be automated and we provide a tool to walk you through the process. To start upgrading an application select
+`Upgrade XGapp' from the `Tools' menu. This will first ask you to choose an application file to upgrade and will then present the UI shown in
+Figure \ref{fig:upgrade-tool}.
 
 \begin{figure}[htb]
 \begin{center}
-\includegraphics[scale=0.5]{upgradexgapp.png}
+\includegraphics[width=\textwidth]{upgrade-tool.png}
 \end{center}
-\caption{Choose upgrade xgapp}
-\label{fig:pr-init-params}
+\caption{XGapp Upgrade Tool}
+\label{fig:upgrade-tool}
 \end{figure}
 
+
+
+After upgrade, the old version of the application file will still be available but will have been renamed by adding the '.bak' suffix.
+
+Note that this process is not limited simply to upgrading applications saved prior to GATE 8.5 but can be used at any time to upgrade
+the version of a plugin used by an application.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \sect[sec:developer:keyboard]{Keyboard Shortcuts}
