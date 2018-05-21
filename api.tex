@@ -2685,3 +2685,66 @@ takes a Resource as it's first parameter.
 The only downside to this approach is that there is no compile time checking
 that the method you are trying to call actually exists or that the parameters
 are of the correct type so testing is important.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:api:updateplugins]{Converting a Directory Plugin to a Maven Plugin}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Prior to GATE version 8.5 plugins were distributed as direcories containing
+a \verb!creole.xml! at their root. This approach was fragile (required relative
+paths for dependencies etc.) and did not properly support versioning making it
+difficult to gurantee reproducability. From GATE version 8.5 onwards the recommended
+way to both build and distribute plugins is via the Apache Maven build tool.
+In this approach a plugin is represented by a JAR file containing the compiled code,
+default resources, and CREOLE metadata.  For best results you should use
+Maven 3.5.2 or later.
+
+As discussed in Section \ref{sec:api:bootstrap} GATE provides a Maven \emp{archetype}
+to create the skeleton of a new plugin. That example contains a sample processing
+resource. We also provide an archetype which produces an empty plugin and which
+can easy the process of converting a directory plugin to a new Maven style plugin.
+To use this archetype run the following Maven
+command (which has been split over several lines for clarity, but should be run
+as a single command):
+\begin{verbatim}
+mvn archetype:generate -DarchetypeGroupId=uk.ac.gate \
+                       -DarchetypeArtifactId=gate-plugin-archetype \
+                       -DarchetypeVersion=8.5
+\end{verbatim}
+Replace ``8.5'' with the version of \texttt{gate-core} that you wish to depend
+on.  You will be prompted for several values by Maven:
+\begin{description}
+\item[groupId] the group ID to use in the generated project POM. In Maven terms
+  a ``group'' is a set of related JARs maintained and released by the same
+  developer or group -- conventionally this is based on the same convention as
+  Java \texttt{package} names, using a reversed form of a DNS domain you own.
+  You can use any value you like here, except that you should \emph{not} use
+  a group ID starting \texttt{uk.ac.gate}, as that is reserved for core plugins
+  from the GATE team.
+\item[artifactId] the artifact ID for the generated project POM -- this will be
+  used as the directory name for the new project on disk and as the first part
+  of the name of the final JAR file.
+\item[version] the initial version number for your new plugin -- this should
+  always end with \verb!-SNAPSHOT! in capital letters, which is a Maven
+  convention denoting work-in-progress code where the same version number can
+  refer to different JAR files over time.  The Maven dependency mechanism
+  assumes that \emph{only} \verb!-SNAPSHOT! versions can ever change, and
+  JAR files for non-SNAPSHOT versions are immutable and can be cached forever.
+\end{description}
+
+Once the directory structure has been corrected existing code and resources can
+be copied in from your old directory based plugin as follows:
+
+\begin{description}
+\item[Source Code] should be copied into \verb!src/main/java! or \vebr!src/test/java!
+  as appropriate
+\item[Resources] should be copied into \verb!src/main/resources/resources!. Note that 
+  the repeated directory name is deliberate to ensure that any resources end up in a
+  folder called \verb!resources! at the root of the plugin JAR file.
+\end{description}
+
+Code libraries (usually found in \verb!lib! in directory plugins) are now handled via Maven
+and so do not need to be transfered over from the old plugin but should be detailed in
+the Maven \verb!pom.xml! file. See Section \ref{sec:api:bootstrap} for full details
+on developing a Maven based plugin, all of which applies to upgrading a plugin once
+the source and resources have been copied into the correct directory structure.
