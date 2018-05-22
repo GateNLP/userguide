@@ -408,6 +408,50 @@ changed by setting the removeElements parameter to false so that all recognised
 chemical elements are annotated.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:misc-creole:textrazor]{TextRazor Annotation Service}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+TextRazor (\htlinkplain{http://www.textrazor.com}) is an online service
+offering entity and relation annotation, keyphrase extraction, and other
+similar services via an HTTP API.  The \verb!Tagger_TextRazor! plugin provides
+a PR to access the TextRazor entity annotation API and store the results as
+GATE annotations.
+
+The TextRazor Service PR is a simple wrapper around the TextRazor API which
+sends the text content of a GATE document to TextRazor and creates one
+annotation for each ``entity'' that the API returns.  The PR invokes the
+``words'' and ``entities'' \emph{extractors} of the TextRazor API.  The PR has
+one initialization parameter:
+\begin{description}
+\item[apiKey] your TextRazor API key -- to obtain one you must sign up for an
+  account at \htlinkplain{http://www.textrazor.com}.
+\end{description}
+
+and one (optional) runtime parameter:
+\begin{description}
+\item[outputASName] the annotation set in which the output annotations should
+  be created.  If unset, the default annotation set is used.
+\end{description}
+
+The PR creates annotations of type \verb!TREntity! with features
+\begin{description}
+\item[type] the entity type(s), as class names in the DBpedia ontology.  The
+  value of this feature is a \verb!List<String>!.
+\item[freebaseTypes] FreeBase types for the entity.  The value of this feature
+  is a \verb!List<String>!.
+\item[confidence] confidence score (\verb!java.lang.Double!).
+\item[ent\_id] canonical ``entity ID'' -- typically the title of the Wikipedia
+  page corresponding to the DBpedia instance.
+\item[link] URL of the entity's Wikipedia page.
+\end{description}
+
+Since the key features are lists rather than single values they may be awkward
+to process in downstream components, so a JAPE grammar is provided in the
+plugin (\verb!resources/jape/TextRazor-to-ANNIE.jape!) which can be run after
+the TextRazor PR to transform key types of TREntity into the corresponding
+ANNIE annotation types Person, Location and Organization.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \sect[sec:misc-creole:numbers]{Annotating Numbers}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
