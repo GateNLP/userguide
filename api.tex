@@ -1496,7 +1496,18 @@ an XML reader.
 {\bf Step 1}
 
 Create a new class called {\tt XmlDocumentFormat} that extends\\
-{\tt gate.corpora.TextualDocumentFormat}.
+{\tt gate.corpora.TextualDocumentFormat} and add appropriate CREOLE metadata.
+For example:
+
+\small
+\begin{lstlisting}
+@CreoleResource(name = "XML Document Format", isPrivate = true,
+    autoinstances = {@AutoInstance(hidden = true)})
+public class XmlDocumentFormat extends TextualDocumentFormat {
+
+}
+\end{lstlisting}
+\nnormalsize
 
 {\bf Step 2}
 
@@ -1530,20 +1541,6 @@ public Resource init() throws ResourceInstantiationException{
 
 More details about the information from those maps can be found in
 Section \ref{sec:corpora:detecting-reader}
-
- {\bf Step 3}
-
-Add the following creole definition in the creole.xml document.
-\small
-\begin{verbatim}
-    <RESOURCE>
-      <NAME>My XML Document Format</NAME>
-      <CLASS>mypackage.XmlDocumentFormat</CLASS>
-      <AUTOINSTANCE/>
-      <PRIVATE/>
-    </RESOURCE>
-\end{verbatim}
-\nnormalsize
 
 More information on the operation of GATE's document format analysers may be
 found in Section~\ref{sec:corpora:formats}.
