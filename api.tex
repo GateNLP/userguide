@@ -2679,8 +2679,8 @@ is on line 18 which uses the \lstinline!ResourceHandler.call(String, Resource, O
 method. This essentially allows you to call a named method of the Resource Helper
 (in the example ``export''), for a given Resource instance (here we are using a
 Document instance), supplying any necessary parameters. This allows you to
-access any public method (including static methods) of a Resource Helper that
-takes a Resource as it's first parameter.
+access any public instance method of a Resource Helper that takes a Resource as
+it's first parameter.
 
 The only downside to this approach is that there is no compile time checking
 that the method you are trying to call actually exists or that the parameters
