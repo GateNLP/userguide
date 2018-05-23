@@ -1,3 +1,7 @@
+## Generated files specific to this project
+shortc.tex
+tao.pdf
+
 ## Core latex/pdflatex auxiliary files:
 *.aux
 *.lof
@@ -218,3 +222,13 @@ TSWLatexianTemp*
 
 # expex forward references with \gathertags
 *-tags.tex
+
+# Tex4HT
+*.4ct
+*.4tc
+*.css
+*.html
+*.idv
+*.lg
+*.tmp
+*.xref
