@@ -12,30 +12,29 @@ editing ontologies and using ontologies for document annotation.
 
 Ontologies in GATE are classified as language resources. In order to create 
 an ontology language resource, the user must first  
-\emph{load
-one of the two plugins containing an ontology implementation}.
+\emph{load a plugin containing an ontology implementation}.
 
 The following implementations and ontology related tools are provided 
 as plugins:
 \begin{itemize}
- \item Plugin \texttt{Ontology\_OWLIM2} provides an implementation that is fully
-backwards-compatible with the implementation that was part of GATE 
-prior to version 5.1 (see Section~\ref{sec:ontologies:pluginowlim2compat}). 
-\item Plugin \texttt{Ontology} provides a modified and current implementation
-(see Section~\ref{sec:ontologies:pluginontology}).
+% \item Plugin \texttt{Ontology\_OWLIM2} provides an implementation that is fully
+%backwards-compatible with the implementation that was part of GATE 
+%prior to version 5.1 (see Section~\ref{sec:ontologies:pluginowlim2compat}). 
+\item Plugin \texttt{Ontology} provides the standard implementation of the GATE
+ontology API (see Section~\ref{sec:ontologies:pluginontology}).
 Unless noted otherwise, all information in this \chapthing\ applies to this
 implementation.
-\item Plugin \texttt{Ontology\_Tools} provides a simple graphical ontology 
+\item The plugin \texttt{ontology-tools} provides a simple graphical ontology 
 editor (see Section~\ref{sec:ontologies:vr}) and OCAT, a tool for interactive ontology based
 document annotation (see Section~\ref{sec:ontologies:ocat}). It also provides a gazetteer
 processing resource, OntoGaz, that allows the mapping of linear 
 gazetteers to classes in an ontology (see Section~\ref{sec:gazetteers:ontogaz}).
-\item Plugin \texttt{Gazetteer\_Ontology\_Based} provides the `Onto Root
+\item Plugin \texttt{gazetteer-ontology-based} provides the `Onto Root
 Gazetteer' for the automatic creating of a gazetteer from an ontology 
 (see Section~\ref{sec:gazetteers:ontoRootGaz})
-\item Plugin \texttt{Ontology\_BDM\_Computation} can be used to compute BDM
+\item Plugin \texttt{ontology-bdm-computation} can be used to compute BDM
 scores (see Section~\ref{sec:eval:bdmplugin}).
-\item Plugin \texttt{Gazetteer\_LKB} provides a processing resource for
+\item Plugin \texttt{gazetteer-lkb} provides a processing resource for
 creating annotations based on the contents of a large ontology.
 \end{itemize}
 
@@ -447,17 +446,26 @@ deleted.
 %% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\sect[sec:ontologies:pluginontology]{The Ontology Plugin: Current Implementation}
+\sect[sec:ontologies:pluginontology]{The Ontology Plugin}
 
-The plugin \texttt{Ontology} contains the current ontology API implementation. This
-implementation provides the additions and enhancements introduced into the GATE
-ontology API as of release 5.1. It is based on a backend that uses Sesame version 2
-and OWLIM version 3. 
+The plugin \texttt{Ontology} contains the current ontology API implementation.
+It is based on a backend that uses Sesame version 2 and OWLIM version 3. 
 
-Before any ontology-based functionality can be used, the plugin must be loaded into
-GATE. To do this in the GATE Developer GUI, select the `Manage CREOLE Plugins' 
-option from the `File' menu and check the `Load now' checkbox for the `Ontology'
-plugin, then click OK. After this, the context menu for Language Resources will
+The Ontology plugin depends on libraries that are not available in the Central
+Maven Repository, so the plugin must be downloaded and installed separately.
+You can download released versions of the plugin from
+\htlink{https://github.com/GateNLP/gateplugin-Ontology/releases}{GitHub}, and
+snapshot versions from
+\htlink{https://jenkins.gate.ac.uk/job/gate-plugins/job/gateplugin-Ontology/job/master/}{our
+Jenkins continuous integration server}.  Unpacking the downloaded zip file will
+create a new directory \texttt{gateplugin-Ontology-\emph{version}}, and that
+directory should be loaded as a CREOLE plugin -- open the plugin manager, click
+the ``+'' button at the top left, switch to the ``directory URL'' tab, and
+select the ontology plugin directory you just unpacked.  This will add the
+plugin to the known plugins list and you can then select ``load now'' and/or
+``load always'' as appropriate.
+
+Once the plugin is loaded, the context menu for Language Resources will
 include the following ontology language resources:
 \begin{itemize}
  \item \emph{OWLIMOntology}: this is the standard language resource to use in most situations.
@@ -481,23 +489,47 @@ include the following ontology language resources:
 Each of these language resources is explained in more detail in the following sections.
 
 To make the plugin available to your GATE Embedded application, load the plugin
-prior to creating one of the ontology language resources using the following 
-code:
+prior to creating one of the ontology language resources using code similar to
+the following:
 \begin{lstlisting}
 // Find the directory for the Ontology plugin
-File pluginHome = 
- new File(new File(Gate.getGateHome(), "plugins"), "Ontology");
+File ontologyPlugin = new File("/path/to/gateplugin-Ontology");
 // Load the plugin from that directory
-Gate.getCreoleRegister().registerDirectories(pluginHome.toURI().toURL());
+Gate.getCreoleRegister().registerPlugin(new Plugin.Directory(
+      ontologyPlugin.toURI().toURL()));
 \end{lstlisting}
+
+Alternatively, if you load a saved application state that was saved with the
+plugin loaded, then it will be re-loaded automatically as part of that process.
+
+\subsect[sec:ontologies:ontoplugin:upgrade]{Upgrading from previous versions of GATE}
+
+If you have a saved GATE application from GATE version 8.4.1 or earlier that
+uses the Ontology plugin that was built in to GATE at that time, you will need
+to upgrade your application to make it work with GATE 8.5 and later.
+
+With the Ontology plugin loaded, there will be an ``Ontologies'' sub-menu in
+the GATE Developer ``Tools'' menu, with an entry to ``Upgrade old saved
+application''.  Select this option and locate the existing xgapp file i the
+file chooser.  The upgrade backs up the old xgapp file with a ``.onto.bak''
+extension and replaces all references to the old ``built-in'' Ontology plugin
+with the version of the plugin you currently have loaded.
+
+\emph{Note} that this procedure is specific to the Ontology plugin and is in
+addition to the standard upgrade procedure detailed in
+section~\ref{sec:developer:convertxgapp} used for the other standard GATE
+plugins -- to fully upgrade an application that uses ontologies you must run
+both the standard upgrader \emph{and} the ontology plugin upgrader in sequence
+in order to obtain a final xgapp that will work with GATE 8.5.  You can run the
+two upgrades either way around on the same file, we suggest running the
+standard upgrader first (skipping the Ontology plugin) and then the ontology
+plugin upgrader second, which will leave your original pre-8.5 application
+backed up with a ``.bak'' extension.
 
 \subsect[sec:ontologies:ontoplugin:owlim]{The OWLIMOntology Language Resource}
 
 The \verb!OWLIMOntology! language resource is the main ontology language 
-resource provided by the plugin and provides a similar functionality
-to the \verb!OWLIMOntologyLR! language resource provided by the pre-5.1
-implementation and provided by the \verb!Ontology_OWLIM2! plugin from
-version 5.1 on. This language resource creates an in-memory store backed
+resource provided by the plugin and creates an in-memory store backed
 by files in a directory on the file system to hold the ontology
 data.
 
@@ -794,143 +826,143 @@ some basic operations from the command line and for basic testing. The functions
 it supports and its command line options may change in future versions.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\sect[sec:ontologies:pluginowlim2compat]
- {The Ontology\_OWLIM2 plugin: backwards-compatible implementation}
-
-
-\subsect[sec:ontologies:lr]{The OWLIMOntologyLR Language Resource}
-
-This implementation is identical to the implementation that was part of 
-GATE core before version 5.1. It is based on SwiftOWLIM version 2 and 
-Sesame version 1.
-
-In order to load an ontology in an OWLIM repository, the user has to provide certain
-configuration parameters.  These include the name of the repository, the URL of the
-ontology, the default name space, the format of the ontology (RDF/XML, N3, NTriples and
-Turtle), the URLs or absolute locations of the other ontologies to be imported,
-their respective name spaces and so on. Ontology files, based on their format,
-are parsed and persisted in the NTriples format.
-
-In order to utilize the power of OWLIM and the simplicity of GATE
-ontology API, GATE provides an implementation of the OWLIM
-Ontology. Its basic purpose is to hide all the complexities of OWLIM
-and Sesame and provide an easy to use API and interface to create,
-load, save and update ontologies. Based on certain parameters that
-the user provides when instantiating the ontology, a configuration
-file is dynamically generated to create a dummy repository in memory
-(unless persistence is specified).
-
-When creating a new ontology, one can use an existing file to pre-populate it
-with data. If no such file is provided, an empty ontology is created. A detailed
-description for all the parameters that are available for new ontologies
-follows:
-
-\begin{enumerate}
-\item \emph{defaultNameSpace} is the base URI to be used for all new items that
-are only mentioned using their local name.  This can safely be left empty, in
-which case, while adding new resources to the ontology, users are asked to
-provide name spaces for each new resource.
-\item As indicated earlier, OWLIM supports four different formats: RDF/XML,
-NTriples, Turtle and N3.  According to the format of the ontology file, user should
-select one of the four URL options \emph{(rdfXmlURL, ntriplesURL, turtleURL and
-n3URL (not supported yet))} and provide a URL pointing to the
-ontology data.
-\end{enumerate}
-
-Once an ontology is created, additional data can be loaded that will
-be merged with the existing information. This can be done by
-right-clicking on the ontology in the resources tree in GATE Developer
-and selecting `Load ... data' where `...' is one of the supported
-formats.
-
-Other options available are cleaning the ontology (deleting all the information from
-it) and saving it to a file in one of the supported formats.
- 
-%% This was originally part of the editor section but really belongs to the LR section
-
-Ontology can be saved in different formats (rdf/xml, ntriples, n3 and
-turtle) using the options provided in the context menu that can be
-invoked by right clicking on the instance of an ontology in GATE
-Developer. All the changes made to the ontology are logged and stored
-as an ontology feature. Users can also export these changes to a file
-by selecting the `Save Ontology Event Log' option from the context
-menu. Similarly, users can also load the exported event log and apply
-the changes on a different ontology by using the `Load Ontology Event
-Log' option. Any change made to the ontology can be described by a set
-of triples either added or deleted from the repository. For example,
-in GATE Embedded, addition of a new instance results into addition of
-two statements into the repository:
-
-%\begin{lstlisting}
-\begin{small}\begin{verbatim}
-
-// Adding a new instance "Rec1" of type "Recognized"
-// Here + indicates the addition
-+ <http://proton.semanticweb.org/2005/04/protons#Rec1> 
-	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> 
-	<http://proton.semanticweb.org/2005/04/protons#Recognized>
-
-// Adding a label (annotation property) to the instance with 
-// value "Rec Instance"
-+ <http://proton.semanticweb.org/2005/04/protons#Rec1> 
-	<http://www.w3.org/2000/01/rdf-schema#label> 
-	<Rec Instance> 
-	<http://www.w3.org/2001/XMLSchema#string>
-
-\end{verbatim}\end{small}
-%\end{lstlisting}
-
-
-The event log therefore contains a list of such triples, the latest change being at 
-the bottom of the change log. Each triple consists of a subject followed by a 
-predicate followed by an object.  Below we give an illustration explaining the 
-syntax used for recording the changes.
-
-%\begin{lstlisting}
-\begin{small}\begin{verbatim}
-
-// Adding a new instance "Rec1" of type "Recognized"
-// Here + indicates the addition
-+ <http://proton.semanticweb.org/2005/04/protons#Rec1> 
-	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> 
-	<http://proton.semanticweb.org/2005/04/protons#Recognized>
-
-// Adding a label (annotation property) to the instance with 
-// value "Rec Instance"
-+ <http://proton.semanticweb.org/2005/04/protons#Rec1> 
-	<http://www.w3.org/2000/01/rdf-schema#label> 
-	<Rec Instance> 
-	<http://www.w3.org/2001/XMLSchema#string>
-
-// Adding a new class called TrustSubClass
-+ <http://proton.semanticweb.org/2005/04/protons#TrustSubClass> 
-	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> 
-	<http://www.w3.org/2002/07/owl#Class>
-
-// TrustSubClass is a subClassOf the class Trusted
-+ <http://proton.semanticweb.org/2005/04/protons#TrustSubClass> 
-	<http://www.w3.org/2000/01/rdf-schema#subClassOf> 
-	<http://proton.semanticweb.org/2005/04/protons#Trusted>
-
-// Deleting a property called hasAlias and all relevant statements
-// Here - indicates the deletion
-// * indicates any value in place
-- <http://proton.semanticweb.org/2005/04/protons#hasAlias> <*> <*>
-- <*> <http://proton.semanticweb.org/2005/04/protons#hasAlias> <*>
-- <*> <*> <http://proton.semanticweb.org/2005/04/protons#hasAlias>
-
-// Deleting a label set on the instance Rec1
-- <http://proton.semanticweb.org/2005/04/protons#Rec1> 
-	<http://www.w3.org/2000/01/rdf-schema#label> 
-	<Rec Instance>
-	<http://www.w3.org/2001/XMLSchema#string>
-
-// Reseting the entire ontology (Deleting all statements)
-- <*> <*> <*>
-
-\end{verbatim}\end{small}
-%\end{lstlisting}
-
+%\sect[sec:ontologies:pluginowlim2compat]
+% {The Ontology\_OWLIM2 plugin: backwards-compatible implementation}
+%
+%
+%\subsect[sec:ontologies:lr]{The OWLIMOntologyLR Language Resource}
+%
+%This implementation is identical to the implementation that was part of 
+%GATE core before version 5.1. It is based on SwiftOWLIM version 2 and 
+%Sesame version 1.
+%
+%In order to load an ontology in an OWLIM repository, the user has to provide certain
+%configuration parameters.  These include the name of the repository, the URL of the
+%ontology, the default name space, the format of the ontology (RDF/XML, N3, NTriples and
+%Turtle), the URLs or absolute locations of the other ontologies to be imported,
+%their respective name spaces and so on. Ontology files, based on their format,
+%are parsed and persisted in the NTriples format.
+%
+%In order to utilize the power of OWLIM and the simplicity of GATE
+%ontology API, GATE provides an implementation of the OWLIM
+%Ontology. Its basic purpose is to hide all the complexities of OWLIM
+%and Sesame and provide an easy to use API and interface to create,
+%load, save and update ontologies. Based on certain parameters that
+%the user provides when instantiating the ontology, a configuration
+%file is dynamically generated to create a dummy repository in memory
+%(unless persistence is specified).
+%
+%When creating a new ontology, one can use an existing file to pre-populate it
+%with data. If no such file is provided, an empty ontology is created. A detailed
+%description for all the parameters that are available for new ontologies
+%follows:
+%
+%\begin{enumerate}
+%\item \emph{defaultNameSpace} is the base URI to be used for all new items that
+%are only mentioned using their local name.  This can safely be left empty, in
+%which case, while adding new resources to the ontology, users are asked to
+%provide name spaces for each new resource.
+%\item As indicated earlier, OWLIM supports four different formats: RDF/XML,
+%NTriples, Turtle and N3.  According to the format of the ontology file, user should
+%select one of the four URL options \emph{(rdfXmlURL, ntriplesURL, turtleURL and
+%n3URL (not supported yet))} and provide a URL pointing to the
+%ontology data.
+%\end{enumerate}
+%
+%Once an ontology is created, additional data can be loaded that will
+%be merged with the existing information. This can be done by
+%right-clicking on the ontology in the resources tree in GATE Developer
+%and selecting `Load ... data' where `...' is one of the supported
+%formats.
+%
+%Other options available are cleaning the ontology (deleting all the information from
+%it) and saving it to a file in one of the supported formats.
+% 
+%%% This was originally part of the editor section but really belongs to the LR section
+%
+%Ontology can be saved in different formats (rdf/xml, ntriples, n3 and
+%turtle) using the options provided in the context menu that can be
+%invoked by right clicking on the instance of an ontology in GATE
+%Developer. All the changes made to the ontology are logged and stored
+%as an ontology feature. Users can also export these changes to a file
+%by selecting the `Save Ontology Event Log' option from the context
+%menu. Similarly, users can also load the exported event log and apply
+%the changes on a different ontology by using the `Load Ontology Event
+%Log' option. Any change made to the ontology can be described by a set
+%of triples either added or deleted from the repository. For example,
+%in GATE Embedded, addition of a new instance results into addition of
+%two statements into the repository:
+%
+%%\begin{lstlisting}
+%\begin{small}\begin{verbatim}
+%
+%// Adding a new instance "Rec1" of type "Recognized"
+%// Here + indicates the addition
+%+ <http://proton.semanticweb.org/2005/04/protons#Rec1> 
+%	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> 
+%	<http://proton.semanticweb.org/2005/04/protons#Recognized>
+%
+%// Adding a label (annotation property) to the instance with 
+%// value "Rec Instance"
+%+ <http://proton.semanticweb.org/2005/04/protons#Rec1> 
+%	<http://www.w3.org/2000/01/rdf-schema#label> 
+%	<Rec Instance> 
+%	<http://www.w3.org/2001/XMLSchema#string>
+%
+%\end{verbatim}\end{small}
+%%\end{lstlisting}
+%
+%
+%The event log therefore contains a list of such triples, the latest change being at 
+%the bottom of the change log. Each triple consists of a subject followed by a 
+%predicate followed by an object.  Below we give an illustration explaining the 
+%syntax used for recording the changes.
+%
+%%\begin{lstlisting}
+%\begin{small}\begin{verbatim}
+%
+%// Adding a new instance "Rec1" of type "Recognized"
+%// Here + indicates the addition
+%+ <http://proton.semanticweb.org/2005/04/protons#Rec1> 
+%	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> 
+%	<http://proton.semanticweb.org/2005/04/protons#Recognized>
+%
+%// Adding a label (annotation property) to the instance with 
+%// value "Rec Instance"
+%+ <http://proton.semanticweb.org/2005/04/protons#Rec1> 
+%	<http://www.w3.org/2000/01/rdf-schema#label> 
+%	<Rec Instance> 
+%	<http://www.w3.org/2001/XMLSchema#string>
+%
+%// Adding a new class called TrustSubClass
+%+ <http://proton.semanticweb.org/2005/04/protons#TrustSubClass> 
+%	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> 
+%	<http://www.w3.org/2002/07/owl#Class>
+%
+%// TrustSubClass is a subClassOf the class Trusted
+%+ <http://proton.semanticweb.org/2005/04/protons#TrustSubClass> 
+%	<http://www.w3.org/2000/01/rdf-schema#subClassOf> 
+%	<http://proton.semanticweb.org/2005/04/protons#Trusted>
+%
+%// Deleting a property called hasAlias and all relevant statements
+%// Here - indicates the deletion
+%// * indicates any value in place
+%- <http://proton.semanticweb.org/2005/04/protons#hasAlias> <*> <*>
+%- <*> <http://proton.semanticweb.org/2005/04/protons#hasAlias> <*>
+%- <*> <*> <http://proton.semanticweb.org/2005/04/protons#hasAlias>
+%
+%// Deleting a label set on the instance Rec1
+%- <http://proton.semanticweb.org/2005/04/protons#Rec1> 
+%	<http://www.w3.org/2000/01/rdf-schema#label> 
+%	<Rec Instance>
+%	<http://www.w3.org/2001/XMLSchema#string>
+%
+%// Reseting the entire ontology (Deleting all statements)
+%- <*> <*> <*>
+%
+%\end{verbatim}\end{small}
+%%\end{lstlisting}
+%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \sect[sec:ontologies:vr]{GATE Ontology Editor}
 
@@ -941,12 +973,14 @@ information relating to any of the objects defined in it---classes and
 restrictions, instances and their properties. Also, resources can be
 deleted and new resources can be added through the viewer.
 
-Before the ontology editor can be used, one of the ontology
-implementation plugins must be loaded. In addition the 
-\verb!Ontology_Tools! must be loaded.
+The ontology viewer is part of the ``Ontology Tools'' plugin, which is visible
+by default in the GATE plugin manager, however you will also need to load the
+ontology implementation plugin (see
+section~\ref{sec:ontologies:pluginontology}) in order to be able to load the
+ontology LRs you want to view.
 
 \texttt{Note:} To make it possible to show a loaded ontology in the ontology
-editor, the \verb!Ontology_Tools! plugin must be loaded
+editor, the Ontology Tools plugin must be loaded
 \emph{before} the ontology language resource is created.
 
 
@@ -1424,19 +1458,16 @@ to the ontology and to add new annotation relation as object property.
 \sect[ontology:use-api-current]{Using the ontology API}
 
 The following code demonstrates how to use the GATE API to create an instance of
-the OWLIM Ontology language resource. This example shows how to use the current
-version of the API and ontology implementation. 
-
-For an example of using the
-old API and the backwards compatibility plugin, see~\ref{ontology:use-api-owlim2}.
+the OWLIM Ontology language resource.
 
 \begin{lstlisting}
 // step 1: initialize GATE
 if(!Gate.isInitialized()) { Gate.init(); }
 
 // step 2: load the Ontology plugin that contains the implementation
-File ontoHome = new File(Gate.getPluginsHome(),"Ontology");
-Gate.getCreoleRegister().addDirectory(ontoHome.toURL());
+File ontoHome = new File("/path/to/gateplugin-Ontology");
+Gate.getCreoleRegister().registerPlugin(
+    new Plugin.Directory(ontoHome.toURI().toURL()));
 
 // step 3: set the parameters
 FeatureMap fm = Factory.newFeatureMap();
@@ -1456,7 +1487,7 @@ Set<OClass> topClasses = ontology.getOClasses(true);
 // for all top classes, printing their direct sub classes and print 
 // their URI or blank node ID in turtle format.
 for(OClass c : topClasses) {
-   Set<OClass> dcs = c.getSubClasses(OConstants.DIRECT_CLOSURE);
+   Set<OClass> dcs = c.getSubClasses(OConstants.Closure.DIRECT_CLOSURE);
    for(OClass sClass : dcs) {
 	System.out.println(sClass.getONodeID().toTurtle());
    }
@@ -1488,8 +1519,8 @@ OURI iURI = ontology.createOURI("http://sample.en/owlim#IBM");
 OInstance ibm = Ontology.addOInstance(iURI, organizationClass);
 
 // assigning a Datatype property, name to ibm
-ibm.addDatatypePropertyValue(dp, new Literal("IBM Corporation", 
-											 dp.getDataType());
+ibm.addDatatypePropertyValue(dp,
+    new Literal("IBM Corporation", dp.getDataType());
 
 // get all the set values of all Datatype properties on the instance ibm
 Set<DatatypeProperty> dps = Ontology.getDatatypeProperties();
@@ -1509,87 +1540,87 @@ writer.close();
 \end{lstlisting}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\sect[ontology:use-api-owlim2]{Using the ontology API (old version)}
-
-The following code demonstrates how to use the GATE API to create an instance of
-the OWLIM Ontology language resource. \emph{This example shows how to use the 
-API with the backwards-compatibility plugin \texttt{Ontology\_OWLIM2}}
-
-For how to use the API with the current implementation plugin, 
-see~\ref{ontology:use-api-current}.
-
-%\begin{small}\begin{verbatim}[language=Java]
-\begin{lstlisting}
-// step 1: initialize GATE
-Gate.init();
-
-// step 2: load the plugin
-File ontoHome = new File(Gate.getPluginsHome(),"Ontology_OWLIM2");
-Gate.getCreoleRegister().addDirectory(ontoHome.toURL());
-
-// step 3: set the parameters
-FeatureMap fm = Factory.newFeatureMap();
-fm.put("rdfXmlURL", url-of-the-ontology);
-
-// step 4: finally create an instance of ontology
-Ontology ontology = (Ontology) 
-Factory.createResource("gate.creole.ontology.owlim.OWLIMOntologyLR", fm);
-
-// retrieving a list of top classes
-Set<OClass> topClasses = ontology.getOClasses(true);
-
-// for all top classes, printing their direct sub classes
-Iterator<OClass> iter = topClasses.iterator();
-while(iter.hasNext()) {
-   Set<OClass> dcs = iter.next().getSubClasses(OConstants.DIRECT_CLOSURE);
-   for(OClass aClass : dcs) {
-        System.out.println(aClass.getURI().toString());
-   }
-}
-
-// creating a new class
-// false indicates that it is not an anonymous URI
-URI aURI = new URI("http://sample.en/owlim#Organization", false);
-OClass organizationClass = ontology.addOClass(aURI);
-
-// creating a new Datatype property called name
-// with domain set to Organization
-// with datatype set to string
-URI dURI = new URI("http://sample.en/owlim#Name", false);
-Set<OClass> domain = new HashSet<OClass>();
-domain.add(organizationClass);
-DatatypeProperty dp = ontology.addDatatypeProperty(dURI, domain, 
-                                        Datatype.getStringDataType());
-
-// creating a new instance of class organization called IBM
-URI iURI = new URI("http://sample.en/owlim#IBM", false);
-OInstance ibm = Ontology.addOInstance(iURI, organizationClass);
-
-// assigning a Datatype property, name to ibm
-ibm.addDatatypePropertyValue(dp, new Literal("IBM Corporation", 
-                                        dp.getDataType());
-
-// get all the set values of all Datatype properties on the instance ibm
-Set<DatatypeProperty> dps = Ontology.getDatatypeProperties();
-for(DatatypeProperty dp : dps) {
- List<Literal> values = ibm.getDatatypePropertyValues(dp);
- System.out.println("DP : "+dp.getURI().toString());
- for (Literal l : values) {
-   System.out.println("Value : "+l.getValue());
-   System.out.println("Datatype : " 
-                   + l.getDataType().getXmlSchemaURI().toString()); }
-}
-
-// export data to a file in the ntriples format
-BufferedWriter writer = new BufferedWriter(new FileWriter(someFile));
-String output = ontology.getOntologyData(
-                   OConstants.ONTOLOGY_FORMAT_NTRIPLES);
-writer.write(output);
-writer.flush();
-writer.close();
-\end{lstlisting}
-%\end{verbatim}\end{small}
-
+%\sect[ontology:use-api-owlim2]{Using the ontology API (old version)}
+%
+%The following code demonstrates how to use the GATE API to create an instance of
+%the OWLIM Ontology language resource. \emph{This example shows how to use the 
+%API with the backwards-compatibility plugin \texttt{Ontology\_OWLIM2}}
+%
+%For how to use the API with the current implementation plugin, 
+%see~\ref{ontology:use-api-current}.
+%
+%%\begin{small}\begin{verbatim}[language=Java]
+%\begin{lstlisting}
+%// step 1: initialize GATE
+%Gate.init();
+%
+%// step 2: load the plugin
+%File ontoHome = new File(Gate.getPluginsHome(),"Ontology_OWLIM2");
+%Gate.getCreoleRegister().addDirectory(ontoHome.toURL());
+%
+%// step 3: set the parameters
+%FeatureMap fm = Factory.newFeatureMap();
+%fm.put("rdfXmlURL", url-of-the-ontology);
+%
+%// step 4: finally create an instance of ontology
+%Ontology ontology = (Ontology) 
+%Factory.createResource("gate.creole.ontology.owlim.OWLIMOntologyLR", fm);
+%
+%// retrieving a list of top classes
+%Set<OClass> topClasses = ontology.getOClasses(true);
+%
+%// for all top classes, printing their direct sub classes
+%Iterator<OClass> iter = topClasses.iterator();
+%while(iter.hasNext()) {
+%   Set<OClass> dcs = iter.next().getSubClasses(OConstants.DIRECT_CLOSURE);
+%   for(OClass aClass : dcs) {
+%        System.out.println(aClass.getURI().toString());
+%   }
+%}
+%
+%// creating a new class
+%// false indicates that it is not an anonymous URI
+%URI aURI = new URI("http://sample.en/owlim#Organization", false);
+%OClass organizationClass = ontology.addOClass(aURI);
+%
+%// creating a new Datatype property called name
+%// with domain set to Organization
+%// with datatype set to string
+%URI dURI = new URI("http://sample.en/owlim#Name", false);
+%Set<OClass> domain = new HashSet<OClass>();
+%domain.add(organizationClass);
+%DatatypeProperty dp = ontology.addDatatypeProperty(dURI, domain, 
+%                                        Datatype.getStringDataType());
+%
+%// creating a new instance of class organization called IBM
+%URI iURI = new URI("http://sample.en/owlim#IBM", false);
+%OInstance ibm = Ontology.addOInstance(iURI, organizationClass);
+%
+%// assigning a Datatype property, name to ibm
+%ibm.addDatatypePropertyValue(dp, new Literal("IBM Corporation", 
+%                                        dp.getDataType());
+%
+%// get all the set values of all Datatype properties on the instance ibm
+%Set<DatatypeProperty> dps = Ontology.getDatatypeProperties();
+%for(DatatypeProperty dp : dps) {
+% List<Literal> values = ibm.getDatatypePropertyValues(dp);
+% System.out.println("DP : "+dp.getURI().toString());
+% for (Literal l : values) {
+%   System.out.println("Value : "+l.getValue());
+%   System.out.println("Datatype : " 
+%                   + l.getDataType().getXmlSchemaURI().toString()); }
+%}
+%
+%// export data to a file in the ntriples format
+%BufferedWriter writer = new BufferedWriter(new FileWriter(someFile));
+%String output = ontology.getOntologyData(
+%                   OConstants.ONTOLOGY_FORMAT_NTRIPLES);
+%writer.write(output);
+%writer.flush();
+%writer.close();
+%\end{lstlisting}
+%%\end{verbatim}\end{small}
+%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \sect[sec:ontologies:ontology-aware-jape]{Ontology-Aware JAPE Transducer}
 
@@ -1781,198 +1812,3 @@ instance.
 
 For a detailed description of the GATE ontology API, please
 consult the JavaDoc documentation.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\sect[sec:ontology:changes5.1]{Ontology API and Implementation Changes}
-
-This section describes the changes in the API and the implementation 
-made in GATE Developer version 5.1. The most important change is that
-\emph{the implementation of the ontology API has been removed from the 
-GATE core and is now being made available as plugins}. Currently 
-the plugin \texttt{Ontology\_OWLIM2} provides the implementation that
-was present in the GATE core previously and the plugin \texttt{Ontology}
-provides a new and upgraded implementation that also implements some
-new features that were added to the API. The \texttt{Ontology\_OWLIM2} 
-plugin is intended to provide maximum backwards compatibility but
-will not be developed further and be phased out in the future, while 
-the \texttt{Ontology} plugin provides the current actively developed
-implementation. 
-
-\emph{Before any ontology-related function can be used in GATE, one of the
-ontology implementation plugins must be loaded.}
-
-
-\subsection{Differences between the implementation plugins}
-
-The implementation provided in plugin \texttt{Ontology\_OWLIM2} is based
-on Sesame version 1 and OWLIM version 2, while the changed
-implementation provided in plugin \texttt{Ontology} is based  on Sesame 
-version 2 and OWLIM version 3. 
-
-The plugin \texttt{Ontology} provides the ontology language resource
-\texttt{OWLIM Ontology} with new and changed parameters. In addition,
-there are two language resources for advanced users, 
-\texttt{Create Sesame Ontology} and \texttt{Connect Sesame Ontology}.
-Finally the new implementation provides the language resource
-\texttt{OWLIM Ontology DEPRECATED} to make the move from the old to the
-new implementation easier: this language resource has the same name, 
-parameters and Java package as the language resource \texttt{OWLIMOntologyLR}
-in backwards-compatibility plugin \texttt{Ontology\_OWLIM2}. This allows
-to test existing pipelines and applications with the new implementation
-without the necessity to adapt the names of the language resource or
-parameters.
-
-The implementation in plugin \texttt{Ontology} makes various attempts to
-reduce the amount of memory needed to load an ontology. This will allow
-to load significantly larger ontologies into GATE. This comes at the 
-price of some methods needing more time than before, as the implementation
-does not cache all ontology entities in GATE's memory any more. 
-
-The new implementation does not provide access to any implementation 
-detail anymore, the method \texttt{getSesameRepository} will therefore
-throw an exception. The return type of this method in the old implementation
-has been changed to Object to remove the dependency on a Sesame
-class in the GATE API.
-
-\subsection{Changes in the Ontology API}
-The class \verb!gate.creole.ontology.URI! has been deprecated. Instead,
-the ontology API client must use objects that implement the new
-OURI, OBnodeID or ONodeID interfaces. An API client can only 
-directly create OURI objects and must use the ontology factory 
-methods \texttt{createOURI}, \texttt{createOURIFroName} or 
-\texttt{generateOURI} to create such objects. 
-
-Also, the intended way how ontologies are modeled has been changed:
-the API tries to prevent a user from adding anything to an 
-ontology that would make an ontology that conforms to OWL-Lite 
-go beyond that sublanguage (and e.g. become OWL-Full). However,
-if an ontology already is not conforming to OWL-Lite, the API
-tries to make as much information visible to the client as 
-possible. That means for instance that RDF classes will be included
-in the list of classes returned by method \texttt{getOClasses}, 
-but there is no support for adding RDF classes to an ontology.
-Similarly, all methods that already existed which would allow 
-to add entities to an ontology that do not conform to OWL-Lite
-have been deprecated.
-
-Most methods that use a constant from class \verb!OConstants! which
-is defined as a byte value have been deprecated and replaced by
-methods that use enums that replace the byte constants instead.
-(however, the byte constants used for literal string languages
-are still used).
-
-The API now supports the handling of ontology imports more flexibly.
-Ontology imports are internally kept in a named graph that is
-different from the named graph data from loaded ontologies is 
-kept in. Imported ontology data is still visible to the ontology
-API but can be ignored when storing (serializing) an ontology.
-The ontology API now also allows to explicitly resolve ontology
-imports and it allows the specification of mappings between 
-import URIs and URLs of either local files or substitute web 
-URLs. The import map can also specify patterns for substituting
-import URIs with replacement URLs (or ignoring them altogether).
-
-The default namespace URI is now set automatically from the ontology
-if possible and the API allows getting and setting the ontology URI.
-
-The ontology API now offers methods for getting an iterator when
-accessing some ontology resources, e.g. when getting all classes
-in the ontology. This helps to prevent the excessive use of 
-memory when retrieving a large number of such resources from
-a large ontology.
-
-Ontology objects do not internally store copies of all ontology
-resources in hash maps any more. This means that re-fetching 
-ontology resources will be a slower operation and old methods that
-rely on this mechanism are either deprecated (\verb!getOResourcesByName!, 
-\verb!getOResourceByName!) or do not work at all
-any more (\verb!getOResourceFromMap!, \verb!addOResourceToMap!, 
-\verb!removeOResourceFromMap!).
-
-
-
-%% \sect[sec:ontology:tipsandfaqs]{Various tipps, tricks and answers to FAQs}
-
-
-
-%% TODO: maybe strucutre this a bit better -- list changes in the 
-%% API vs. changes in the implementation vs. changes in the 
-%% language resources?
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% \sect[sec:howto:ontology]{Miscellaneous how-tos, recommendations and tips}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%% TBD.
-
-%% TODO: the whole section needs to get worked over:
-%% mention 
-%% ontology-enabled JAPE transducing  se:jape:ontologyaware and sec:ontologies:ontology-aware-jape
-%% onto root gazetteer,
-%% ontology annotation tool
-% 
-
-%% THE FOLLOWING already is covered by the main chapter
-% Before you can work with ontologies you have to load one of the plugins
-% that provide an ontology implementation. Currently there are two such
-% plugins included in GATE:
-% \begin{itemize}
-%  \item \verb!Ontology_OWLIM2!: this plugin provides an implementation that is
-% based on Sesame version 1 and OWLIM version 2. This plugin is deprecated but
-% kept for backwards compatibility with the ontology implementation the
-% was included in GATE prior to version 5.1.
-%   \item \verb!Ontology!: this plugin is based on Sesame version 2 and OWLIM 
-% version 3. It includes new features, new ontology language resources and
-% implements the new methods that were added to the GATE ontology API in 
-% version 5.1. This implementation does not support some of the deprecated
-% functions in the API any more.
-% \end{itemize}
-% 
-% You can load the desired plugin via the plugin manabger from the File menu
-% and then Manage CREOLE plugins. Select either \verb!Ontology OWLIM2! or 
-% \verb!Ontology! (recommended) and the ontology language resources provided
-% by the plugin will be made available in the language resource menu.
-% 
-% Note that you cannot use both plugins in the same GATE session!
-% 
-% In order to make the graphical ontology editor or the ontology annotation
-% tool available in GATE you have to also load the \verb!Ontology Tools! 
-% plugin prior to loading or creating an ontology.
-% 
-
-%% TODO: see if any of this should get merged into the OntoGazetteer 
-%% section in the gazetteer chapter
-% \paragraph{OntoGazetteer
-% 
-% 
-% The OntoGazetteer is a Processing Resource in which lists of instances of
-% ontology concepts can be loaded. For the OntoGazetteer to function properly, it
-% needs one or more .lst files, and two .def files, usually called mappings.def,
-% and lists.def.
-% 
-% The .lst file is simply a file with an instance on every line. For instance
-% persons.lst will have, on every line, the name of a person.
-% 
-% The mappings.def file describes the relations between the .lst files and the
-% ontology concepts. The format is .lst file:ontology file:ontology concept.
-% 
-% The lists.def file states the relations between the .lst files and the
-% annotation feature the OntoGazetteer should generate. The format is: .lst
-% file:feature
-% 
-% The OntoGazetteer, when run, generates annotations for every instance mentioned
-% in the .lst files. All these instances will be annotated with the same
-% annotation type, called 'Lookup' ( in the 'default' Annotation Set). Every
-% Lookup annotation will have a feature, which is its majorType, which will differ
-% per .lst file.
-% 
-% This is not very useful, because every different concept from the ontology
-% will have the same annotation type (namely 'Lookup'). However, since the
-% 'majorType' feature differs, we can process them further. And to do that, we
-% need a Jape Transducer.
-
-
-
-
