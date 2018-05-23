@@ -1289,41 +1289,8 @@ any of the classes and methods in the API can be used, one of the implementing
 ontology plugins must be loaded. For details see chapter~\ref{chap:ontologies}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\sect[sec:api:schemas]{Creating a New Annotation Schema}
+\sect[sec:api:schemas]{Loading Annotation Schemas}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-An annotation schema (see Section~\ref{sec:developer:schemaannotationeditor}) can
-be brought inside GATE through the creole.xml file. By using the AUTOINSTANCE
-element, one can create instances of resources defined in creole.xml. The
-gate.creole.AnnotationSchema (which is the Java representation of an annotation
-schema file) initializes with some predefined annotation definitions (annotation
-schemas) as specified by the GATE team.
-
-{\em Example from GATE's internal creole.xml (in
-  {\tt src/gate/resources/creole}):}
-
-\small
-\begin{small}\begin{verbatim}
-<!-- Annotation schema -->
-<RESOURCE>
-  <NAME>Annotation schema</NAME>
-  <CLASS>gate.creole.AnnotationSchema</CLASS>
-  <COMMENT>An annotation type and its features</COMMENT>
-  <PARAMETER NAME="xmlFileUrl" COMMENT="The url to the definition file"
-    SUFFIXES="xml;xsd">java.net.URL</PARAMETER>
-  <AUTOINSTANCE>
-    <PARAM NAME ="xmlFileUrl" VALUE="schema/AddressSchema.xml" />
-  </AUTOINSTANCE>
-  <AUTOINSTANCE>
-    <PARAM NAME ="xmlFileUrl" VALUE="schema/DateSchema.xml" />
-  </AUTOINSTANCE>
-  <AUTOINSTANCE>
-    <PARAM NAME ="xmlFileUrl" VALUE="schema/FacilitySchema.xml" />
-  </AUTOINSTANCE>
-  <!-- etc. -->
-</RESOURCE>
-\end{verbatim}\end{small}
-\nnormalsize
 
 In order to create a gate.creole.AnnotationSchema object from a
 schema annotation file, one must use the gate.Factory class;
