@@ -1226,7 +1226,7 @@ application to a file, right click on it in the resources tree and select
 Choose a file name that ends in \texttt{gapp} as this file dialog and
 the one for loading application states age displays all files which
 have a name ending in \texttt{gapp}. A common convention is to 
-use \texttt{.gapp} as a file extension.
+use \texttt{.gapp} or \texttt{.xgapp} as a file extension.
 
 To restore the application later, select `Restore application from file'
 from the `File' menu.
@@ -1251,18 +1251,13 @@ that content will not be saved. In order for document content to be preserved,
 load the document from an URL, specify the content as for the string content
 parameter or use a document from a datastore.
 
-For the parameters of type URL (which are typically used to
-select external resources such as grammars or rules files) a transformation is
-applied so that  
+For the parameters of type URL or ``ResourceReference'' (which are typically used to
+select resources such as grammars or rules files either from inside the plugin
+or elsewhere on disk) a transformation is applied so that  
 the paths are are stored relative to either the location of the saved application 
-state file, the GATE home directory, or a special user resources home directory,
+state file or a special user resources home directory,
 according to the following rules:
 \begin{itemize}
-\item If the resource is inside the GATE home directory, but the the application
-  state file is saved to a location outside the GATE home directory, the path
-  is stored relative to the GATE home directory and the path marker 
-  \verb=$gatehome$=
-  is used.
 \item If the property \texttt{gate.user.resourceshome} is set to the path of
   a directory and the resource
   is located inside that directory but the state file is saved to a location 
@@ -1273,43 +1268,41 @@ according to the following rules:
   is used.
 \end{itemize}
 
-In this way, all resource files that are part of GATE are always used corretly,
-no matter where GATE is installed. Resource files which are not part of GATE
+References to resources inside GATE plugins are stored as a special type of URI
+of the form \texttt{creole://group;artifact;version/path/inside/plugin}.
+In this way, all resource files that are part of plugins are always used corretly,
+no matter where the plugins are stored. Resource files which are not part of a plugin
 and used by an application do not need to be in the same location as when the 
 application was initially created but rather in the same \emph{location relative 
 to the location of the application file}. 
 In addition if your application uses a project-specific location for global
-resources or project specific plugins, the java property \texttt{gate.user.resourceshome}
-can be set to this location and the application will be stored so that this
-location will also always be used correctly, no matter where the application state
-file is copied to. To set the resources home directory, the \texttt{-rh location} 
-option for the Linux script \texttt{gate.sh} to start GATE can be used.
-The combination of these features allows the creation and deployment of portable
-applications by keeping the application file and the resource files used by the
-application together.
+resources or project specific plugins, the java property
+\texttt{gate.user.resourceshome} can be set to this location and the
+application will be stored so that this location will also always be used
+correctly, no matter where the application state file is copied to. To set the
+resources home directory, the \texttt{-rh location} option for the Linux script
+\texttt{gate.sh} to start GATE can be used.  The combination of these features
+allows the creation and deployment of portable applications by keeping the
+application file and the resource files used by the application together.
 
-
-Note that GATE resources that are used by your application may change
-between different releases of GATE. If your application depends on a specific 
-version of resources that come with the GATE distribution, consider copying them
-to your project directory in order to ensure the correct version is used.
-The option "Export for GATE Cloud" (see
-Section~\ref{sec:developer:export})
- supports this by creating a ZIP file that
-contains a copy all GATE resources used by the application, including GATE plugins.
+If your application uses resources from inside plugins then those resources may
+change if you upgrade your application to a newer version of the plugin.  If
+you want to upgrade to a newer plugin but keep the same resources you should
+export a copy of the resource files from the plugin onto disk and load them
+from there instead of using the plugin-relative defaults.
 
 When an application is restored from an application state file, 
 GATE uses the keyword \verb=$relpath$= for paths relative to the location of the
-gapp file, \verb=$gatehome$= for paths relative to the GATE home installation directory
+gapp file 
 and \verb=$resourceshom$= for paths relative to the the location the property
 \texttt{gate.user.resourceshome} is set. 
 There exists other keywords that can be interesting in some
-cases. You will need to edit the gapp file manually. The keywords are
-\verb=$gateplugins$= and \verb=$sysprop:...$=. The latter is any java
+cases. You will need to edit the gapp file manually. You can use
+\verb=$sysprop:...$= to declare paths relative to any java
 system property, for example \verb=$sysprop:user.home$=.
 
-If you want to save your application along with all the resources it requires
-you can use the `Export for GATE Cloud' option (see
+If you want to save your application along with all plugins and resources it
+requires you can use the `Export for GATE Cloud' option (see
 Section~\ref{sec:developer:export}).
 
 See also the \htlink{http://gate.ac.uk/demos/movies.html\#saveAppState}
@@ -1342,29 +1335,20 @@ correct locations within the package.  The resulting package is
 therefore self-contained and can be copied to another machine and
 unpacked there, or passed to
 \htlink{https://cloud.gate.ac.uk}{GATE Cloud} for deployment.
-
-As well as selecting the location where you want to save the package,
-the `Export for GATE Cloud' option will also prompt you to select the
-annotation sets that your application uses for input and output.  For
-example, if your application makes use of the unpacked XML markup in
-source documents and creates annotations in the default set then you
-would select `Original markups' as an input set and the `{\it
-$<$Default annotation set$>$}' as an output set.  GATE Developer will
-try to make an educated guess at the correct sets but you should check
-and amend the lists as necessary.
+Maven-style plugins will be resolved from within the package rather than
+being downloaded at runtime from the internet.
 
 There are a few important points to note about the export process:
 \begin{itemize}
-\item The complete contents of all the plugin directories that are loaded when
-  you perform the export will be included in the resulting package.  Use the
-  plugin manager to unload any plugins your application is not using before you
-  export it.
-\item If your application refers to a resource file in a directory that is not
-  under one of the loaded plugins, the entire contents of this directory will be
-  recursively included in the package.  If you have a number of unrelated
-  resources in a single directory (e.g. many sets of large gazetteer lists) you
-  may want to separate them into separate directories so that only the relevant
-  ones are included in the package.
+\item All plugins that are loaded at the point when you perform the export will
+  be included in the resulting package.  Use the plugin manager to unload any
+  plugins your application is not using before you export it.
+\item If your application refers to a resource file that is in a directory on
+  disk rather than inside one of the loaded plugins, the entire contents of
+  this directory will be recursively included in the package.  If you have a
+  number of unrelated resources in a single directory (e.g. many sets of large
+  gazetteer lists) you may want to separate them into separate directories
+  so that only the relevant ones are included in the package.
 \item The packager only knows about resources that your application refers to
   directly in its parameters.  For example, if your application includes a
   multi-phase JAPE grammar the packager will only consider the main grammar
