@@ -843,10 +843,18 @@ pane, although some special plugins have different effects; for example, the
 Schema\_Annotation\_Editor (see
 Section~\ref{sec:developer:schemaannotationeditor}).
 
-
-
-Extract Plugin Resources  --- ?
-
+Some plugins also contain files which are used to configure the resources. For
+example, the ANNIE plugin contains the resources for the ANNIE Gazetteer and
+the ANNIE NE Transducer (amongst other things). While often these files can be
+used straight from within the plugin, it can be useful to edit them, either to
+add missing information or as a starting point for delveloping new resources etc.
+To extract a copy of these resource files from a plugin simply select it in the
+plugin manager and then click the download resources button shown under the list
+of resources the plugin defines. This button will only be enabled for plugins
+which contain such files. After clicking the button you will be asked to select
+a directory into which to copy the files. You can then edit the files as needed
+before using them to configure a new instance of the appropriate processing
+resource.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
