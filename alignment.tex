@@ -136,8 +136,10 @@ using GATE Embedded:
 Gate.init(); 
  
 // step 2: load the Alignment plugin 
-File alignmentHome = new File(Gate.getPluginsHome(),"Alignment"); 
-Gate.getCreoleRegister().addDirectory(alignmentHome.toURL()); 
+Gate.getCreoleRegister().registerPlugin(new Plugin.Maven(
+    "uk.ac.gate.plugins"
+    "alignment"
+    "8.5"));
  
 // step 3: set the parameters 
 FeatureMap fm = Factory.newFeatureMap(); 
