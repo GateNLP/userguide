@@ -1549,10 +1549,9 @@ running on at the time -- e.g. on Western versions of Windows this will be
 ISO-8859-1, and Eastern ones ISO-8859-9. On Linux systems, the default 
 encoding is influenced by the \texttt{LANG} environment variable, e.g.
 when this variable is set to \texttt{en\_US.utf-8} the default encoding used
-will be \texttt{UTF-8}. When GATE is started using the \texttt{bin/ant run} 
-command or (on Linux) through the \texttt{gate.sh} script or a link to it,
-you can change the default encoding used by GATE to UTF-8 by adding 
-\texttt{-Drun.file.encoding=utf-8} as a parameter.
+will be \texttt{UTF-8}. You can change the default encoding used by GATE to
+UTF-8 by adding \texttt{-Dfile.encoding=UTF-8} to the \texttt{gate.l4j.ini}
+file.
 
 A popular way to store Unicode
 documents is in UTF-8, which is a superset of ASCII (but can still store all
