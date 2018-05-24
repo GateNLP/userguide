@@ -21,7 +21,7 @@ To download GATE point your web browser at
 
 \mbox{ }
 
-GATE will run anywhere that supports Java 7 or later, including Solaris, Linux,
+GATE will run anywhere that supports Java 8 or later, including Linux,
 Mac OS X and Windows platforms. We don't run tests on other platforms, but have
 had reports of successful installs elsewhere.
 
@@ -29,10 +29,10 @@ had reports of successful installs elsewhere.
 \subsect[sec:gettingstarted:easy]{The Easy Way}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The easy way to install is to use one of the platform-specific installers
+The easy way to install is to use the installer
 (created using the excellent \htlink{http://izpack.org/}{IzPack}).
-\htlink{http://gate.ac.uk/download/}{Download a `platform-specific
-installer'} and follow the instructions it gives
+\htlink{http://gate.ac.uk/download/}{Download the installer} (\verb!.exe! for
+Windows, \verb!.jar! for other platforms) and follow the instructions it gives
 you. Once the installation is complete, you can start GATE Developer using
 \verb|gate.exe| (Windows) or \verb|GATE.app| (Mac) in the top-level
 installation directory, on Linux and other platforms use \verb|gate.sh| 
@@ -42,83 +42,52 @@ in the \texttt{bin} directory (see section~\ref{sec:gettingstarted:runonlinux}).
 \subsect[sec:gettingstarted:hard]{The Hard Way (1)}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Download the Java-only release package or the binary build snapshot, and follow 
-the instructions below.
 
-{\bf Prerequisites:}
 \begin{itemize}
 \item
-A conforming Java 2 environment,
-  \begin{itemize}
-  \item version 1.4.2 or above for GATE 3.1
-  \item version 5.0 for GATE 4.0 beta 1 or later.
-  \item version 6.0 for GATE 6.1 or later.
-  \item version 7.0 for GATE 8.0 or later.
-  \end{itemize}
-available free from
-\htlink{http://www.oracle.com/technetwork/java/javase/overview/index.html}{Oracle}
-or from your UNIX supplier. (We test on various Sun
-JDKs on Solaris, Linux and Windows XP.)
-\item Binaries from the GATE distribution you downloaded: {\tt gate.jar} (which
-can be found in the directory called {\tt bin}). You will also need the {\tt
-lib} directory, containing various libraries that GATE depends on.
-\item a suitable \htlink{http://ant.apache.org/}{Apache ANT} installation
-(version 1.8.1 or newer). You will need to add an environment variable named
-\verb!ANT_HOME! pointing to your ANT installation, and add \verb!ANT_HOME/bin!
-to your {\tt PATH}.
-
-\item An open mind and a sense of humour.
-\end{itemize}
-
-Using the binary distribution:
-\begin{itemize}
-\item
-Unpack the distribution, creating a directory containing jar files and
-scripts.
+Download and unpack the ZIP distribution, creating a directory containing jar
+files and scripts.
 \item To run GATE Developer: 
   \begin{itemize}
-  \item on Windows, start a Command Prompt window, change to the directory where
-    you unpacked the GATE distribution and run `\verb!bin\gate.bat!';
-  \item on Windows using the GUI, double-click the `\verb!gate.exe!' file;
-  \item on UNIX/Linux or Mac open a terminal window and run
-    `\verb!bin/gate.sh!'.
+  \item on Windows, use the the `\verb!gate.exe!' file;
+  \item on UNIX/Linux use `\verb!bin/gate.sh!'.
+  \item on Mac use `\verb!GATE.app!' -- if running from a terminal you can keep
+  GATE in the foreground using \verb!GATE.app/Contents/MacOS/GATE! or
+  \verb!bin/gate.sh!
   \end{itemize}
 \item
-To embed GATE as a library (GATE Embedded), put {\tt gate.jar} and all
-the libraries in the lib directory in your {\tt CLASSPATH}.
+To embed GATE as a library (GATE Embedded), put the JAR files in the
+{\tt lib} folder onto your application's classpath.  Alternatively you can use
+a dependency manager to download GATE and its dependencies from the Central
+Repository by declaring a dependency on the appropriate version of group ID
+\verb!uk.ac.gate! and artifact ID \verb!gate-core! (see
+section~\ref{sec:gettingstarted:maven}).
 \end{itemize}
 
-The Ant scripts that start GATE Developer ({\tt ant.bat} or {\tt ant})
-require you to set the {\tt JAVA\_HOME} environment variable to point to the
-top level directory of your JAVA installation.
-%
-The value of {\tt GATE\_CONFIG} is passed to the system by the scripts using
-either a {\tt -i} command-line option, or the Java property {\tt
-gate.site.config}.
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsect[sec:gettingstarted:svn]{The Hard Way (2): Subversion}
+\subsect[sec:gettingstarted:git]{The Hard Way (2): Git}\label{sec:gettingstarted:svn}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The GATE code is maintained in a
-\htlink{http://subversion.tigris.org}{Subversion} repository.  You can use
-a Subversion client to check out the source code -- the most up-to-date version
-of GATE is the trunk:
-\\
-{\tt svn checkout http://svn.code.sf.net/p/gate/code/gate/trunk gate}
+The GATE code is maintained in a set of repositories on
+\htlink{https://github.com/GateNLP}{GitHub}.
+The main repository for GATE Developer and Embedded is \verb!gate-core!, and
+each plugin has its own repository (typically with a name beginning
+\verb!gateplugin-!).
 
-Once you have checked out the code you can build GATE using Ant (see
-Section~\ref{sec:gettingstarted:build})
+All the modules (\verb!gate-core! and the plugins) are built using Apache Maven
+version 3.5.2 or later.  Clone the appropriate repository, checkout the
+relevant branch (``master'' is the latest snapshot version), and build the code
+using \verb!mvn install!
 
-You can browse the complete Subversion repository online at\\
-\htlinkplain{https://sourceforge.net/p/gate/code/HEAD/tree/}.
+See section~\ref{sec:gettingstarted:build} for more details.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsect[sec:gettingstarted:runonlinux]{Running GATE Developer on Unix/Linux}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 The script \verb|gate.sh| in the directory \verb|bin| of your installation
+(or \verb!distro/bin! if you are building from source)
 can be used to start GATE Developer. You can run this script by entering
 its full path in a terminal or by adding the \verb|bin| directory to your 
 binary path. In addition you can also add a symbolic link to this script 
@@ -192,16 +161,8 @@ files.
 
 Here is a list of the properties used, their default values and their meanings:
 \begin{description}
-\item[gate.home] sets the location of the GATE install directory. This should
-point to the top level directory of your GATE installation. This is the only
-property that is required. If this is not set, the system will display an error
-message and them it will attempt to guess the correct value.
-\item[gate.plugins.home] points to the location of the directory containing 
-installed plugins (a.k.a. CREOLE directories). If this is not set then the
-default value of {\tt \{gate.home\}/plugins} is used.
 \item[gate.site.config] points to the location of the configuration file
-containing the site-wide options. If not set this will default to {\tt
-\{gate.home\}/gate.xml}. The site configuration file must exist!
+containing the site-wide options. If not set no site config will be used.
 \item[gate.user.config] points to the file containing the user's options. If
 not specified, or if the specified file does not exist at startup time, the
 default value of gate.xml (.gate.xml on Unix platforms) in the user's home
@@ -217,11 +178,6 @@ the configuration dialog).  The session is not used when using GATE Embedded.
 be shown in the file chooser of GATE Developer  
 to the specified directory instead of the 
 user's operating-system specific default directory.
-\item[load.plugin.path] is a path-like structure, i.e. a list of URLs
-separated by `;'.
-All directories listed here will be loaded as CREOLE plugins during
-initialisation. This has similar functionality with the the {\tt -d} command line 
-option.
 \item[gate.builtin.creole.dir] is a URL pointing to the location of GATE's
 built-in CREOLE directory.  This is the location of the {\tt
 creole.xml} file that defines the fundamental GATE resource types,
@@ -233,64 +189,22 @@ overridden.
 
 When using GATE Embedded, you can set the values for these properties before
 you call {\tt Gate.init()}.  Alternatively, you can set the values
-programmatically using the static methods {\tt setGateHome()},
-{\tt setPluginsHome()}, {\tt setSiteConfigFile()}, etc.  before calling
-{\tt Gate.init()}.  See the Javadoc documentation for details.
-If you want to set these values from the command line you can use the following
-syntax for setting {\tt gate.home} for example:
+programmatically using the static methods {\tt setUserConfigFile()},
+etc.  before calling
+{\tt Gate.init()}.  Note that from version 8.5 onwards, the user config file is
+ignored by default unless you also call {\tt runInSandbox(false)} before init.
+See the Javadoc documentation for details.
 
-{\tt java -Dgate.home=/my/new/gate/home/directory -cp... gate.Main}
-
-When running GATE Developer, you can set the properties by creating a file
-{\tt build.properties} in the top level GATE directory.  In this file, any
-system properties which are prefixed with `{\tt run.}' will be passed to
-GATE.  For example, to set an alternative user config file, put the following
-line in {\tt build.properties}\footnote{In this specific case, the alternative
-config file must already exist when GATE starts up, so you should copy your
-standard {\tt gate.xml} file to the new location.}:
-
-{\tt run.gate.user.config=\$\{user.home\}/alternative-gate.xml}
-
-This facility is not limited to the GATE-specific properties listed above, for
-example the following line changes the default temporary directory for GATE
-(note the use of forward slashes, even on Windows platforms):
-
-{\tt run.java.io.tmpdir=d:/bigtmp}
-
-When running GATE Developer from the command line via \verb|ant| or via the
-{\tt gate.sh} script you can set properties using \verb!-D!.  Note that the
-``run'' prefix is required when using ant:
-
-\texttt{ant run -Drun.gate.user.config=/my/path/to/user/config.file}
-
-but not when using {\tt gate.sh}:
-
-\texttt{./bin/gate.sh -Dgate.user.config=/my/path/to/user/config.file} 
-
-The GATE Developer launcher also supports the system property
-{\tt gate.class.path} to specify additional classpath entries that should be
-added to the classloader that is used to load GATE classes.  This is expected
-to be in the normal ``classpath'' format, i.e. a list of directory or JAR file
-paths separated by semicolons on Windows and colons on other platforms.  The
-standard Java 6 shorthand of {\tt /path/to/directory/*}\footnote{Remember to
-protect the * from expansion by your shell if necessary.} to include all
-{\tt .jar} files from a given directory is also supported.  As an alternative
-to this system property, the environment variable \verb!GATE_CLASSPATH! can be
-used, but the environment variable is only read if the system property is
-{\em not} set.
-
-\texttt{./bin/gate.sh -Dgate.class.path=/shared/lib/myclasses.jar}
+To set these properties when running GATE developer see the next section.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \sect[sec:gettingstarted:launchconfig]{Changing GATE's launch configuration}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-With effect from build 4723 (13 November 2013), all the JVM and GATE launch
-options can be set in the \texttt{gate.l4j.ini} file on all platforms, as well
-as by using options to the \texttt{gate.sh} command.  
 
-The \texttt{gate.l4j.ini} file supplied by default with GATE simply sets two
-standard JVM memory options:
+JVM options for GATE Developer are supplied in the \texttt{gate.l4j.ini} file
+on all platforms.  The \texttt{gate.l4j.ini} file supplied by default with GATE
+simply sets two standard JVM memory options:
 %
 \begin{verbatim}
 -Xmx1G
@@ -298,24 +212,18 @@ standard JVM memory options:
 \end{verbatim}
 %
 \texttt{-Xmx} specifies the maximum heap size in megabytes (\texttt{m}) or
-gigabytes (\texttt{g}), and -Xms specifies the initial size. Other parameters of
-interest are \texttt{-XX:MaxPermSize=128m} for the "permanent generation", which
-you may wish to specify if you are getting OutOfMemoryErrors that say "PermGen
-space".
-
-
+gigabytes (\texttt{g}), and -Xms specifies the initial size. 
 
 Note that the format consists of one option per line.  All the properties listed
 in Section~\ref{sec:gettingstarted:sysprop} can be configured here by prefixing
 them with \texttt{-D}, e.g., \texttt{-Dgate.user.config=path/to/other-gate.xml}.
-
 
 Proxy configuration (see Section~\ref{sec:misc-creole:proxy}) can now be set in
 this file by adding these lines and editing them as needed for your
 configuration.
 %
 \begin{verbatim}
--Drun.java.net.useSystemProxies=true  
+-Djava.net.useSystemProxies=true  
 -Dhttp.proxyHost=proxy.example.com  
 -Dhttp.proxyPort=8080  
 -Dhttp.nonProxyHosts=*.example.com 
@@ -326,9 +234,10 @@ configuration.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 When GATE Developer is started, or when {\tt Gate.init()} is called from GATE
-Embedded, GATE loads various sorts of configuration data stored as XML in files
-generally called something like {\tt gate.xml} or {\tt .gate.xml}. This data
-holds information such as:
+Embedded (if you have disabled the default ``sandbox'' mode), GATE loads
+various sorts of configuration data stored as XML in a file
+generally called something like {\tt gate.xml} or {\tt .gate.xml} in your home
+directory. This data holds information such as:
 \begin{itemize}
   
 \item whether to save settings on exit;
@@ -348,45 +257,16 @@ holds information such as:
 %\item where the local Oracle database lives.
 
 \end{itemize}
-%
-This type of data is stored at two levels (in order from general to
-specific):
-%
-\begin{itemize}
-\item
-  the site-wide level, which by default is located the {\tt gate.xml} file in
-  top level directory of the GATE installation (i.e. the {\tt GATE home}.
-  This location can be overridden by the Java system property {\tt
-  gate.site.config};
-\item
-  the user level, which lives in the user's HOME directory on
-  UNIX or their profile directory on Windows (note that parts of this file
-  are overwritten when saving user settings).
-  The default location for this file can be overridden by the Java system
-  property {\tt gate.user.config}.
-\end{itemize}
-%
-Where configuration data appears on several different levels, the
-more specific ones overwrite the more general. This means that you can set
-defaults for all GATE users on your system, for example, and allow individual
-users to override those defaults without interfering with others.
 
 Configuration data can be set from the GATE Developer GUI via the
-`Options' menu then `Configuration'. The user can change the
-appearance of the GUI in the `Appearance' tab, which includes the
-options of font and the `look and feel'. The `Advanced' tab
-enables the user to include annotation features when saving the
-document and preserving its format, to save the selected Options
-automatically on exit, and to save the session automatically on exit.
-The `Input Methods' submenu from the `Options' menu enables the
-user to change the default language for input. These options are all
-stored in the user's .gate.xml file.
-
-When using GATE Embedded, you can also set the site config location
-using\linebreak {\tt Gate.setSiteConfigFile(File)} prior to calling {\tt
-Gate.init()}.
-
-
+`Options' menu then `Configuration'\footnote{On Mac OS X, us the standard
+`Preferences' option in the application menu, the same as for native Mac
+applications.}. The user can change the appearance of the GUI in the
+`Appearance' tab, which includes the options of font and the `look and feel'.
+The `Advanced' tab enables the user to include annotation features when saving
+the document and preserving its format, to save the selected Options
+automatically on exit, and to save the session automatically on exit. These
+options are all stored in the user's .gate.xml file.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -403,54 +283,42 @@ on the system itself.
 \item
 A conforming Java environment as above.
 \item
-A copy of the GATE sources and the build scripts -- either the SRC distribution 
-package from the nightly snapshots or a copy of the code
-obtained through Subversion (see Section~\ref{sec:gettingstarted:svn}).
+A clone of the relevant Git repository or repositories (see Section~\ref{sec:gettingstarted:git}).
 \item 
-A working installation of \htlink{http://ant.apache.org/}{Apache ANT} version
-1.8.1 or newer. You will need to add an environment variable named
-\verb!ANT_HOME! pointing to your ANT installation, and add \verb!ANT_HOME/bin!
-to your {\tt PATH}. It is advisable that you also set your \verb!JAVA_HOME!
+A working installation of \htlink{http://maven.apache.org/}{Apache Maven} version
+3.5.2 or newer. It is advisable that you also set your \verb!JAVA_HOME!
 environment variable to point to the top-level directory of your Java
 installation.
 \item
 An appreciation of natural beauty.
 \end{itemize}
 
-{\bf To build gate}, cd to gate and: 
+{\bf To build gate-core}, cd to where you cloned {\tt gate-core} and: 
 \begin{enumerate}
 \item
 Type: {\tt \newline
-ant
+mvn install
 }
-\item
-$[$optional$]$ To test the system:
-{\tt \newline
-ant test\newline
-}
-%(Note that DB tests may fail unless you can connect to Sheffield's Oracle
-%server.)
 \item
 $[$optional$]$ To make the Javadoc documentation:
 {\tt \newline
-ant doc\newline
+mvn site
 }
-\item
-You can also run GATE Developer using Ant, by typing:\newline
-{\tt ant run}
-\item
-To see a full list of options type: {\tt ant help}\newline
 \end{enumerate}
 
-(The details of the build process are all specified by the build.xml file 
-in the gate directory.)
+In order to be able to \emph{run} the GATE Developer you just built, you will
+also need to cd into the \verb!distro! folder and run \verb!mvn compile! in
+there, in order to create the classpath file that the GATE Developer launcher
+uses to find the JARs.
 
-You can also use a development environment like Eclipse (the required .project
-file and other metadata are included with the sources), but note that it's still
-advisable to use ant to generate documentation, the jar file and so on. Also
-note that the run configurations have the location of a {\tt gate.xml} site
-configuration file hard-coded into them, so you may need to change these for
-your site.
+{\bf To build plugins} cd into the plugin you just cloned and run
+\verb!mvn install!.  This will build the plugin and place it in your local
+Maven cache, from where GATE Developer will be able to resolve it at runtime.
+
+{\bf Note} if you are building a version of a plugin that depends on a SNAPSHOT
+version of \verb!gate-core! then you will need to add some configuration to
+your Maven \verb!settings.xml! file, as described in the \verb!gate-core!
+README file.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsect[sec:gettingstarted:maven]{Using GATE with Maven/Ivy}
@@ -467,7 +335,7 @@ To use GATE in a Maven-based project you can simply add a dependency:
 <dependency>
   <groupId>uk.ac.gate</groupId>
   <artifactId>gate-core</artifactId>
-  <version>6.0</version>
+  <version>8.5</version>
 </dependency>
 \end{verbatim}
 \end{small}
@@ -475,14 +343,12 @@ To use GATE in a Maven-based project you can simply add a dependency:
 Similarly, with a project that uses Ivy for dependency management:
 \begin{small}
 \begin{verbatim}
-<dependency org="uk.ac.gate" name="gate-core" rev="6.0"/>
+<dependency org="uk.ac.gate" name="gate-core" rev="8.5"/>
 \end{verbatim}
 \end{small}
 
-In addition you will require the matching versions of any GATE plugins you wish
-to use in your application -- these are not managed by Maven or Ivy, but can be
-obtained from the standard GATE release download or downloaded using the GATE
-Developer plugin manager as appropriate.
+You do not need to do anything to allow GATE to access its plugins, it will
+fetch them at runtime from the internet when they are loaded.
 
 Nightly snapshot builds of gate-core are available from our own Maven
 repository at \verb|http://repo.gate.ac.uk/content/groups/public|.
