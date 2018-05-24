@@ -112,23 +112,22 @@ Resource types is supplied to GATE.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 GATE allows resource implementations and Language Resource persistent data to
-be distributed over the Web, and uses Java annotations and XML for
+be distributed over the Web, and uses Java annotations for
 configuration of resources (and GATE itself).
 
 Resource implementations are grouped together as `plugins', stored
-at a URL (when the resources are in the local file system this can be
-a {\tt file:/} URL). When a plugin is loaded into GATE it looks for a
-configuration file called {\tt creole.xml} relative to the plugin URL
-and uses the contents of this file to determine what resources this
-plugin declares and where to find the classes that implement the
-resource types (typically these classes are stored in a JAR file in
-the plugin directory).  Configuration data for the resources may be
-stored directly in the creole.xml file, or it may be stored as Java
-annotations on the resource classes themselves; in either case GATE
-retrieves this configuration information and adds the resource
-definitions to the CREOLE register. When a user requests an
-instantiation of a resource, GATE creates an instance of the resource
-class in the virtual machine.
+either in a single JAR file published via the standard Maven repository
+mechanism, or at a URL (when the resources are in the local file system this
+would be a {\tt file:/} URL). When a plugin is loaded into GATE it looks
+for a configuration file called {\tt creole.xml} relative to the plugin URL or
+inside the plugin JAR file and uses the contents of this file in combination
+with Java annotations on the source code to determine what resources this
+plugin declares and, in the case of directory-style plugins, where to find the
+classes that implement the resource types (typically a JAR file in the plugin
+directory).  GATE retrieves the configuration information from the plugin's
+resource classes and adds the resource definitions to the CREOLE register. When
+a user requests an instantiation of a resource, GATE creates an instance of the
+resource class in the virtual machine.
 
 Language resource data can be stored in binary serialised form in the local
 file system.
@@ -145,8 +144,8 @@ file system.
 
 We can think of the GATE framework as a backplane into
 which users can plug CREOLE components.
-The user gives the system a list of URLs to search when it starts up,
-and components at those locations are loaded by the system.
+The user gives the system a list of plugins to search when it starts up,
+and components in those plugins are loaded by the system.
 
 The backplane performs these functions:
 \begin{itemize}
@@ -206,7 +205,7 @@ The various phases may be summarised as:
 To create the binary image of a resource (a Java class in a JAR file),
 and the XML file that describes the resource to GATE, you need to
 create the appropriate {\tt .java} file(s), compile them and package
-them as a {\tt .jar}. GATE provides a bootstrap tool to
+them as a {\tt .jar}. GATE provides a Maven archetype to
 start this process -- see
 Section \ref{sec:api:bootstrap}. Alternatively you can simply copy
 code from an existing resource.
@@ -224,11 +223,10 @@ Section
 \ref{sec:developer:gui}.
 %
 \item[Resource configuration and implementation.]
-GATE's bootstrap tool will create an empty resource that does nothing. In
+GATE's Maven archetype will create an empty resource that does nothing. In
 order to achieve the behaviour you require, you'll need to change the
-configuration of the resource (by editing the {\tt creole.xml} file) and/or
-change the Java code that implements the resource. See section
-\ref{sec:creole-model:config}.
+Java code and its configuration annotations.
+See section \ref{sec:creole-model:config} for more details.
 %
 \end{description}
 %
@@ -248,8 +246,8 @@ PRs can be combined into {\em applications}. Applications model a control
 strategy for the execution of PRs. In GATE, applications are called
 `controllers' accordingly.
 
-Currently only sequential, or pipeline,
-execution is supported. There are two main types of pipeline:
+Currently the main application types provided by GATE implement sequential or
+``pipeline'' control flow. There are two main types of pipeline:
 %
 \begin{description}
 %
@@ -289,8 +287,7 @@ application's execution -- for a corpus pipeline, this means before any
 document has been processed and after all documents in the corpus have been
 processed, which is useful for PRs that need to share data structures across
 the whole corpus, build aggregate statistics, etc.  For full details, see the
-\htlink{http://gate.ac.uk/gate/doc/javadoc/gate/creole/ControllerAwarePR.html}{JavaDoc documentation}
-for \texttt{ControllerAwarePR}.
+JavaDoc documentation for \texttt{ControllerAwarePR}.
 %
 
 
@@ -370,339 +367,41 @@ Other miscellaneous resources -- see \Chapthing\ \ref{chap:misc-creole}.
 This section describes how to supply GATE with the configuration data it needs
 about a resource, such as what its parameters are, how to display it if it has
 a visualisation, etc.  Several GATE resources can be grouped into a single
-\emph{plugin}, which is a directory containing an XML configuration file called
-{\tt creole.xml}.  Configuration data for the plugin's resources can be given
-in the {\tt creole.xml} file or directly in the Java source file using Java
-annotations.
+\emph{plugin}, which is a directory or JAR file containing an XML configuration file called
+{\tt creole.xml} at its root.  The {\tt creole.xml} file provides metadata
+about the plugin as a whole, the configuration for individual resource classes
+is given directly in the Java source file using Java annotations.
 
-A {\tt creole.xml} file has a root element \verb|<CREOLE-DIRECTORY>|. Traditionally
-this element didn't contain any attributes, but with the introduction of installable
-plugins (see Sections \ref{sec:developer:installplugins} and
-\ref{sec:development:pluginrepository}) the following attributes can now be provided.
+A {\tt creole.xml} file has a root element \verb|<CREOLE-DIRECTORY>| which
+supports one optional attribute:%several attributes:
 
 \begin{description}
-\item[{\tt ID}:] A string that uniquely identifies this plugin. This should
-be formatted in a similar way to fully specified Java class names. The class portion
-(i.e. everything after the last dot) will be used as the name of the plugin in the
-GUI. For example, the obsolete RASP plugin could have the ID gate.obsolete.RASP.
-Note that unlike Java class names the plugin name can contain spaces for the purpose
-of presentation.
-\item[{\tt VERSION}:] The version number of the plugin. For example, 3, 3.1,
-3.11, 3.12-SNAPSHOT etc.
-\item[{\tt DESCRIPTION}:] A short description of the resources provided by the plugin.
-Note that there is really only space for a single sentence in the GUI.
-\item[{\tt HELPURL}:] The URL of a web page giving more details about this plugin.
+%\item[{\tt ID}:] A string that uniquely identifies this plugin. This should
+%be formatted in a similar way to fully specified Java class names. The class portion
+%(i.e. everything after the last dot) will be used as the name of the plugin in the
+%GUI. For example, the obsolete RASP plugin could have the ID gate.obsolete.RASP.
+%Note that unlike Java class names the plugin name can contain spaces for the purpose
+%of presentation.
+%\item[{\tt VERSION}:] The version number of the plugin. For example, 3, 3.1,
+%3.11, 3.12-SNAPSHOT etc.
+%\item[{\tt DESCRIPTION}:] A short description of the resources provided by the plugin.
+%Note that there is really only space for a single sentence in the GUI.
+%\item[{\tt HELPURL}:] The URL of a web page giving more details about this plugin.
 \item[{\tt GATE-MIN}:] The  earliest version of GATE that this plugin is compatible
 with. This should be in the same format as the version shown in the GATE titlebar, i.e.
-6.1 or 6.2-SNAPSHOT. Do not include the build number information.
-\item[{\tt GATE-MAX}:] The last version of GATE which the plugin is compatible with.
-This should be in the same format as GATE-MIN.
+8.5 or 8.6-beta1. Do not include the build number information.
+%\item[{\tt GATE-MAX}:] The last version of GATE which the plugin is compatible with.
+%This should be in the same format as GATE-MIN.
 \end{description}
 
-Currently all these attributes are optional, unless you intend to make the plugin
-available through a plugin repository (see Section~\ref{sec:development:pluginrepository}),
-in which case the {\tt ID} and {\tt VERSION} attributes must be provided. We would,
-however, suggest that developers start to add these attributes to all the plugins
-they develop as the information is likely to be used in more places throughout GATE
-developer and embeded in the future.
+For many simple single-JAR plugins the {\tt creole.xml} file need have no other
+content -- just an empty \verb|<CREOLE-DIRECTORY />| element -- but there are
+certain child elements that are used in some types of plugin.
 
-Child elements of the \verb|<CREOLE-DIRECTORY>| depend on the configuration
-style.  The following three sections discuss the different styles -- all-XML,
-all-annotations and a mixture of the two.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsect[sec:creole-model:config:xml]{Configuration with XML}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-To configure your resources in the {\tt creole.xml} file, the
-\verb|<CREOLE-DIRECTORY>| element should contain one \verb|<RESOURCE>| element
-for each resource type in the plugin.  The \verb|<RESOURCE>| elements may
-optionally be contained within a \verb|<CREOLE>| element (to allow a single
-{\tt creole.xml} file to be built up by concatenating multiple separate files).
-For example:
-
-\begin{small}\begin{verbatim}
-<CREOLE-DIRECTORY>
-
-<CREOLE>
-  <RESOURCE>
-    <NAME>Minipar Wrapper</NAME>
-    <JAR>MiniparWrapper.jar</JAR>
-    <CLASS>minipar.Minipar</CLASS>
-    <COMMENT>MiniPar is a shallow parser. It determines the
-    dependency relationships between the words of a sentence.</COMMENT>
-    <HELPURL>http://gate.ac.uk/cgi-bin/userguide/sec:parsers:minipar</HELPURL>
-    <PARAMETER NAME="document"
-	  RUNTIME="true"
-	  COMMENT="document to process">gate.Document</PARAMETER>
-    <PARAMETER NAME="miniparDataDir" 
-        RUNTIME="true"
-        COMMENT="location of the Minipar data directory">
-        java.net.URL
-    </PARAMETER>
-    <PARAMETER NAME="miniparBinary" 
-        RUNTIME="true"
-        COMMENT="Name of the Minipar command file">
-        java.net.URL
-    </PARAMETER>
-    <PARAMETER NAME="annotationInputSetName" 
-        RUNTIME="true"
-        OPTIONAL="true"
-        COMMENT="Name of the input Source">
-        java.lang.String
-    </PARAMETER>
-    <PARAMETER NAME="annotationOutputSetName" 
-        RUNTIME="true"
-        OPTIONAL="true"
-        COMMENT="Name of the output AnnotationSetName">
-        java.lang.String
-    </PARAMETER>
-    <PARAMETER NAME="annotationTypeName" 
-        RUNTIME="false"
-        DEFAULT="DepTreeNode" 
-        COMMENT="Annotations to store with this type">
-        java.lang.String
-    </PARAMETER>
-  </RESOURCE>
-</CREOLE>
-</CREOLE-DIRECTORY>
-\end{verbatim}\end{small}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsect{Basic Resource-Level Data}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-Each resource must give a name, a Java class and the JAR file that it can be
-loaded from.
-The above example is taken from the {\tt Parser\_Minipar} plugin, and defines a
-single resource with a number of parameters.
-
-The full list of valid elements under \verb|<RESOURCE>| is as follows:
-
-\begin{description}
-\item[NAME] the name of the resource, as it will appear in the `New'
-  menu in GATE Developer.  If omitted, defaults to the bare name of
-  the resource class (without a package name).
-\item[CLASS] the fully qualified name of the Java class that implements this
-  resource.
-\item[JAR] names JAR files required by this resource (paths are relative to the
-  location of {\tt creole.xml}).  Typically this will be the JAR file
-  containing the class named by the \verb|<CLASS>| element, but additional
-  \verb|<JAR>| elements can be used to name third-party JAR files that the
-  resource depends on.
-\item[COMMENT] a descriptive comment about the resource, which will
-  appear as the tooltip when hovering over an instance of this resource in the
-  resources tree in GATE Developer.  If omitted, no comment is used.
-\item[HELPURL] a URL to a help document on the web for this resource. It is
-  used in the help browser inside GATE Developer.
-\item[INTERFACE] the interface type implemented by this resource, for example
-  new types of document would specify \verb|<INTERFACE>gate.Document</INTERFACE>|.
-\item[ICON] the icon used to represent this resource in GATE Developer.  This is
-  a path inside the plugin's JAR file, for
-  example \verb|<ICON>/some/package/icon.png</ICON>|.  If the path
-  specified does not start with a forward slash, it is assumed to name
-  an icon from the GATE default set, which is located in gate.jar at
-  gate/resources/img.  If no icon is specified, a generic language
-  resource or processing resource icon (as appropriate) is used.
-\item[PRIVATE] if present, this resource type is hidden in the GATE Developer GUI, i.e. it is
-  not shown in the `New' menus.  This is useful for resource types
-  that are intended to be created internally by other resources, or
-  for resources that have parameters of a type that cannot be set in
-  the GUI.  \verb|<PRIVATE/>| resources can still be created in Java
-  code using the {\tt Factory}.
-\item[AUTOINSTANCE (and HIDDEN-AUTOINSTANCE)] tells GATE to automatically
-  create instances of this resource when the plugin is loaded.  Any number of
-  auto instances may be defined, GATE will create them all.  Each
-  \verb|<AUTOINSTANCE>| element may optionally contain
-  \verb|<PARAM NAME="..." VALUE="..." />| elements giving parameter values to
-  use when creating the instance.  Any parameters not specified explicitly will
-  take their default values.  Use \verb|<HIDDEN-AUTOINSTANCE>| if you want the
-  auto instances not to show up in GATE Developer -- this is useful for things
-  like document formats where there should only ever be a single instance in
-  GATE and that instance should not be deleted.
-\item[TOOL] if present, this resource type is considered to be a ``tool''.
-  Tools can contribute items to the Tools menu in GATE Developer.
-\end{description}
-
-For visual resources, a \verb|<GUI>| element should also be provided.
-This takes a \verb|TYPE| attribute, which can have the value {\tt
-LARGE} or {\tt SMALL}.  LARGE means that the visual resource is a
-large viewer and should appear in the main part of the GATE Developer
-window on the right hand side, SMALL means the VR is a small viewer
-which appears in the space below the resources tree in the bottom
-left.  The \verb|<GUI>| element supports the following sub-elements:
-
-\begin{description}
-\item[RESOURCE\_DISPLAYED] the type of GATE resource this VR can display.  Any
-  resource whose type is assignable to this type will be displayed with this
-  viewer, so for example a VR that can display all types of document would
-  specify \verb|gate.Document|, whereas a VR that can only display the default
-  GATE document implementation would specify \verb|gate.corpora.DocumentImpl|.
-\item[MAIN\_VIEWER] if present, GATE will consider this VR to be the `most
-  important' viewer for the given resource type, and will ensure that if
-  several different viewers are all applicable to this resource, this viewer
-  will be the one that is initially visible.
-\end{description}
-
-For annotation viewers, you should specify an
-\verb|<ANNOTATION_TYPE_DISPLAYED>| element giving the annotation type that the
-viewer can display (e.g. {\tt Sentence}).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsect{Resource Parameters}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-Resources may also have parameters of various types.
-These resources, from the GATE distribution, illustrate the various types of
-parameters:
-\begin{small}\begin{verbatim}
-<RESOURCE>
-  <NAME>GATE document</NAME>
-  <CLASS>gate.corpora.DocumentImpl</CLASS>
-  <INTERFACE>gate.Document</INTERFACE>
-  <COMMENT>GATE transient document</COMMENT>
-  <OR>
-    <PARAMETER NAME="sourceUrl"
-      SUFFIXES="txt;text;xml;xhtm;xhtml;html;htm;sgml;sgm;mail;email;eml;rtf"
-      COMMENT="Source URL">java.net.URL</PARAMETER>
-    <PARAMETER NAME="stringContent"
-      COMMENT="The content of the document">java.lang.String</PARAMETER>
-  </OR>
-  <PARAMETER
-    COMMENT="Should the document read the original markup"
-    NAME="markupAware" DEFAULT="true">java.lang.Boolean</PARAMETER>
-  <PARAMETER NAME="encoding" OPTIONAL="true"
-    COMMENT="Encoding" DEFAULT="">java.lang.String</PARAMETER>
-  <PARAMETER NAME="sourceUrlStartOffset"
-    COMMENT="Start offset for documents based on ranges"
-    OPTIONAL="true">java.lang.Long</PARAMETER>
-  <PARAMETER NAME="sourceUrlEndOffset"
-    COMMENT="End offset for documents based on ranges"
-    OPTIONAL="true">java.lang.Long</PARAMETER>
-  <PARAMETER NAME="preserveOriginalContent"
-    COMMENT="Should the document preserve the original content"
-    DEFAULT="false">java.lang.Boolean</PARAMETER>
-  <PARAMETER NAME="collectRepositioningInfo"
-    COMMENT="Should the document collect repositioning information"
-    DEFAULT="false">java.lang.Boolean</PARAMETER>
-  <ICON>lr.gif</ICON>
-</RESOURCE>
-\end{verbatim}\end{small}
-
-\begin{small}\begin{verbatim}
-<RESOURCE>
-  <NAME>Document Reset PR</NAME>
-  <CLASS>gate.creole.annotdelete.AnnotationDeletePR</CLASS>
-  <COMMENT>Document cleaner</COMMENT>
-  <PARAMETER NAME="document" RUNTIME="true">gate.Document</PARAMETER>
-  <PARAMETER NAME="annotationTypes" RUNTIME="true"
-    OPTIONAL="true">java.util.ArrayList</PARAMETER>
-</RESOURCE>
-\end{verbatim}\end{small}
-
-Parameters may be optional, and may have default values (and may have
-comments to describe their purpose, which is displayed by GATE
-Developer during interactive parameter setting).
-
-Some PR parameters are execution time ({\tt RUNTIME}),
-some are initialisation time.
-E.g. at execution time a doc is supplied to a language analyser;
-at initialisation time a grammar may be supplied to a language analyser.
-
-The \verb|<PARAMETER>| tag takes the following attributes:
-\begin{description}
-\item[NAME:]
-name of the JavaBean property that the parameter refers to, i.e. for a
-parameter named `someParam' the class must have {\tt setSomeParam} and
-{\tt getSomeParam} methods.\footnote{The JavaBeans spec allows {\tt is} instead
-of {\tt get} for properties of the primitive type {\tt boolean}, but GATE does
-not support parameters with primitive types.  Parameters of type
-{\tt java.lang.Boolean} (the wrapper class) are permitted, but these have
-{\tt get} accessors anyway.}
-\item[DEFAULT:]
-default value (see below).
-\item[RUNTIME:]
-doesn't need setting at initialisation time, but must be set before calling
-{\tt execute()}. Only meaningful for PRs
-\item[OPTIONAL:]
-not required
-\item[COMMENT:]
-for display purposes
-\item[ITEM\_CLASS\_NAME:]
-(only applies to parameters whose type is {\tt java.util.Collection}
-or a type that implements or extends this) this specifies the type of
-elements the collection contains, so GATE can use the right
-type when parameters are set.  If omitted, GATE will pass in
-the elements as Strings.
-\item[SUFFIXES:]
-(only applies to parameters of type {\tt java.net.URL}) a
-semicolon-separated list of file suffixes that this parameter
-typically accepts, used as a filter in the file chooser provided by
-GATE Developer to select a local file as the parameter value.
-\end{description}
-
-It is possible for two or more parameters to be mutually exclusive (i.e. a user
-must specify one or the other but not both).  In this case the
-\verb|<PARAMETER>| elements should be grouped together under an \verb|<OR>|
-element.
-
-The type of the parameter is specified as the text of
-the \verb|<PARAMETER>| element, and the type supplied must match the
-return type of the parameter's {\tt get} method.  Any reference type
-(class, interface or enum) may be used as the parameter type,
-including other resource types -- in this case GATE Developer will
-offer a list of the loaded instances of that resource as options for
-the parameter value.  Primitive types (char, boolean, \ldots) are not
-supported, instead you should use the corresponding wrapper type ({\tt
-java.lang.Character}, {\tt java.lang.Boolean}, \ldots).  If the getter
-returns a parameterized type (e.g. \verb|List<Integer>|) you should
-just specify the raw type ({\tt java.util.List}) here\footnote{In this
-particular case, as the type is a collection, you would specify {\tt
-java.lang.Integer} as the {\tt ITEM\_CLASS\_NAME}.}.
-
-The DEFAULT string is converted to the appropriate type for the parameter -
-\texttt{java.lang.String} parameters use the value directly, primitive wrapper
-types e.g. \texttt{java.lang.Integer} use their respective \texttt{valueOf}
-methods, and other built-in Java types can have defaults specified provided
-they have a constructor taking a \texttt{String}.
-
-The type \texttt{java.net.URL} is treated specially: if the default
-string is not an absolute URL (e.g. http://gate.ac.uk/) then it is treated as a
-path relative to the location of the \texttt{creole.xml} file.  Thus a DEFAULT
-of \texttt{`resources/main.jape'} in the file
-\texttt{file:/opt/MyPlugin/creole.xml} is treated as the absolute URL
-\texttt{file:/opt/MyPlugin/resources/main.jape}.
-
-For \texttt{Collection}-valued parameters multiple values may be specified,
-separated by semicolons, e.g. \texttt{`foo;bar;baz'}; if the parameter's type
-is an interface -- \texttt{Collection} or one of its sub-interfaces (e.g.
-\texttt{List}) -- a suitable concrete class (e.g. \texttt{ArrayList},
-\texttt{HashSet}) will be chosen automatically for the default value.
-
-For parameters of type \texttt{gate.FeatureMap} multiple \texttt{name=value}
-pairs can be specified, e.g.  \texttt{`kind=word;orth=upperInitial'}.  For
-\texttt{enum}-valued parameters the default string is taken as the name of the
-enum constant to use.  Finally, if no DEFAULT attribute is specified, the
-default value is \texttt{null}.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsect[sec:creole-model:config:annotations]{Configuring Resources using Annotations}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-As an alternative to the XML configuration style, GATE provides Java
-annotation types to embed the configuration data directly in the Java source
-code.  \verb|@CreoleResource| is used to mark a class as a GATE resource, and
-parameter information is provided through annotations on the JavaBean {\tt set}
-methods.  At runtime these annotations are read and mapped into the equivalent
-entries in {\tt creole.xml} before parsing.  The metadata annotation types are
-all marked \verb|@Documented| so the CREOLE configuration data will be visible
-in the generated JavaDoc documentation.
-
-For more detailed information, see the
-\htlink{http://gate.ac.uk/gate/doc/javadoc/gate/creole/metadata/package-summary.html}{JavaDoc documentation for {\tt gate.creole.metadata}}.
-
-To use annotation-driven configuration for a plugin a {\tt creole.xml} file is
-still required but it need only contain the following:
+Directory-style plugins need at least one \verb|<JAR>| child element to tell
+GATE where to find the classes that implement the plugin's resources.  Each
+\verb|<JAR>| element contains a path to a JAR file, which is resolved relative
+to the location of the {\tt creole.xml}, for example:
 \begin{small}\begin{verbatim}
 <CREOLE-DIRECTORY>
   <JAR SCAN="true">myPlugin.jar</JAR>
@@ -710,20 +409,51 @@ still required but it need only contain the following:
 </CREOLE-DIRECTORY>
 \end{verbatim}\end{small}
 
-This tells GATE to load {\tt myPlugin.jar} and scan its contents looking for
-resource classes annotated with \verb|@CreoleResource|.  Other JAR files
-required by the plugin can be specified using other \verb|<JAR>| elements
+JAR files that contain resource classes must be specified with
+\verb|SCAN="true"|, which tells GATE to scan the JAR contents to discover
+resource classes annotated with \verb|@CreoleResource| (see below).  Other JAR
+files required by the plugin can be specified using other \verb|<JAR>| elements
 without \verb|SCAN="true"|.
 
-In a GATE Embedded application it is possible to register a single
-\verb|@CreoleResource| annotated class without using a {\tt creole.xml} file
-by calling
+Plugins can depend on other plugins, for example if a plugin defines a PR which
+internally makes use of a JAPE transducer then that plugin would declare that
+it depends on ANNIE (the standard plugin that defines the JAPE transducer PR).
+This is done with a \verb|<REQUIRES>| element.  To depend on a single-JAR
+plugin from a Maven repository, use an empty element with attributes
+\verb|GROUP|, \verb|ARTIFACT| and \verb|VERSION|, for example
 \begin{small}\begin{verbatim}
-Gate.getCreoleRegister().registerComponent(MyResource.class);
+<CREOLE-DIRECTORY>
+  <REQUIRES GROUP="uk.ac.gate.plugins"
+            ARTIFACT="annie"
+            VERSION="8.5" />
+</CREOLE-DIRECTORY>
 \end{verbatim}\end{small}
-%
-GATE will extract the configuration from the annotations on the class and make
-it available for use as if it had been defined in a plugin.
+
+Directory-style plugins can also depend on other directory-style plugins using
+a relative path (e.g. \verb|<REQUIRES>../other-plugin</REQUIRES>|, but this is
+generally discouraged -- if your plugin is likely to be required as a
+dependency of other plugins then it is better converted to the single JAR Maven
+style so the dependency can be handled via group/artifact/version co-ordinates.
+
+You may see old plugins with other elements such as \verb|<RESOURCE>|, this is
+the older style of configuration in XML, which is now deprecated in favour of
+the annotations described below.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsect[sec:creole-model:config:annotations]{Configuring Resources using Annotations}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The configuration of the resources within a plugin is handled using Java
+annotation types to embed the configuration data directly in the Java source
+code.  \verb|@CreoleResource| is used to mark a class as a GATE resource, and
+parameter information is provided through annotations on the JavaBean {\tt set}
+methods.  At runtime these annotations are read and used to construct the
+resource data that is registered with the CREOLE register.  The metadata
+annotation types are all marked \verb|@Documented| so the CREOLE configuration
+data will be visible in the generated JavaDoc documentation.
+
+For more detailed information, see the
+JavaDoc documentation for {\tt gate.creole.metadata}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsect{Basic Resource-Level Data}
@@ -740,51 +470,66 @@ import gate.creole.metadata.*;
                 comment = "Splits text into tokens and spaces")
 public class Tokeniser extends AbstractLanguageAnalyser {
   ...
+}
 \end{lstlisting}
 
-The \verb|@CreoleResource| annotation provides slots for all the values that
-can be specified under \verb|<RESOURCE>| in {\tt creole.xml}, except
-\verb|<CLASS>| (inferred from the name of the annotated class) and \verb|<JAR>|
-(taken to be the JAR containing the class):
+The \verb|@CreoleResource| annotation provides slots for various configuration
+values:
 \begin{description}
 \item[name] (String) the name of the resource, as it will appear in the `New'
   menu in GATE Developer.  If omitted, defaults to the bare name of the resource
-  class (without a package name). (XML equivalent \verb|<NAME>|)
+  class (without a package name).
 \item[comment] (String) a descriptive comment about the resource, which will
   appear as the tooltip when hovering over an instance of this
   resource in the resources tree in GATE Developer.  If omitted, no
-  comment is used. (XML equivalent \verb|<COMMENT>|)
+  comment is used.
 \item[helpURL] (String) a URL to a help document on the web for this
-  resource. It is used in the help browser inside GATE Developer. (XML
-  equivalent \verb|<HELPURL>|)
+  resource. It is used in the help browser inside GATE Developer.
 \item[isPrivate] (boolean) should this resource type be hidden from the GATE Developer GUI, so
   it does not appear in the `New' menus?  If omitted, defaults to
-  false (i.e.  not hidden). (XML equivalent \verb|<PRIVATE/>|)
+  false (i.e.  not hidden).
 \item[icon] (String) the icon to use to represent the resource in GATE Developer.
   If omitted, a generic language resource or processing resource icon
-  is used.  (XML equivalent \verb|<ICON>|, see the description above
-  for details)
+  is used. The value of this element can be:
+  \begin{itemize}
+  \item a plain name such as ``Application'', which is prepended with the
+    package name {\tt gate.resources.img.svg.} and the suffix ``Icon'', which is
+    assumed to be a Java class implementing {\tt javax.swing.Icon}.  GATE
+    provides a collection of these icon classes which are generated from SVG
+    files and are fully scalable for high-DPI monitors.
+  \item a path to an image file inside the plugin's JAR, starting with a
+    forward slash, e.g. \verb|/myplugin/images/icon.png|
+  \end{itemize}
 \item[interfaceName] (String) the interface type implemented by this resource,
   for example a new type of document would specify \verb|"gate.Document"| here.
-  (XML equivalent \verb|<INTERFACE>|)
+\item[tool] (boolean) is this resource type a tool?  The ``tool'' flag
+  identifies things like resource helpers and resources that contribute items
+  to the tools menu in GATe Developer.
 \item[autoInstances] (array of {\tt @AutoInstance} annotations) definitions for
   any instances of this resource that should be created automatically when the
-  plugin is loaded.  If omitted, no auto-instances are created by default. (XML
-  equivalent, one or more \verb|<AUTOINSTANCE>| and/or
-  \verb|<HIDDEN-AUTOINSTANCE>| elements, see the description above for details)
-\item[tool] (boolean) is this resource type a tool?
+  plugin is loaded.  If omitted, no auto-instances are created by default.
+  Auto-instances are useful for things like document formats and tools which
+  contribute behaviour to other GATE resources, and which should be available
+  by default whenever the plugin is loaded.
 \end{description}
 
 For visual resources only, the following elements are also available:
 \begin{description}
 \item[guiType] (GuiType enum) the type of GUI this resource defines.
-  (XML equivalent \verb~<GUI TYPE="LARGE|SMALL">~)
+  The options are LARGE (the VR should appear in the main right-hand panel of
+  the GUI) or SMALL (the VR should appear in the bottom left hand corner
+  below the resources tree).
 \item[resourceDisplayed] (String) the class name of the resource type that this
-  VR displays, e.g. \verb|"gate.Corpus"|. (XML equivalent
-  \verb|<RESOURCE_DISPLAYED>|)
+  VR displays, e.g. \verb|"gate.Corpus"|. Any resource whose type is assignable
+  to this type will be displayed with this viewer, so for example a VR that can
+  display all types of document would specify \verb|gate.Document|, whereas a
+  VR that can only display the default GATE document implementation would
+  specify \verb|gate.corpora.DocumentImpl|.
 \item[mainViewer] (boolean) is this VR the `most important' viewer for its
-  displayed resource type? (XML equivalent \verb|<MAIN_VIEWER/>|, see above for
-  details)
+  displayed resource type? If there are several different viewers that are all
+  applicable to a particular resource type, the {\tt mainViewer} hint helps
+  GATE Developer decide which one should be initially visible as the selected
+  tab.
 \end{description}
 
 For annotation viewers, you should specify an
@@ -812,41 +557,56 @@ The parameter name is \emph{not} taken from the name of the method parameter.
 The parameter's type is inferred from the type of the method parameter
 ({\tt java.net.URL} in this case).
 
-The annotation elements of \verb|@CreoleParameter| correspond to the attributes
-of the \verb|<PARAMETER>| tag in the XML configuration style:
+The annotation elements of \verb|@CreoleParameter| are as follows:
 \begin{description}
 \item[comment] (String) an optional descriptive comment about the parameter.
-  (XML equivalent \verb|COMMENT|)
 \item[defaultValue] (String) the optional default value for this parameter.
   The value is specified as a string but is converted to the relevant type by
-  GATE according to the conversions described in the previous section.  Note
-  that relative path default values for URL-valued parameters are still
-  relative to the location of the {\tt creole.xml} file, not the annotated
-  class\footnote{When registering a class using {\tt
-  CreoleRegister.registerComponent} the base URL against which defaults for URL
-  parameters are resolved is not specified.  In such a resource it may be
-  better to use {\tt Class.getResource} to construct the default URLs if no
-  value is supplied for the parameter by the user.}.  (XML equivalent
-  \verb|DEFAULT|)
-\item[suffixes] (String) for URL-valued parameters, a semicolon-separated list
-  of default file suffixes that this parameter accepts. (XML equivalent
-  \verb|SUFFIXES|)
+  GATE according to the conversions described below.
+\item[suffixes] (String) for parameters of type URL or ResourceReference, a
+  semicolon-separated list of default file suffixes that this parameter accepts.
 \item[collectionElementType] (Class) for {\tt Collection}-valued parameters,
   the type of the elements in the collection.  This can usually be inferred
   from the generic type information, for example
   \verb|public void setIndices(List<Integer> indices)|, but must be specified
   if the {\tt set} method's parameter has a raw (non-parameterized) type.
-  (XML equivalent \verb|ITEM_CLASS_NAME|)
 \end{description}
 
-Mutually-exclusive parameters (such as would be grouped in an \verb|<OR>| in
-{\tt creole.xml}) are handled by adding a {\tt disjunction="{\it label}"} and
-{\tt priority={\it n}} to the \verb|@CreoleParameter| annotation -- all
-parameters that share the same label are grouped in the same disjunction, and
-will be offered in order of priority.  The parameter with the smallest priority
-value will be the one listed first, and thus the one that is offered initially
-when creating a resource of this type in GATE Developer.  For example, the
-following is a simplified extract from {\tt gate.corpora.DocumentImpl}:
+Parameter default values must be specified as strings, but parameters can be of
+any type and GATE applies the following rules to convert the default string
+into an appropriate value for the parameter type:
+
+\begin{description}
+\item[String] if the parameter is of type String the default value is used
+  directly
+\item[Primitive wrapper types e.g. Integer] the string is passed to the
+  relevant {\tt valueOf} method
+\item[{\tt enum} types] the value is passed to {\tt Enum.valueOf}
+\item[{\tt java.net.URL} or {\tt gate.creole.ResourceReference}] the string is
+  parsed as a URI, and if the URI is relative then it is resolved against the
+  plugin (for directory-style plugins this means against the location of {\tt
+  creole.xml} and for Maven plugins it is the root of the plugin JAR file)
+\item[collection types (Set, List, etc.)] the string is treated as a
+  semicolon-separated list of values, and each value is converted to the
+  collection's element type following these same rules.
+\item[{\tt gate.FeatureMap}] the string is parsed as
+  ``feature1=value1;feature2=value2'' etc. (a semicolon-separated list of
+  ``name=value'' pairs)
+\item[any other {\tt java.*} type] if the type has a constructor taking a
+  String then that constructor is called with the default string as its
+  parameter.
+\end{description}
+
+If there is no default specified, the default value is {\tt null}.
+
+Mutually-exclusive parameters are handled by adding a {\tt disjunction="{\it
+label}"} and {\tt priority={\it n}} to the \verb|@CreoleParameter| annotation
+-- all parameters that share the same label are grouped in the same
+disjunction, and will be offered in order of priority.  The parameter with the
+smallest priority value will be the one listed first, and thus the one that is
+offered initially when creating a resource of this type in GATE Developer.  For
+example, the following is a simplified extract from
+{\tt gate.corpora.DocumentImpl}:
 
 \begin{lstlisting}
 @CreoleParameter(disjunction="src", priority=1)
@@ -874,11 +634,16 @@ Optional and runtime parameters are marked using extra annotations, for example:
     ...
 \end{lstlisting}
 
+Runtime parameters apply only to Processing Resources, and are parameters that
+are not used when the resource is initialised but instead only when it is
+executed.  An ``optional'' parameter is one that does not have to be set
+before creating or executing the resource.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsect{Inheritance}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Unlike with pure XML configuration, when using annotations a resource
+A resource
 will inherit any configuration data that was not explicitly specified
 from annotations on its parent class and on any interfaces it
 implements.  Specifically, if you do not specify a comment,
@@ -893,12 +658,7 @@ a family of related resources that inherit from a common base class.
 The resource name and the {\tt isPrivate} and {\tt mainViewer} flags are
 \emph{not} inherited.
 
-Parameter definitions are inherited in a similar way.  This is one of the big
-advantages of annotation configuration over pure XML -- if one resource class
-extends another then with pure XML configuration all the parent class's
-parameter definitions must be duplicated in the subclass's {\tt creole.xml}
-definition.  With annotations, parameters are inherited from the parent class
-(and its parent, etc.) as well as from any interfaces implemented.  For
+Parameter definitions are inherited in a similar way.  For
 example, the {\tt gate.LanguageAnalyser} interface provides two parameter
 definitions via annotated {\tt set} methods, for the {\tt corpus} and
 {\tt document} parameters.  Any \verb|@CreoleResource| annotated class that
@@ -958,158 +718,21 @@ trivially overriding the {\tt set} method and re-annotating it:
 
 Note that for backwards compatibility, data is only inherited from superclass
 annotations if the subclass is itself annotated with \verb|@CreoleResource|.
-If the subclass is not annotated then GATE assumes that \emph{all} its
-configuration is contained in {\tt creole.xml} in the usual way.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsect[sec:creole-model:config:mixed]{Mixing the Configuration Styles}
+\subsect[sec:creole-model:config:dependencies]{Loading Third-Party Libraries in a Maven plugin}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-It is possible and often useful to mix and match the XML and annotation-driven
-configuration styles.  The rule is always that \emph{anything specified in the
-XML takes priority over the annotations}.  The following examples show what
-this allows.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsect{Overriding Configuration for a Third-Party Resource}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-Suppose you have a plugin from some third party that uses annotation-driven
-configuration.  You don't have the source code but you would like to override
-the default value for one of the parameters of one of the plugin's resources.
-You can do this in the {\tt creole.xml}:
-\begin{small}\begin{verbatim}
-<CREOLE-DIRECTORY>
-  <JAR SCAN="true">acmePlugin-1.0.jar</JAR>
-
-  <!-- Add the following to override the annotations -->
-  <RESOURCE>
-    <CLASS>com.acme.plugin.UsefulPR</CLASS>
-    <PARAMETER NAME="listUrl"
-      DEFAULT="resources/myList.txt">java.net.URL</PARAMETER>
-  </RESOURCE>
-</CREOLE-DIRECTORY>
-\end{verbatim}\end{small}
-
-The default value for the {\tt listUrl} parameter in the annotated class will
-be replaced by your value.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsect{External AUTOINSTANCEs}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-For resources like document formats, where there should always and only be one
-instance in GATE at any time, it makes sense to put the auto-instance
-definitions in the \verb|@CreoleResource| annotation.  But if the automatically
-created instances are a convenience rather than a necessity it may be better
-to define them in XML so other users can disable them without re-compiling the
-class:
-\begin{small}\begin{verbatim}
-<CREOLE-DIRECTORY>
-  <JAR SCAN="true">myPlugin.jar</JAR>
-
-  <RESOURCE>
-    <CLASS>com.acme.AutoPR</CLASS>
-    <AUTOINSTANCE>
-      <PARAM NAME="type" VALUE="Sentence" />
-    </AUTOINSTANCE>
-    <AUTOINSTANCE>
-      <PARAM NAME="type" VALUE="Paragraph" />
-    </AUTOINSTANCE>
-  </RESOURCE>
-</CREOLE-DIRECTORY>
-\end{verbatim}\end{small}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsect{Inheriting Parameters}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-If you would prefer to use XML configuration for your own resources, but would
-like to benefit from the parameter inheritance features of the
-annotation-driven approach, you can write a normal {\tt creole.xml} file with
-all your configuration and just add a blank \verb|@CreoleResource| annotation
-to your class.  For example:
-\begin{lstlisting}
-package com.acme;
-import gate.*;
-import gate.creole.metadata.CreoleResource;
-
-@CreoleResource
-public class MyPR implements LanguageAnalyser {
-  ...
-}
-\end{lstlisting}
-
-\begin{small}\begin{verbatim}
-<!-- creole.xml -->
-<CREOLE-DIRECTORY>
-  <CREOLE>
-    <RESOURCE>
-      <NAME>My Processing Resource</NAME>
-      <CLASS>com.acme.MyPR</CLASS>
-      <COMMENT>...</COMMENT>
-      <PARAMETER NAME="annotationSetName"
-        RUNTIME="true" OPTIONAL="true">java.lang.String</PARAMETER>
-      <!--
-      don't need to declare document and corpus parameters, they
-      are inherited from LanguageAnalyser
-      -->
-    </RESOURCE>
-  </CREOLE>
-</CREOLE-DIRECTORY>
-\end{verbatim}\end{small}
-
-N.B. Without the \verb|@CreoleResource| the parameters would not be inherited.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsect[sec:creole-model:config:ivy]{Loading Third-Party Libraries using Apache Ivy}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-With ``simple'' plugins most of the code is contained in a single jar or relies
-on just one or two thrid-party libraries which are easy to enumerate within
-{\tt creole.xml} in order for them to be loaded into GATE when the plugin is
-loaded. More complex plugins can, however, rely on a large number of third-party
-libraries, each of which may have it's own dependencies. In an attempt to
-simplify the management of third-party libraries, within CREOLE plugins,
-\htlink{http://ant.apache.org/ivy/}{Apache Ivy} can be used to specify the
+A Maven plugin is distributed as a single JAR file, but if the plugin depends
+on any third-party libraries these can be specified as dependencies in the
+corresponding POM file in the usual Maven way as compile or runtime scoped
 dependencies.
 
-No attempt is made here to explain the workings of Ivy or the format of
-the {\tt ivy.xml} file. For full details you should refer to the
-\htlink{http://ant.apache.org/ivy/history/latest-milestone/ivyfile.html}{approprioate 
-section of the Ivy manual}.
-
-Incorporating an Ivy file within a CREOLE plugin is as simple as referencing
-it from within {\tt creole.xml}. Assumuing you have used the default filename
-of {\tt ivy.xml} then you can reference it via a simple \verb|<IVY>| element.
-
-\begin{small}\begin{verbatim}
-<CREOLE-DIRECTORY>
-  <JAR SCAN="true">myPlugin.jar</JAR>
-  <IVY/>
-</CREOLE-DIRECTORY>
-\end{verbatim}\end{small}
-
-If you have used an alternative filename then you can specify it as the text
-content of the \verb|<IVY>| element. For example, if the filename is {\tt plugin-ivy.xml}
-you would reference it as follows:
-
-\begin{small}\begin{verbatim}
-<CREOLE-DIRECTORY>
-  <JAR SCAN="true">myPlugin.jar</JAR>
-  <IVY>plugin-ivy.xml</IVY>
-</CREOLE-DIRECTORY>
-\end{verbatim}\end{small}
-
-When the plugin is loaded into GATE Ivy resolves the dependencies, downloads the
-appropriate libraries (if necessary) and then makes them available to the plugin.
-Once the plugin is loaded it behaves exactly the same as any other plugin.
-
-Note that if you export an application (see Section \ref{sec:developer:export})
-then to ensure that it is self-contained and useable within any processing
-environment the Ivy based dependencies are expanded; the libraries are
-downloaded into the plugin's lib folder, appropriate entires are added to
-{\tt creole.xml} and the \verb|<IVY>| element is removed.
+If one plugin has a \emph{compile-time} dependency on another (as opposed to
+simply a runtime dependency when one plugin creates resources defined in
+another) then you should specify the dependency in your POM as
+\verb|<scope>provided</scope>| as well as declaring it in {\tt creole.xml} with
+group/artifact/version.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \sect[sec:creole-model:tools]{Tools: How to Add Utilities to GATE Developer}
@@ -1123,9 +746,8 @@ Groovy console (provided by the \verb|Groovy| plugin), both of which are
 self-contained tools that display in their own top-level window.  To support
 this, the CREOLE model has the concept of a {\em tool}.
 
-A resource type is marked as a tool by using the \verb|<TOOL/>| element in its
-\verb|creole.xml| definition, or by setting \verb|tool = true| if using the
-@CreoleResource annotation configuration style.  If a resource is declared to
+A resource type is marked as a tool by setting \verb|tool = true| in the
+@CreoleResource annotation.  If a resource is declared to
 be a tool, and written to implement the \verb|gate.gui.ActionsPublisher|
 interface, then whenever an instance of the resource is created its published
 actions will be added to the ``Tools'' menu in GATE Developer.
@@ -1173,7 +795,7 @@ A Resource Helper is defined in the same way as a Tool (by setting the
 autoinstance definition) but must also extend the \verb|gate.gui.ResourceHelper|
 class. A Resource Helper can then return a set of actions for a given resource
 which will be added to its right-click menu. See the \verb|FastInfosetExporter|
-resource in the \verb|Format_FastInfoset| plugin for an example of how this works.
+resource in the ``Format: FastInfoset'' plugin for an example of how this works.
 
 A Resource Helper may also make new API calls accessable to allow similar
 functionality to be made available to GATE Embedded, see Section
