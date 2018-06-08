@@ -1627,9 +1627,9 @@ GATE Embedded provides helper classes to allow GATE resources to be created and
 managed by the \htlink{http://www.springframework.org}{Spring framework}.
 These helpers are provided by the
 \htlink{https://mvnrepository.com/artifact/uk.ac.gate/gate-spring}{gate-spring}
-module, which must be added as a dependency of your project alongside
-\verb!gate-core!.  To use the helpers in an XML bean definition file, add the
-following declarations to the top:
+module, which must be added as a dependency of your project (and which in turn
+depends on \verb!gate-core!).  To use the helpers in an XML bean definition
+file, add the following declarations to the top:
 \begin{small}\begin{verbatim}
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:gate="http://gate.ac.uk/ns/spring"
@@ -1881,9 +1881,13 @@ The machinery to implement this is all built into Spring, but the configuration
 typically required to enable it is quite fiddly, involving at least three
 co-operating bean definitions.  Since the technique is so useful with GATE
 Embedded, GATE provides a special syntax to configure pooling in a simple way.
-Given the \verb|<gate:duplicate id="theApp">| definition from the previous
-section we can create a \verb|DocumentProcessor| proxy that can handle up to
-five concurrent requests as follows:
+
+To use Spring pooling, you need to add a dependency to your project on
+an appropriate version of \verb!org.apache.commons:commons-pool2! or
+\verb!commons-pool:commons-pool!\footnote{Spring 5 no longer supports
+commons-pool version 1}.  Now, given the \verb|<gate:duplicate id="theApp">|
+definition from the previous section we can create a \verb|DocumentProcessor|
+proxy that can handle up to five concurrent requests as follows:
 \begin{small}\begin{verbatim}
 <bean id="processor"
     class="gate.util.LanguageAnalyserDocumentProcessor">
@@ -1916,14 +1920,15 @@ element, the most important ones being:
 %
 Any of these attributes can make use of the usual \verb!${...}! property
 placeholder mechanism.  Many more options are available, corresponding to the
-properties of the underlying Spring TargetSource in use (by default
-CommonsPoolTargetSource).  These allow you, for example, to configure a pool
-that dynamically grows and shrinks as necessary, releasing objects that have
-been idle for a set amount of time.  See the
+properties of the underlying Spring TargetSource in use (by default, a slightly
+customised subclass of CommonsPool2TargetSource or CommonsPoolTargetSource,
+depending which version of commons-pool you depend on).  These allow you, for
+example, to configure a pool that dynamically grows and shrinks as necessary,
+releasing objects that have been idle for a set amount of time.  See the
 \htlink{http://static.springsource.org/spring/docs/2.0.x/api/org/springframework/aop/target\-/CommonsPoolTargetSource.html}%
 {JavaDoc documentation of CommonsPoolTargetSource} (and the documentation for
 Apache commons-pool) for full details.  If you wish to use a different
-\verb|TargetSource| implementation from the default CommonsPoolTargetSource,
+\verb|TargetSource| implementation from the default
 you can provide a \verb|target-source-class| attribute with the fully-qualified
 class name of the class you wish to use (which must, of course, implement the
 TargetSource interface).
@@ -1936,7 +1941,7 @@ GATE.
 \subsect[sec:api:spring:furtherreading]{Further reading}
 
 These custom elements all define various factory beans.  For full details, see
-the JavaDocs for \texttt{\htlink{https://jenkins.gate.ac.uk/job/gate-components/job/gate-spring/job/master/javadoc/index.html}{the gate-spring module}}.
+the JavaDocs for \texttt{\htlink{https://jenkins.gate.ac.uk/job/gate-components/job/gatelib-spring/job/master/javadoc/index.html}{the gate-spring module}}.
 The main Spring framework API documentation is the best place to look for more
 detail on the pooling facilities provided by Spring AOP.
 
