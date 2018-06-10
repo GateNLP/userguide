@@ -198,6 +198,16 @@
   \renewcommand{\htlatex}[1]{}
 \fi
 
+%%% JavaDoc links adapting to the GATE version
+\ifgaterelease
+  % releases point to javadoc.io
+  \newcommand{\javadoctop}[1]{\htlink{https://javadoc.io/doc/uk.ac.gate/gate-core/\gateversion}{#1}}
+  \newcommand{\javadoclink}[2]{\htlink{https://javadoc.io/page/uk.ac.gate/gate-core/\gateversion/#1}{#2}}
+\else
+  % snapshots point to jenkins
+  \newcommand{\javadoctop}[1]{\htlink{https://jenkins.gate.ac.uk/job/gate-core/javadoc/index.html}{#1}}
+  \newcommand{\javadoclink}[2]{\htlink{https://jenkins.gate.ac.uk/job/gate-core/javadoc/#1}{#2}}
+\fi
 
 \typeout{******** END TeX4HT ********}
 
