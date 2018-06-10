@@ -284,9 +284,9 @@ The GCP (GATE Cloud Paralleliser) process is configured for 'headless' operation
 display is available.
 
 GCP loads one copy of your \verb!application.xgapp! in the
-\htlink{http://jenkins.gate.ac.uk/job/GATE-Nightly/javadoc/gate/util/persistence/\-PersistenceManager.html\#loadObjectFromFile\-\%28java.io.File\%29}{usual way}
+\javadoclink{gate/util/persistence/\-PersistenceManager.html\#loadObjectFromFile\-\%28java.io.File\%29}{usual way}
 using the PersistenceManager.  It then uses the GATE
-\htlink{http://jenkins.gate.ac.uk/job/GATE-Nightly/javadoc/gate/Factory.html\#duplicate\-\%28gate.Resource\%29}
+\javadoclink{gate/Factory.html\#duplicate\-\%28gate.Resource\%29}
 {duplication mechanism}
 to make a further 5 independent copies of the loaded application, and runs 6
 parallel threads to process your documents.  For most PRs this duplication
