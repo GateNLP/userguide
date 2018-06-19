@@ -15,7 +15,7 @@
 \nnormalsize
 
 To develop high-performance language processing applications, you need training
-data.  Traditionally that means recruiting a small team of experts in your
+data. Traditionally that means recruiting a small team of experts in your
 chosen domain, then several iterations developing annotation guidelines,
 training your annotators, doing a test run, examining the results, refining the
 guidelines until you reach an acceptable level of inter-annotator agreement,
@@ -23,7 +23,7 @@ letting the annotators loose on the full corpus, cross-checking their
 results\ldots  Clearly this can be a time-consuming and expensive process.
 
 An alternative approach for some annotation tasks is to \emph{crowdsource} some
-or all of your training data.  If the task can be defined tightly enough and
+or all of your training data. If the task can be defined tightly enough and
 broken down into sufficiently small self-contained chunks, then you can take
 advantage of services such as Amazon Mechanical
 Turk\footnote{\htlinkplain{https://www.mturk.com/}} to farm out the tasks to a
@@ -49,31 +49,31 @@ main types of crowdsourcing task:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \sect[sec:crowd:basics]{The Basics}
 
-The GATE crowdsourcing tools are based on the \emph{CrowdFlower}
-platform\footnote{\htlinkplain{http://crowdflower.com}}.  To get the most out
-of the GATE tools it is first necessary to understand a few pieces of
-CrowdFlower terminology.
+The GATE crowdsourcing tools are based on the \emph{Figure Eight}
+platform\footnote{\htlinkplain{http://figure-eight.com}} (formerly
+known as CrowdFlower).  To get the most out of the GATE tools it is
+first necessary to understand a few pieces of Figure Eight terminology.
 
 \begin{itemize}
 \item a \emph{job} is the container which represents a single end-to-end
   crowdsourcing process.  It defines the input form you want to present to your
   workers, and holds a number of units of work.
 \item a \emph{unit} is a single item of work, i.e. a single snippet (for
-  annotation jobs) or a single entity (for classification jobs).  CrowdFlower
+  annotation jobs) or a single entity (for classification jobs).  Figure Eight
   presents several units at a time to the user as a single \emph{task}, and
   users are paid for each task they successfully complete.
 \item a \emph{gold} unit is one where the correct answer is already known in
   advance.  Gold units are the basis for determining whether a task has been
-  completed ``successfully'' -- when a job includes gold units, CrowdFlower
+  completed ``successfully'' -- when a job includes gold units, Figure Eight
   includes one gold unit in each task but does not tell the user which one it
   is, and if they get the gold unit wrong then the whole task is disregarded.
-  You can track users' performance through the CrowdFlower platform and ignore
+  You can track users' performance through the Figure Eight platform and ignore
   results from users who get too many gold units wrong.
 \end{itemize}
 
-CrowdFlower provides a web interface to build jobs in a browser, and also a
+Figure Eight provides a web interface to build jobs in a browser, and also a
 REST API for programmatic access.  The GATE tools use the REST API, so you will
-need to sign up for a CrowdFlower account and generate an API key which you
+need to sign up for a Figure Eight account and generate an API key which you
 will use to configure the various processing resources.
 
 To access the GATE crowdsourcing tools, you must first load the
@@ -104,10 +104,10 @@ available for every annotation, such as ``none of the above'').
 
 To start a new classification job, first load the \verb!Crowd_Sourcing! plugin,
 then create a new instance of the ``Entity Classification Job Builder'' PR.
-The PR requires your CrowdFlower API key as an init-time parameter.
+The PR requires your Figure Eight API key as an init-time parameter.
 
 Right-clicking on the newly-created PR in the resources tree will offer the
-option to ``Create a new CrowdFlower job'', which presents a dialog to
+option to ``Create a new Figure Eight job'', which presents a dialog to
 configure the settings of the new job (see
 figure~\ref{fig:crowd:new-classification-job}).  The available options are as
 follows:
@@ -152,14 +152,14 @@ follows:
   instructions to explain the common options.
 \end{description}
 
-Clicking ``OK'' will make calls to the CrowdFlower REST API to create a job
+Clicking ``OK'' will make calls to the Figure Eight REST API to create a job
 with the given settings, and store the resulting job ID so the PR can be used
 to load units into the job.
 
 \subsect[sec:crowd:classification:data]{Loading data into a job}
 
 When added to a corpus pipeline application, the PR will read annotations from
-documents and use them to create units of work in the CrowdFlower job.  It is
+documents and use them to create units of work in the Figure Eight job.  It is
 highly recommended that you store your documents in a persistent corpus in a
 serial datastore, as the PR will add additional features to the source
 annotations which can be used at a later date to import the results of the
@@ -180,7 +180,7 @@ The job builder PR has a few runtime parameters:
   than one context annotation that covers an entity (e.g. HTML \verb!div! tags
   that are nested) then the shortest annotation from among the alternatives
   will be the one chosen.
-\item[jobId] the unique identifier of the CrowdFlower job that is to be
+\item[jobId] the unique identifier of the Figure Eight job that is to be
   populated.  This parameter is filled in automatically when you create a job
   with the dialog described above.
 \item[skipExisting] if true (the default), entity annotations that already have
@@ -254,7 +254,7 @@ can use the ``Entity Classification Results Importer'' PR to turn those
 judgments back into GATE annotations in your original documents.
 
 As with the job builder, the results importer PR has just one initialization
-parameter, which is your CrowdFlower API key, and the following runtime
+parameter, which is your Figure Eight API key, and the following runtime
 parameters:
 \begin{description}
 \item[entityASName/entityAnnotationType] the annotation set and type
@@ -265,11 +265,11 @@ parameters:
   created.
 \item[answerFeatureName] (default ``answer'') the name of the feature on each
   result annotation that will represent the answer selected by the annotator.
-\item[jobId] the ID of the CrowdFlower job whose results are being imported
+\item[jobId] the ID of the Figure Eight job whose results are being imported
   (copy the value from the corresponding job builder PR).
 \end{description}
 
-When run, the results importer PR will call the CrowdFlower REST API to
+When run, the results importer PR will call the Figure Eight REST API to
 retrieve the list of judgments for each unit in turn, and then create one
 annotation of the target type in the target annotation set (as configured by
 the ``result'' runtime parameters) for each judgment -- so if your job required
@@ -279,12 +279,12 @@ entity annotation).  Each generated annotation will have the following
 features:
 \begin{description}
 \item[cf\_judgment] the ``judgment ID'' -- the unique identifier assigned to
-  this judgment by CrowdFlower.
-\item[worker\_id] the CrowdFlower identifier for the worker who provided this
+  this judgment by Figure Eight.
+\item[worker\_id] the Figure Eight identifier for the worker who provided this
   judgment.  There is no way to track this back directly to a specific human
   being, but it is guaranteed that two judgments with the same worker ID were
   performed by the same person.
-\item[trust] the worker's ``trust score'' assigned by CrowdFlower based on the
+\item[trust] the worker's ``trust score'' assigned by Figure Eight based on the
   proportion of this job's gold units they answered correctly.  The higher the
   score, the more reliable this worker's judgments.
 \item[comment] the contents of the free-text comment field supplied by the
@@ -305,7 +305,7 @@ annotations for judgments that have already been processed.
 
 \subsect[sec:crowd:classification:adjudication]{Automatic adjudication}
 
-Once you have imported the human judgments from CrowdFlower back into GATE
+Once you have imported the human judgments from Figure Eight back into GATE
 annotations, a common next step is to take the multiply-annotated entities and
 attempt to build a single ``consensus'' set of the classifications where enough
 of the annotators agree.  The simplest form of automatic adjudication is the
@@ -370,7 +370,7 @@ is determined by the \emph{noAgreementAction} parameter:
 \end{description}
 
 In the \emph{reAnnotateByCrowd} case, the resulting entity annotations are
-suitable to be imported into CrowdFlower again for another round of
+suitable to be imported into Figure Eight again for another round of
 crowdsourced annotation, but this time highly ambiguous entities have a smaller
 set of choices that will be presented to the workers.
 
@@ -399,10 +399,10 @@ suitable for crowdsourcing:
 
 To start a new annotation job, first load the \verb!Crowd_Sourcing! plugin,
 then create a new instance of the ``Entity Annotation Job Builder'' PR.
-The PR requires your CrowdFlower API key as an init-time parameter.
+The PR requires your Figure Eight API key as an init-time parameter.
 
 Right-clicking on the newly-created PR in the resources tree will offer the
-option to ``Create a new CrowdFlower job'', which presents a dialog to
+option to ``Create a new Figure Eight job'', which presents a dialog to
 configure the settings of the new job (see
 figure~\ref{fig:crowd:new-annotation-job}).  The available options are as
 follows:
@@ -456,14 +456,14 @@ are presented to users.
 \end{figure}
 
 
-Clicking ``OK'' will make calls to the CrowdFlower REST API to create a job
+Clicking ``OK'' will make calls to the Figure Eight REST API to create a job
 with the given settings, and store the resulting job ID so the PR can be used
 to load units into the job.
 
 \subsect[sec:crowd:annotation:data]{Loading data into a job}
 
 When added to a corpus pipeline application, the PR will read annotations from
-documents and use them to create units of work in the CrowdFlower job.  It is
+documents and use them to create units of work in the Figure Eight job.  It is
 highly recommended that you store your documents in a persistent corpus in a
 serial datastore, as the PR will add additional features to the source
 annotations which can be used at a later date to import the results of the
@@ -508,7 +508,7 @@ The job builder PR has a few runtime parameters:
   \emph{not} contain annotations the reason should explain why (e.g. ``this
   text is a list of navigation links'').  Any user who gets this gold unit
   wrong will see the reason as feedback.
-\item[jobId] the unique identifier of the CrowdFlower job that is to be
+\item[jobId] the unique identifier of the Figure Eight job that is to be
   populated.  This parameter is filled in automatically when you create a job
   with the dialog described above.
 \item[skipExisting] if true (the default), snippet annotations that already have
@@ -533,22 +533,22 @@ can use the ``Entity Annotation Results Importer'' PR to turn those
 judgments back into GATE annotations in your original documents.
 
 As with the job builder, the results importer PR has just one initialization
-parameter, which is your CrowdFlower API key, and the following runtime
+parameter, which is your Figure Eight API key, and the following runtime
 parameters:
 \begin{description}
-\item[jobId] the ID of the CrowdFlower job whose results are being imported
+\item[jobId] the ID of the Figure Eight job whose results are being imported
   (copy the value from the corresponding job builder PR).
 \item[resultASName/resultAnnotationType] the annotation set and type where
   annotations corresponding to the judgments of your annotators should be
   created.  This annotation type \emph{must} be the same as the
   \verb!entityAnnotationType! you specified when creating the job, since the
   ``\texttt{\emph{resultAnnotationType}\_unit\_id}'' feature provides the link
-  between the snippet and its corresponding CrowdFlower unit.
+  between the snippet and its corresponding Figure Eight unit.
 \item[snippetASName/snippetAnnotationType] the annotation set and type
   containing the snippets whose results are to be imported.  Each snippet
   annotation must have an appropriate unit ID feature.
 \item[tokenASName/tokenAnnotationType] the annotation set and type representing
-  tokens.  The encoding of results from CrowdFlower is based on the order of
+  tokens.  The encoding of results from Figure Eight is based on the order of
   the tokens within each snippet, so it is imperative that the tokens used to
   import the results are the same as those used to create the units in the
   first place (or at least, that there are the same \emph{number} of tokens
@@ -558,7 +558,7 @@ parameters:
   into a single spanning annotation?
 \end{description}
 
-When run, the results importer PR will call the CrowdFlower REST API to
+When run, the results importer PR will call the Figure Eight REST API to
 retrieve the list of judgments for each unit in turn, and then create
 annotations of the target type in the target annotation set (as configured by
 the ``result'' runtime parameters) for each judgment, matching the tokens that
@@ -570,12 +570,12 @@ annotated independently.  Each generated annotation will have the following
 features:
 \begin{description}
 \item[cf\_judgment] the ``judgment ID'' -- the unique identifier assigned to
-  this judgment by CrowdFlower.
-\item[worker\_id] the CrowdFlower identifier for the worker who provided this
+  this judgment by Figure Eight.
+\item[worker\_id] the Figure Eight identifier for the worker who provided this
   judgment.  There is no way to track this back directly to a specific human
   being, but it is guaranteed that two judgments with the same worker ID were
   performed by the same person.
-\item[trust] the worker's ``trust score'' assigned by CrowdFlower based on the
+\item[trust] the worker's ``trust score'' assigned by Figure Eight based on the
   proportion of this job's gold units they answered correctly.  The higher the
   score, the more reliable this worker's judgments.
 \item[comment] the contents of the free-text comment field supplied by the
@@ -590,7 +590,7 @@ annotations for judgments that have already been processed.
 
 \subsect[sec:crowd:annotation:adjudication]{Automatic adjudication}
 
-Once you have imported the human judgments from CrowdFlower back into GATE
+Once you have imported the human judgments from Figure Eight back into GATE
 annotations, a common next step is to take the multiply-annotated entities and
 attempt to build a single ``consensus'' set of the annotations where enough
 of the annotators agree.  The simplest form of automatic adjudication is the
