@@ -728,8 +728,23 @@ this after loaded in GATE Developer:
 
 {\tt This is a title This is a paragraph Here is an useful link}
 
-There are cases when these words are meant to be joined, but they
-are rare. This is why it's an open problem.
+There are cases when these words are meant to be joined, but they are rare. This
+is why it's an open problem.  If you need to disable these spaces in GATE
+Developer, select \emph{Options}, \emph{Configuration}, and then the
+\emph{Advanced} tab in the configuration dialog; untick the box beside \emph{Add
+  space on markup unpack if needed}.  You can re-enable the spaces later if you
+wish.  This option will persist between sessions if \emph{Save options on exit}
+(in the same dialog) is turned on.
+
+Programmatically, this can be controlled with the following code:
+%
+\begin{verbatim}
+Gate.getUserConfig().put(GateConstants.DOCUMENT_ADD_SPACE_ON_UNPACK_FEATURE_NAME,
+enabled);
+\end{verbatim}
+%
+where \texttt{enabled} is a \texttt{boolean} or \texttt{Boolean}.
+
 
 The extensions associate with the XML reader are:
 \begin{itemize}
