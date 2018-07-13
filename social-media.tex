@@ -54,9 +54,6 @@ document.  The format analyser can handle multiple Tweets in one file,
 represented as any of:
 \begin{itemize}
 \item a top-level JSON array \verb![{...},{...}]!
-\item a top-level JSON object containing properties ``search\_metadata'' and
-  ``statuses'', where the ``statuses'' property is an array of Tweets (this is
-  the format returned by a call to Twitter's ``search'' API)
 \item or simply concatenated together, optionally with white space or newline
   characters between adjacent objects (this is the format returned by Twitter's
   streaming APIs).
@@ -68,62 +65,17 @@ files whose names end in ``\verb!.json!''; otherwise you need to specify
 both when directly creating a single new GATE document and when populating a
 corpus.
 
-Each tweet object's \verb!text! value is converted into the document
-content\footnote{HTML entity references \texttt{\&amp;}, \texttt{\&lt;} and
-\texttt{\&gt;} are decoded into the corresponding characters},
-which is covered with a \emph{Tweet} annotations whose features represent
-(recursively when appropriate, using \emph{Map} and \emph{List}) all the other
-key-value pairs in the tweet object.  \textbf{Note:} these recursive values are
-difficult to work with in JAPE; the special corpus population tool described
-next allows important key-sequences to be ``brought up'' to the document content
-and the top level of the annotation features.  Any entities described by the
-standoff markup ``entities'' JSON property will be converted into their
-corresponding GATE annotations (see below for details).
+Each top level tweet is loaded into a GATE document and covered with a Tweet annotation.
+Each of the tweets it contains (retweets, quoted tweets etc. are then added to the document
+and covered with a TweetSegment annotation\footnote{HTML entity references \texttt{\&amp;}, \texttt{\&lt;} and
+\texttt{\&gt;} are decoded into the corresponding characters}. Each TweetSegment annotation has three features
+textPath, entitiesPath, and tweetType. The latter of these tells you the type of tweet i.e.
+retweet, quoted etc. whereas the first two give the dotted path through the JSON object
+to the fields from which text and entities were extracted to produce that segment.
+All the JSON data is added as nested features on the top level Tweet annotation.
 
 Multiple tweet objects in the same JSON file are separated by blank lines (which
 are not covered by \emph{Tweet} annotations).
-
-As well as the document format parser to load Tweets into a single GATE
-document, the plugin provides a ``Populate from Twitter JSON files'' option on
-the GATE Corpus right-click menu.  Selecting this option bringgs up a dialog
-that allows you to select one or more files of tweets in the Twitter API's JSON
-format and set the following options to populate the corpus.
-%%
-\begin{description}
-\item[Encoding]  The default here is UTF-8 (regardless of your Java default) to
-  conform to Twitter JSON.
-\item[One document per tweet] If this box is ticked (the default), each tweet
-  will produce a separate document.  If not, each {\em input file} will produce
-  one GATE document.
-\item[Annotations for ``entities''] If this box is ticked (the default), any
-  entities described by the standoff markup ``entities'' JSON property will be
-  converted into their corresponding GATE annotations (see below).
-\item[Content keys] The values of these JSON keys are converted into strings and
-  concatenated into each tweet's document content.  Colon-delimited strings
-  specify nested keys, e.g., ``\texttt{user:name}'' will yield the value of the
-  \texttt{name} key in the map that is the value of the \texttt{user} key.
-  Missing key sequences are ignored.  Each span of text will be covered by an
-  annotation whose type is the key sequence.
-\item[Feature keys] The key sequences and values of these JSON keys (where
-  present) are turned into feature names and values on the tweet's main
-  \texttt{Tweet} annotation.
-\item[Save configuration] This button saves the current options in an XML file
-  for re-use later.
-\item[Load configuration] This button sets the options according to a saved XML
-  configuration.
-\end{description}
-%%
-Again, the input can be in any of the three formats discussed above (an array
-of Tweets, a search result, or a stream of concatenated objects).
-Every tweet in the resulting GATE documents is covered by a \texttt{Tweet}
-annotation with features specified by the ``feature keys'' option.  Multiple
-tweets in the same GATE document are separated by a blank line (two newlines).
-
-Corpus population from Twitter JSON files is also accessible programmatically
-when this plugin is loaded, using the public static void method
-\texttt{gate.corpora.twitter.Population.populateCorpus(final Corpus corpus, URL
-  inputUrl, String encoding, List<String> contentKeys, List<String> featureKeys,
-  int tweetsPerDoc, boolean processEntities)}.
 
 \subsect[sec:social:twitter:entities]{Entity annotations in JSON}
 
@@ -136,7 +88,8 @@ gives start and end character offsets of the annotation within the Tweet text.
 
 \begin{verbatim}
 {
-  "text":"@some_user this is a nice #example",
+  ...
+  "full_text":"@some_user this is a nice #example",
   "entities":{
     "user_mentions":[
       {
@@ -155,8 +108,7 @@ gives start and end character offsets of the annotation within the Tweet text.
 }
 \end{verbatim}
 
-Both the single document format parser and the corpus population tool are able
-to convert this structure into GATE annotations.  The entity type (e.g.
+When loaded into GATE the entity type (e.g.
 \verb!user_mentions!) becomes the annotation type, the \verb!indices!  property
 provides the offsets, and the other properties become features of the generated
 annotation.
@@ -174,46 +126,19 @@ compatible with the GATE JSON export mechanism described in the next section.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \sect[sec:social:twitter:export]{Exporting GATE documents as JSON}
 
-Loading the \verb!Format_Twitter! plugin also adds a ``GATE JSON'' option to the
+Loading the \verb!Format_Twitter! plugin also adds a ``Twitter JSON'' option to the
 ``Save as\ldots'' right-click menu on documents and corpora, to export GATE
 documents in the Twitter-style JSON format.  This tool can save a document or
 corpus of documents as a single file where each Tweet in the document or corpus
 is represented as a JSON object, and the set of objects are represented either
 as a single top-level JSON array (\verb![{...},{...}]!) or simply as one object
-per line (as per Twitter's streaming APIs).  This exporter can be used for any
-GATE document, not just for documents that were initially loaded from Twitter
-JSON format, and can be used as a much more compact alternative to GATE XML, or
-as an easy-to-parse interchange format to pass GATE-annotated documents to
-non-GATE tools.
+per line (as per Twitter's streaming APIs).  This exporter can only be used on
+documents loaded from Twitter JSON (or which has the same structure) as it
+relies on the \verb!Tweet! and \verb!TweetSegment! annotations to store the
+information back correctly into the original JSON structure.
 
-The format is the same as Twitter's -- the text becomes a property ``text'' in
-the JSON, and annotations are represented as standoff markup in the
-``entities'' property, which is an object whose keys are annotation types and
-whose corresponding values are arrays of objects representing the annotations.
-
-\begin{figure}[htb]
-  \centering
-  \includegraphics[width=0.8\textwidth]{save-as-json.png}
-  \caption{Options dialog for saving a document or corpus as JSON}
-  \label{fig:social:save-as-json}
-\end{figure}
-
-The available options for the JSON exporter are shown in
-figure~\ref{fig:social:save-as-json}.  In detail, they are:
+The available options for the JSON exporter are:
 \begin{description}
-\item[documentAnnotationASName/documentAnnotationType] the annotation set and
-  type that should be treated as covering each span of text that should be output
-  as a separate JSON object.  By default this is annotations of type ``Tweet'' in
-  the ``Original markups'' set (i.e. the annotations covering individual Tweets
-  parsed by the JSON document format parser or corpus population tool).  If a
-  document contains any annotations of the specified type then one JSON object
-  will be output for each such annotation $X$, with the text and entity
-  annotations constrained to the span of $X$.  In addition, features of $X$
-  will become top-level properties of the resulting JSON object.  Text that is
-  not covered by any such annotation will not be saved.  If there are no
-  document annotations found in a particular document (or if the
-  documentAnnotationType parameter is unset) then the whole of the document
-  text will be output as a single JSON object.
 \item[entitiesAnnotationSetName] the primary annotation set that should be
   scanned for entity annotations.
 \item[annotationTypes] the entity annotation types to output.
