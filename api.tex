@@ -2619,34 +2619,27 @@ classes or use reflection, this can quickly become difficult to manage, and
 rather negates the whole plugin philosophy. Fortunately the Resource Helper
 API makes it easy to access these new features from embedded code.
 
-Here is a complete example showing how a GATE document can be exported using
-the Resource Helper in the Fast Infoset plugin (see Section
-\ref{sec:creole:fastinfoset} for details on Fast Infoset support):
+Here is a pseudo example:
 
 \begin{lstlisting}
-// initialise GATE and load the plugin (which creates an autoinstance of the Resource Helper)
-Gate.init();
-Gate.getCreoleRegister().registerPlugin(new Plugin.Maven(
-      "uk.ac.gate.plugins", "format-fastinfoset", "8.5"));
-
-// get the autoinstance of the Resource Helper
+// get the autoinstance of the Document Format
 ResourceHelper rh =
   (ResourceHelper)Gate.getCreoleRegister()
-    .getAllInstances("gate.corpora.FastInfosetExporter").iterator()
+    .getAllInstances("gate.example.ResourceHelperExample").iterator()
     .next();
 
 // create a simple test document
 Document doc =
   Factory.newDocument("A test of the Resource Handler API access");
 
-// use the Resource Helper to export the document
-rh.call("export", doc, new File("resource-handler-test.finf"));
+// use the Resource Helper to "analyse" the document
+rh.call("analyse", doc);
 \end{lstlisting}
 
 The comments should make the code fairly self-explanatory, but the main feature
-is on line 18 which uses the \lstinline!ResourceHandler.call(String, Resource, Object...)!
+is on line 12 which uses the \lstinline!ResourceHandler.call(String, Resource, Object...)!
 method. This essentially allows you to call a named method of the Resource Helper
-(in the example ``export''), for a given Resource instance (here we are using a
+(in the example ``analyse''), for a given Resource instance (here we are using a
 Document instance), supplying any necessary parameters. This allows you to
 access any public instance method of a Resource Helper that takes a Resource as
 it's first parameter.
