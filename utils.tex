@@ -1,0 +1,230 @@
+% 
+%	utils.tex - latex commands
+%
+%	Hamish Cunningham, 9/Nov/1999
+%
+%	$Id: utils.tex,v 1.6 2006/09/26 17:11:54 hamish Exp $
+
+\newcommand{\delete}[1]{}
+\newcommand{\chapt}[1]{\section{#1}}
+\newcommand{\sect}[1]{\subsection{#1}}
+\newcommand{\subsect}[1]{\subsubsection{#1}}
+\newcommand{\subsubsect}[1]{{\bf #1}}
+\newcommand{\subsubsubsect}[1]{{\bf #1}}
+\newcommand{\thing}{paper}
+\newcommand{\chapthing}{section}
+\newcommand{\Chapthing}{Section}
+\newcommand{\chapthings}{sections}
+\newcommand{\Chapthings}{Sections}
+\newcommand{\fud}[1]{}
+\newcommand{\book}[1]{}
+\newcommand{\fudbook}[1]{}
+\newcommand{\jape}[1]{}
+\newcommand{\jnle}[1]{}
+\newcommand{\jnlele}[1]{}
+\newcommand{\sepaper}[1]{}
+\newcommand{\lottie}[1]{}
+\newcommand{\hcgate}[1]{}
+\newcommand{\userguide}[1]{}
+
+
+%%% font size - uncomment for standard print
+\newcommand{\nsmall}{\small}
+\newcommand{\nnormalsize}{\normalsize}
+\newcommand{\nlarge}{\large}
+
+%%% font size - uncomment for large print
+%\newcommand{\nsmall}{\normalsize}
+%\newcommand{\nnormalsize}{\Large}
+%\newcommand{\nlarge}{\Large}
+
+
+%%%% use case tables command %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\delete{ Example:
+
+  \usecase{title}
+    {goal}
+    {description}
+    {example}
+    {example name} % optional
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% see latex companion p.108
+\newcommand{\PBS}[1]{\let\temp=\\#1\let\\=\temp}
+\newcommand{\usecase}[5]{ 
+  \renewcommand{\arraystretch}{1.5}
+  \begin{table}[!hp]
+  \begin{center}
+  \begin{tabular}%
+   {|p{1in}|p{2.1in}|p{2.1in}|}
+%  {|>{\PBS\raggedright\hspace{0pt}}p{1in}%
+%   |>{\PBS\raggedright\hspace{0pt}}p{2.1in}%
+%   |>{\PBS\raggedright\hspace{0pt}}p{2.1in}|}
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \hline
+  \multicolumn{3}{|l|}{
+  \large
+    {\sc Use case \theucctr :} #1
+  \stepcounter{ucctr}          %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \normalsize
+  }
+  \\
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \hline
+    {\sc Goal}
+  &
+    {\sc Description}
+  &
+    {\sc #5 Example}
+  \\
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \hline
+  \hline
+    #2
+  &
+    #3
+  &
+    #4
+  \\
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \hline
+  \end{tabular}
+  \end{center}
+  \end{table} %\label{tab:usecase1}
+  \renewcommand{\arraystretch}{1}
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%% non-tabular usecase2 command %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\nontabusecase}[5]{ 
+  \large
+    {\sc \bf Use Case \theucctr :} #1 \hrulefill
+    \stepcounter{ucctr}          
+  \normalsize
+
+  {\sc \bf Goal:} #2
+
+  {\sc \bf Description:} #3
+
+  {\sc \bf #5 Example:} #4 %\vspace*{-0.1in}\newline\mbox{}\hrulefill
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%% a tic comment %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\tic}{{\bf $\surd$}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%% design case command %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcounter{desctr}
+\stepcounter{desctr}
+\newcommand{\descase}[3]{ 
+%    {\bf Design Case \thedesctr :} #1 \hrulefill
+%  \\
+  {\sc \bf Goal \thedesctr:} #2
+    \stepcounter{desctr}          
+
+  #3 %\mbox{}\vspace*{-0.1in}\newline\mbox{}\hrulefill
+
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%% GATE 2 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\G}{GATE2}
+%{G\hspace*{-0.5mm}a\hspace*{-0.5mm}T\hspace*{-0.5mm}e\hspace*{-0.4mm}2}
+\newcommand{\g}{G\hspace*{-0.5mm}a\hspace*{-0.5mm}T\hspace*{-0.5mm}e}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%% a URL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\newcommand{\url}[1]{\small{\tt #1}\normalsize}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%% compact itemize etc. %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%
+% store the current value of parskip and allow resetting
+% via \resetparskip
+%%%%%%
+
+\newlength{\oldparskip}
+\setlength{\oldparskip}{\parskip} 
+\oldparskip=\parskip 
+
+\newcommand{\resetparskip}[0]
+{
+  \parskip=\oldparskip
+}
+
+
+%%%%%%
+% \bit, \eit - compact version of itemize
+% note that parskip is changed. To reset it use \resetparskip
+% (after any text following the list that's not a new paragraph)
+%%%%%%
+
+\newcommand{\bit}[0]
+{
+  \parskip=-4pt
+  \begin{itemize}
+  \itemsep=-3pt
+}
+\newcommand{\eit}[0]
+{
+  \end{itemize}
+  \parskip=-4pt
+}
+
+
+%%%%%%
+% \ben, \een - compact version of enumerate
+% note that parskip is changed. To reset it use \resetparskip
+% (after any text following the list that's not a new paragraph)
+%%%%%%
+
+\newcommand{\ben}[0]
+{
+  \parskip=-4pt
+  \begin{enumerate}
+  \itemsep=-3pt
+}
+\newcommand{\een}[0]
+{
+  \end{enumerate}
+  \parskip=-4pt
+}
+
+
+%%%%%%
+% \bde, \ede - compact version of description
+% note that parskip is changed. To reset it use \resetparskip
+% (after any text following the list that's not a new paragraph)
+%%%%%%
+
+\newcommand{\bde}[0]
+{
+  \parskip=-4pt
+  \begin{description}
+  \itemsep=-3pt
+}
+\newcommand{\ede}[0]
+{
+  \end{description}
+  \parskip=-4pt
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+

@@ -14,7 +14,6 @@ nightly cron job at Sheffield, so you only need to check in your changes to the
 reason, you must download
 
 http://gate.ac.uk/sale/big.bib
-http://gate.ac.uk/sale/utils.tex
 
 and put it in the directory above this one, i.e. if you are reading this file
 in /home/me/gatestuff/userguide then put it at /home/me/gatestuff/big.bib.  You
