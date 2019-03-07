@@ -3082,6 +3082,34 @@ the right-click menu of the relevant corpus or document.
 
 A GCP\footnote{\url{http://svn.code.sf.net/p/gate/code/gcp/trunk}} output
 handler is also provided by the \verb!Format_FastInfoset! plugin.
+
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:creole:gatejson]{GATE JSON Document Format}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+The \verb!Format_JSON! plugin provides support for a storing GATE documents
+as JSON files. This format supports round tripping; i.e. documents saved in
+this format can be reloaded into GATE without loss of information.
+
+The format is inspired by the original Twitter JSON format (i.e. prior to the
+addition of the extended information in the Twitter JSON to support 280 
+characters and quoted tweets). In essense each document is saved to a JSON
+object which contains two properties \texttt{text} and \texttt{entities}.
+
+The \texttt{text} field is simply the text of the document, while the
+\texttt{entities} field contains the annotations and their features. The
+format of this field is that same as that used by Twitter to store entities,
+namely a map from annotation type to an array of objects each of which contains
+the offsets of the annotation and any other features. You can load documents
+using this format by specifying \texttt{text/json} as the mime type. If your
+JSON documents don't quite match this format you can still extract the text
+from them by specifying the path through the JSON to the text element as a
+dot separated string as a parameter to the mime type. For example, assume
+the text in your document was in a field called text but this wasn't at the
+root of the JSON document but inside an object named document, then you would
+load this by specifying the mime type \texttt{text/json;text-path=document.text}.
+
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \sect[sec:creole:datasift]{DataSift Document Format}
