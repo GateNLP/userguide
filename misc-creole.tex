@@ -1823,25 +1823,25 @@ section~\ref{sec:api:groovy:controller} for details).
 \subsect[sec:misc-creole:proxy]{Proxy configuration}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 The underlying WebSPHINX crawler uses Java's \emph{URLConnection} class, which
-respects the JVM's proxy configuration (if it is set).  To configure a proxy for
-GATE Developer, edit or create the file \texttt{build.properties} and add the
-following lines (the first line is required, and the rest should be changed as
-necessary for your configuration):
+respects the JVM's proxy configuration (if it is set).  The proxy configuration
+is specified using Java system properties.  By default GATE Developer is
+configured to use the system-wide proxy settings via the setting
+\verb!-Djava.net.useSystemProxies=true! in \verb!gate.l4j.ini!, but if you need
+to set a different proxy for GATE you can do so by removing this line from the
+ini file and replacing it with
 \begin{verbatim}
-run.java.net.useSystemProxies=true
-http.proxyHost=proxy.example.com
-http.proxyPort=8080
-http.nonProxyHosts=*.example.com
+-Dhttp.proxyHost=proxy.example.com
+-Dhttp.proxyPort=8080
+-Dhttp.nonProxyHosts=*.example.com
 \end{verbatim}
-Save the file and restart GATE Developer and it should start using your
-configured proxy settings.  The proxy server, port, and exceptions can also be
-set using the Java control panel, but GATE will use them only if
-\texttt{run.java.net.useSystemProxies=true} is set in the
-\texttt{build.properties} file.  Consult the Oracle \emph{Java Networking and
-  Proxies} documentation\footnote{see
-  \url{http://docs.oracle.com/javase/6/docs/technotes/guides/net/proxies.html}}
+Consult the Oracle \emph{Java Networking and Proxies} documentation\footnote{see
+  \url{https://docs.oracle.com/javase/8/docs/technotes/guides/net/proxies.html}}
 for further details of proxy configuration in Java, and see 
 section~\ref{sec:gettingstarted:sysprop}.
+
+For GATE Embedded, note that Java \emph{does not} automatically use the system
+proxy settings by default, you must set \verb!java.net.useSystemProxies=true!
+explicitly to enable this.
 
 With effect from build 4723 (14 November 2013), the proxy and other options can
 be configured in the \texttt{gate.l4j.ini} file on all platforms, as explained
