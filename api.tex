@@ -351,6 +351,11 @@ of the ANNIE plugin, for example, you would use:
 Gate.getCreoleRegister().registerPlugin(new Plugin.Maven(
       "uk.ac.gate.plugins", "annie", "8.5"));
 \end{lstlisting}
+By default GATE looks in the Central Repository and in the GATE repository
+(\verb!http://repo.gate.ac.uk/content/groups/public/!, where we deploy snapshot
+builds of the standard plugins), plus any repositories declared in active
+profiles in the normal Maven \verb!settings.xml! file.  Mirror and proxy
+settings from this file are also respected.
 
 In addition to Maven plugins, GATE still supports the style of plugins used in
 GATE version 8.4.1 and earlier where the plugin is a directory on disk

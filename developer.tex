@@ -810,6 +810,15 @@ system property
 \item[remote plugins] are plugins which are loaded via http from a remote machine.
 \end{description}
 
+Regular Maven users may have additional repositories or ``mirror'' settings
+configured in their \verb!m2/settings.xml! file -- GATE will respect these
+settings when retrieving plugins, including authentication with encrypted
+passwords in the standard Maven way with a master password in
+\verb!.m2/settings-security.xml!.  In particular if you have an organisational
+Maven repository configured as a \verb!<mirrorOf>external:*</mirrorOf>! then
+this will be accepted and GATE will not attempt to use the Central Repository
+directly.
+
 The CREOLE plugins can be managed through the graphical user interface which can
 be activated by selecting `Manage CREOLE Plugins' from the `File' menu. This
 will bring up a window listing all the known plugins. For each plugin there are
