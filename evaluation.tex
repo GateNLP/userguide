@@ -385,7 +385,7 @@ annotation type and the results then averaged.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \sect[sec:eval:annotationdiff]{The Annotation Diff Tool}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+%
 The Annotation Diff tool enables two sets of annotations in one or two
 documents to be compared, in order either to compare a system-annotated
 text with a reference (hand-annotated) text, or to compare the output
@@ -526,6 +526,18 @@ To see again the copied rows, select the `Statistics' tab at the bottom and
 use the button `Compare'.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection[sec:eval:adwarning]{A warning about feature values}
+%
+The Annotation Differ uses the Java \texttt{equals} test on the feature values
+to determine whether they match.  This test returns \texttt{false} (i.e., it
+counts as a mismatch) if the values have different types, even if they look the
+same in the user interface: for example, a \texttt{String} with a value of
+\texttt{"5"} and an \texttt{Integer} with a value of \texttt{5} look the same on
+the screen but do not match.  Refer to the longer explanation in
+Section~\ref{sec:eval:qawarning} for more detail and advice on preventing
+mismatches.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 \sect[sec:eval:corpusqualityassurance]{Corpus Quality Assurance}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -679,7 +691,8 @@ They are three for the moment:
 To compute the measures respect the order below.
 
 Constructors and methods to initialise the measure objects:
-\begin{small}\begin{verbatim}
+\begin{small}
+\begin{verbatim}
 AnnotationDiffer differ = new AnnotationDiffer();
 differ.setSignificantFeaturesSet(Set<String> features);
 ClassificationMeasures classificationMeasures = new ClassificationMeasures();
@@ -703,7 +716,8 @@ ignored on the "standard" output stream.
 
 Constructors, useful for micro average, no need to use calculateX methods
 as they must have been already called:
-\begin{small}\begin{verbatim}
+\begin{small}
+\begin{verbatim}
 AnnotationDiffer(Collection<AnnotationDiffer> differs)
 ClassificationMeasures(Collection<ClassificationMeasures> tables)
 OntologyMeasures(Collection<OntologyMeasures> measures)
@@ -731,7 +745,8 @@ Note that the numeric value `1.0' represents the beta coefficient in the Fscore.
 See section~\ref{sec:eval:metrics} for more information on these measures.
 
 Method only for ClassificationMeasures:
-\begin{small}\begin{verbatim}
+\begin{small}
+\begin{verbatim}
 List<List<String>> getConfusionMatrix(String title)
 \end{verbatim}\end{small}
 
@@ -841,6 +856,38 @@ See method
 like in the Corpus Quality Assurance.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection[sec:eval:qawarning]{A warning about feature values}
+%
+The F-measure, precision, and recall measures, and the counts of matches used to
+produce them, are based on the Java \texttt{equals} test on the feature values
+being compared.  This test returns \texttt{false} (i.e., it counts as a
+mismatch) if the values have different types, even if they look the same in the
+user interface: for example, a \texttt{String} with a value of \texttt{"5"} and
+an \texttt{Integer} with a value of \texttt{5} look the same on the screen but
+do not match.
+
+The values of GATE features (for documents as well as annotations) are
+automatically stored as \texttt{String} values whenever you change them in the
+GUI feature editor.  For example, if you click in a feature with an
+\texttt{Integer} with a value of \texttt{5} and type another digit, the result
+will be stored as a \texttt{String} (e.g., \texttt{"56"}, but it will look like
+\texttt{56} in the GUI).  The current version of GATE does not change feature
+values to \texttt{String} if you click in the value text box but do not change
+anything.  (Earlier versions made the change if you clicked in the text box.)
+
+In order to get correct results, you need to ensure that the values of the
+\emph{key} and \emph{response} features being compared have the same type.  If
+this is not certain to be the case, you may wish to add a JAPE or Groovy PR to
+check the types of the feature values and convert them all to one type (e.g.,
+\texttt{String} or \texttt{Integer}).
+
+The classification and confusion matrix tables in the Corpus QA display are
+produced a different way, by assembling a list of all the feature values,
+converting them to strings to create the row and column headers, and then
+incrementing the cells in the table according to the string conversion.  In
+these tables, a \texttt{String} with a value of \texttt{"5"} and an
+\texttt{Integer} with a value of \texttt{5} count as a match.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection[sec:eval:qapr]{Quality Assurance PR}
 
 We have also implemented a processing resource called Quality Assurance PR that
@@ -873,7 +920,7 @@ for each annotation type in the corpus. In case of the document-stats.html, each
 document is linked with an html file that contains the output of the
 annotation diff utility in GATE.
 \end{itemize}
-
+%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \sect[sec:eval:benchmarktool]{Corpus Benchmark Tool}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -900,7 +947,8 @@ result of running your application on `clean' to the `marked' annotations.
 
 You will need to prepare the following directory structure:
 
-\begin{small}\begin{verbatim}
+\begin{small}
+\begin{verbatim}
 main directory (can have any name)
 |
 |__"clean" (directory containing unannotated documents in XML form)
@@ -972,7 +1020,8 @@ property reverts to default. For example, `annotSetName=' is the same as leaving
 that line out.
 
 An example file is shown below:
-\begin{small}\begin{verbatim}
+\begin{small}
+\begin{verbatim}
 threshold=0.7
 annotSetName=Key
 outputSetName=ANNIE
@@ -981,7 +1030,8 @@ annotFeatures=type;gender
 \end{verbatim}\end{small}
 
 Here is another example:
-\begin{small}\begin{verbatim}
+\begin{small}
+\begin{verbatim}
 threshold=0.6  
 annotSetName=Filtered  
 outputSetName=  
