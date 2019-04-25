@@ -1056,8 +1056,9 @@ than ASCII letters and digits, quote them appropriately:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsect{Copying Feature Values from the LHS to the RHS}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-JAPE provides limited support for copying annotation feature values from the
-left to the right hand side of a rule, for example:
+JAPE provides limited support for copying either single annotation feature
+values, or \emph{all} the features of a matched annotation, from the left to
+the right hand side of a rule.  To copy a single feature:
 
 \begin{small}
 \begin{verbatim}
@@ -1133,6 +1134,54 @@ Rule: LocationType
 In this case the string, cleanString or length is that covered by the whole
 label, i.e. the same span as would be covered by an annotation created with
 ``\verb|:label.NewAnnotation = {}|''.
+
+Finally you can copy \emph{all} the features from a matched annotation onto
+the new annotation as follows:
+%
+\begin{small}
+\begin{verbatim}
+Rule: LocationType
+(
+ {Token.category == IN}
+ {Lookup.majorType == location}
+):loc
+-->
+    :loc.InLocation = {rule = "InLoc", :loc.Lookup}
+\end{verbatim}
+\end{small}
+
+This will find a `Lookup' annotation bound to the \verb!loc! label, and add all
+its features to the new \verb!InLocation! -- it is roughly equivalent to a
+series of ``\verb!f = :loc.Lookup.f!'' for all features of the Lookup
+annotation, except that (a) it is much more efficient and (b) it doesn't
+require the rule writer to know up front what all the possible feature names
+will be.
+
+The annotation type can be omitted if there is only one possible annotation
+in the binding, for example
+%
+\begin{small}
+\begin{verbatim}
+Rule: LocationType
+(
+ {Lookup.majorType == location}
+):loc
+-->
+    :loc.Location = {rule = "LocationType", :loc }
+\end{verbatim}
+\end{small}
+
+As before, if there is more than one annotation bound to the label (or more
+than one of the appropriate type, if a type is specified) then one of the
+annotations will be chosen arbitrarily.
+
+Also note that JAPE processes all feature assignments from left to right,
+so the order of expressions within the brackets may be significant --
+\verb!{type = unknown, :loc}! will set type to ``unknown'' by default, but
+if the annotation bound to \verb!:loc! also has a ``type'' feature then this
+will override the default value.  Conversely \verb!{:loc, type = unknown}! will
+always set the type feature to ``unknown'', even if the annotation bound to
+\verb!:loc! has a different value for the same feature.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsect[sec:jape:optional]{Optional or Empty Labels}
