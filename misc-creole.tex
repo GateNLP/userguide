@@ -2026,12 +2026,12 @@ resource associated with the PR).
 \subsect{Using the `KEA Keyphrase Extractor' PR}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Kea is based on machine learning and it needs to be trained before it can be
-used to extract keyphrases. In order to do this, a corpus is required where the
+Kea is based on machine learning and needs to be trained before it can be used
+to extract keyphrases. In order to do this, a corpus is required where the
 documents are annotated with keyphrases. Corpora in the Kea format (where the
 text and keyphrases are in separate files with the same name but different
-extensions) can be imported into GATE using the `KEA Corpus Importer' tool.
-The usage of this tool is presented in a subsection below.
+extensions) can be imported into GATE using the `KEA Corpus Importer' tool.  The
+usage of this tool is presented in a subsection below.
 
 Once an annotated corpus is obtained, the `KEA Keyphrase Extractor' PR can be
 used to build a model:
@@ -2040,6 +2040,8 @@ used to build a model:
 \item create a new `Corpus Pipeline' controller.
 \item set the corpus for the controller
 \item set the `trainingMode' parameter for the PR to `true'
+\item set the `inputAS' parameter for the PR to `Key' (or wherever the
+  `Keyphrase' annotations are to be found)
 \item run the application.
 \end{enumerate}
 
@@ -2113,7 +2115,9 @@ field.
 .txt).
 \item[Extension for keyphrase files] the extension for the files listing
 keyphrases.
-\item[Encoding for input files] the encoding to be used when reading the files.
+\item[Encoding for input files] the encoding to be used when reading the files
+  (to work propertly all the \texttt{.txt} and \texttt{.key} files must be in
+  the same encoding).
 \item[Corpus name] the name for the GATE corpus that will be created.
 \item[Output annotation set] the name for the annotation set that will contain
 the keyphrases read from the input files.
