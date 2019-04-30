@@ -218,16 +218,25 @@ Note that the format consists of one option per line.  All the properties listed
 in Section~\ref{sec:gettingstarted:sysprop} can be configured here by prefixing
 them with \texttt{-D}, e.g., \texttt{-Dgate.user.config=path/to/other-gate.xml}.
 
-Proxy configuration (see Section~\ref{sec:misc-creole:proxy}) can be set in
-this file -- by default GATE uses the system-wide proxy settings
-(\verb!-Djava.net.useSystemProxies=true!) but a specific proxy can be
-configured by deleting that line and replacing it with settings such as:
+Proxy configuration can be set in this file -- by default GATE uses the
+system-wide proxy settings (\verb!-Djava.net.useSystemProxies=true!) but a
+specific proxy can be configured by deleting that line and replacing it with
+settings such as:
 %
 \begin{verbatim}
 -Dhttp.proxyHost=proxy.example.com  
 -Dhttp.proxyPort=8080  
 -Dhttp.nonProxyHosts=*.example.com 
 \end{verbatim}
+
+Consult the Oracle \emph{Java Networking and Proxies} documentation\footnote{see
+  \url{https://docs.oracle.com/javase/8/docs/technotes/guides/net/proxies.html}}
+for further details of proxy configuration in Java, and see 
+section~\ref{sec:gettingstarted:sysprop}.
+
+For GATE Embedded, note that Java \emph{does not} automatically use the system
+proxy settings by default, you must set \verb!java.net.useSystemProxies=true!
+explicitly to enable this.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \sect[sec:gettingstarted:gateconfig]{Configuring GATE}

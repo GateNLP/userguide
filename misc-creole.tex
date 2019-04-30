@@ -1662,151 +1662,151 @@ System.out.println("DOCUMENT_ID=" + qr.getDocumentID()
 \end{lstlisting}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\sect[sec:misc-creole:crawler]{Websphinx Web Crawler}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-The `Web\_Crawler\_Websphinx' plugin enables GATE to build a corpus from a web
-crawl.  It is based on
-\htlink{http://www.cs.cmu.edu/~rcm/websphinx/}{Websphinx}, a JAVA-based,
-customizable, multi-threaded web crawler.
+% \sect[sec:misc-creole:crawler]{Websphinx Web Crawler}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% The `Web\_Crawler\_Websphinx' plugin enables GATE to build a corpus from a web
+% crawl.  It is based on
+% \htlink{http://www.cs.cmu.edu/~rcm/websphinx/}{Websphinx}, a JAVA-based,
+% customizable, multi-threaded web crawler.
 
 
-\textbf{Note:} if you are using this plugin via an IDE, you may need to make
-sure that the websphinx.jar file is on the IDE's classpath, or add it to the
-IDE's lib directory.
+% \textbf{Note:} if you are using this plugin via an IDE, you may need to make
+% sure that the websphinx.jar file is on the IDE's classpath, or add it to the
+% IDE's lib directory.
 
 
-The basic idea is to specify a source URL (or set of documents created from web
-URLs) and a depth and maximum number of documents to build the initial corpus
-upon which further processing could be done.  The PR itself provides a number of
-other parameters to regulate the crawl.
+% The basic idea is to specify a source URL (or set of documents created from web
+% URLs) and a depth and maximum number of documents to build the initial corpus
+% upon which further processing could be done.  The PR itself provides a number of
+% other parameters to regulate the crawl.
 
 
-This PR now uses the HTTP \texttt{Content-Type} headers to determine each web
-page's encoding and MIME type before creating a GATE Document from it.  It also
-adds to each document a \emph{Date} feature (with a \texttt{java.util.Date}
-value) based on the HTTP \texttt{Last-Modified} header (if available) or the
-current timestamp, an \emph{originalMimeType} feature taken from the
-\texttt{Content-Type} header, and an \emph{originalLength} feature indicating
-the size in bytes of the downloaded document.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsect{Using the Crawler PR}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-In order to use the processing resource you need to load the plugin using the
-plugin manager, create an instance of the crawl PR from the list of processing
-resources, and create a corpus in which to store crawled documents. In order to
-use the crawler, create a simple pipeline (\textbf{not} a corpus pipeline) and
-add the crawl PR to the pipeline.
+% This PR now uses the HTTP \texttt{Content-Type} headers to determine each web
+% page's encoding and MIME type before creating a GATE Document from it.  It also
+% adds to each document a \emph{Date} feature (with a \texttt{java.util.Date}
+% value) based on the HTTP \texttt{Last-Modified} header (if available) or the
+% current timestamp, an \emph{originalMimeType} feature taken from the
+% \texttt{Content-Type} header, and an \emph{originalLength} feature indicating
+% the size in bytes of the downloaded document.
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \subsect{Using the Crawler PR}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% In order to use the processing resource you need to load the plugin using the
+% plugin manager, create an instance of the crawl PR from the list of processing
+% resources, and create a corpus in which to store crawled documents. In order to
+% use the crawler, create a simple pipeline (\textbf{not} a corpus pipeline) and
+% add the crawl PR to the pipeline.
 
-Once the crawl PR is created there will be a number of parameters that can be
-set based on the PR required (see also Figure~\ref{fig:crawler-parameters}).
-%
-\begin{figure}[htb]
-  \begin{center}
-    \includegraphics[width=\textwidth]{crawler-parameters.png}
-  \end{center}
-  \caption{Crawler parameters}
-  \label{fig:crawler-parameters}
-\end{figure}
-% 
-\begin{description}
-\item[depth] The depth (integer) to which the crawl should proceed.
-\item[dfs] A boolean:
-  \begin{description}
-  \item[true] the crawler visits links with a depth-first strategy;
-  \item[false] the crawler visits links with a breadth-first strategy;
-  \end{description}
-\item[domain] An \texttt{enum} value, presented as a pull-down list in the GUI:
-  \begin{description}
-  \item[SUBTREE] The crawler visits only the descendents of the pages
-    specified as the roots for the crawl.
-  \item[WEB] The crawler can visit any pages on the web.
-  \item[SERVER] The crawler can visit only pages that are present on the
-    server where the root pages are located.
-  \end{description}
-\item[max] The maximum number (integer) of pages to be kept: the crawler will
-  stop when it has stored this number of documents in the output corpus.  Use
-  $-1$ to ignore this limit.
-\item[maxPageSize] The maximum page size in kB; pages over this limit will be
-  ignored---even as roots of the crawl---and their links will not be crawled.
-  If your crawl does not add any documents (even the seeds) to the output
-  corpus, try increasing this value.  (A 0 or negative value here means ``no
-  limit''.)
-\item[stopAfter] The maximum number (integer) of pages to be fetched: the
-  crawler will stop when it has visited this number of pages.  Use $-1$ to
-  ignore this limit.  If $\mathit{max} > \mathit{stopAfter} > 0$ then the
-  crawl will store at most \emph{stopAfter} (not \emph{max}) documents.
-\item[root] A string containing one URL to start the crawl.
-\item[source] A corpus that contains the documents whose
-  \texttt{gate.sourceURL} features will be used to start the crawl.  If you
-  use both \emph{root} and \emph{source} parameters, both the \emph{root}
-  value and the URLs collected from the \emph{source} documents will seed the
-  crawl.
-\item[outputCorpus] The corpus in which the fetched documents will be stored.
-\item[keywords] A \texttt{List<String>} for matching against crawled
-  documents.  If this list is empty or null, all documents fetched will be
-  kept.  Otherwise, only documents that contain one of these strings will be
-  stored in the output corpus.  (Documents that are fetched but not kept are
-  still scanned for further links.)
-\item[keywordsCaseSensitive] This boolean determines whether keyword matching
-  is case-sensitive or not.
-\item[convertXmlTypes] GATE's \texttt{XmlDocumentFormat} only accepts certain
-  MIME types.  If this parameter is true, the crawl PR converts other XML
-  types (such as \texttt{application/atom+xml.xml}) to \texttt{text/xml}
-  before trying to instantiate the GATE document (this allows GATE to handle
-  RSS feeds, for example).
-\item[userAgent] If this parameter is blank, the crawler will use the default
-  Websphinx user-agent header.  Set this parameter to spoof the header.
-\end{description}
-
-
-Once the parameters are set, the crawl can be run and the documents fetched (and
-matched to the keywords, if that list is in use) are added to the specified
-corpus.  Documents that are fetched but not matched are discarded after scanning
-them for further links.  
-% Figure \ref{fig:crawler-corpus} shows the crawled pages
-% added to the corpus.
+% Once the crawl PR is created there will be a number of parameters that can be
+% set based on the PR required (see also Figure~\ref{fig:crawler-parameters}).
 % %
 % \begin{figure}[htb]
-% \begin{center}
-% \includegraphics[width=\textwidth]{crawler-corpus.png}
-% \end{center}
-% \caption{Crawled pages added to the corpus}
-% \label{fig:crawler-corpus}
+%   \begin{center}
+%     \includegraphics[width=\textwidth]{crawler-parameters.png}
+%   \end{center}
+%   \caption{Crawler parameters}
+%   \label{fig:crawler-parameters}
 % \end{figure}
+% % 
+% \begin{description}
+% \item[depth] The depth (integer) to which the crawl should proceed.
+% \item[dfs] A boolean:
+%   \begin{description}
+%   \item[true] the crawler visits links with a depth-first strategy;
+%   \item[false] the crawler visits links with a breadth-first strategy;
+%   \end{description}
+% \item[domain] An \texttt{enum} value, presented as a pull-down list in the GUI:
+%   \begin{description}
+%   \item[SUBTREE] The crawler visits only the descendents of the pages
+%     specified as the roots for the crawl.
+%   \item[WEB] The crawler can visit any pages on the web.
+%   \item[SERVER] The crawler can visit only pages that are present on the
+%     server where the root pages are located.
+%   \end{description}
+% \item[max] The maximum number (integer) of pages to be kept: the crawler will
+%   stop when it has stored this number of documents in the output corpus.  Use
+%   $-1$ to ignore this limit.
+% \item[maxPageSize] The maximum page size in kB; pages over this limit will be
+%   ignored---even as roots of the crawl---and their links will not be crawled.
+%   If your crawl does not add any documents (even the seeds) to the output
+%   corpus, try increasing this value.  (A 0 or negative value here means ``no
+%   limit''.)
+% \item[stopAfter] The maximum number (integer) of pages to be fetched: the
+%   crawler will stop when it has visited this number of pages.  Use $-1$ to
+%   ignore this limit.  If $\mathit{max} > \mathit{stopAfter} > 0$ then the
+%   crawl will store at most \emph{stopAfter} (not \emph{max}) documents.
+% \item[root] A string containing one URL to start the crawl.
+% \item[source] A corpus that contains the documents whose
+%   \texttt{gate.sourceURL} features will be used to start the crawl.  If you
+%   use both \emph{root} and \emph{source} parameters, both the \emph{root}
+%   value and the URLs collected from the \emph{source} documents will seed the
+%   crawl.
+% \item[outputCorpus] The corpus in which the fetched documents will be stored.
+% \item[keywords] A \texttt{List<String>} for matching against crawled
+%   documents.  If this list is empty or null, all documents fetched will be
+%   kept.  Otherwise, only documents that contain one of these strings will be
+%   stored in the output corpus.  (Documents that are fetched but not kept are
+%   still scanned for further links.)
+% \item[keywordsCaseSensitive] This boolean determines whether keyword matching
+%   is case-sensitive or not.
+% \item[convertXmlTypes] GATE's \texttt{XmlDocumentFormat} only accepts certain
+%   MIME types.  If this parameter is true, the crawl PR converts other XML
+%   types (such as \texttt{application/atom+xml.xml}) to \texttt{text/xml}
+%   before trying to instantiate the GATE document (this allows GATE to handle
+%   RSS feeds, for example).
+% \item[userAgent] If this parameter is blank, the crawler will use the default
+%   Websphinx user-agent header.  Set this parameter to spoof the header.
+% \end{description}
 
 
-\textbf{Note} that you must use a simple Pipeline, and not a Corpus Pipeline. In
-order to process the corpus of crawled documents, you need to build a separate
-Corpus Pipeline and run it after crawling.  You could combine the two functions
-by carefully developing a Scriptable Controller (see
-section~\ref{sec:api:groovy:controller} for details).
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsect[sec:misc-creole:proxy]{Proxy configuration}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-The underlying WebSPHINX crawler uses Java's \emph{URLConnection} class, which
-respects the JVM's proxy configuration (if it is set).  The proxy configuration
-is specified using Java system properties.  By default GATE Developer is
-configured to use the system-wide proxy settings via the setting
-\verb!-Djava.net.useSystemProxies=true! in \verb!gate.l4j.ini!, but if you need
-to set a different proxy for GATE you can do so by removing this line from the
-ini file and replacing it with
-\begin{verbatim}
--Dhttp.proxyHost=proxy.example.com
--Dhttp.proxyPort=8080
--Dhttp.nonProxyHosts=*.example.com
-\end{verbatim}
-Consult the Oracle \emph{Java Networking and Proxies} documentation\footnote{see
-  \url{https://docs.oracle.com/javase/8/docs/technotes/guides/net/proxies.html}}
-for further details of proxy configuration in Java, and see 
-section~\ref{sec:gettingstarted:sysprop}.
+% Once the parameters are set, the crawl can be run and the documents fetched (and
+% matched to the keywords, if that list is in use) are added to the specified
+% corpus.  Documents that are fetched but not matched are discarded after scanning
+% them for further links.  
+% % Figure \ref{fig:crawler-corpus} shows the crawled pages
+% % added to the corpus.
+% % %
+% % \begin{figure}[htb]
+% % \begin{center}
+% % \includegraphics[width=\textwidth]{crawler-corpus.png}
+% % \end{center}
+% % \caption{Crawled pages added to the corpus}
+% % \label{fig:crawler-corpus}
+% % \end{figure}
 
-For GATE Embedded, note that Java \emph{does not} automatically use the system
-proxy settings by default, you must set \verb!java.net.useSystemProxies=true!
-explicitly to enable this.
 
-With effect from build 4723 (14 November 2013), the proxy and other options can
-be configured in the \texttt{gate.l4j.ini} file on all platforms, as explained
-in Section~\ref{sec:gettingstarted:launchconfig}.
+% \textbf{Note} that you must use a simple Pipeline, and not a Corpus Pipeline. In
+% order to process the corpus of crawled documents, you need to build a separate
+% Corpus Pipeline and run it after crawling.  You could combine the two functions
+% by carefully developing a Scriptable Controller (see
+% section~\ref{sec:api:groovy:controller} for details).
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \subsect[sec:misc-creole:proxy]{Proxy configuration}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% The underlying WebSPHINX crawler uses Java's \emph{URLConnection} class, which
+% respects the JVM's proxy configuration (if it is set).  The proxy configuration
+% is specified using Java system properties.  By default GATE Developer is
+% configured to use the system-wide proxy settings via the setting
+% \verb!-Djava.net.useSystemProxies=true! in \verb!gate.l4j.ini!, but if you need
+% to set a different proxy for GATE you can do so by removing this line from the
+% ini file and replacing it with
+% \begin{verbatim}
+% -Dhttp.proxyHost=proxy.example.com
+% -Dhttp.proxyPort=8080
+% -Dhttp.nonProxyHosts=*.example.com
+% \end{verbatim}
+% Consult the Oracle \emph{Java Networking and Proxies} documentation\footnote{see
+%   \url{https://docs.oracle.com/javase/8/docs/technotes/guides/net/proxies.html}}
+% for further details of proxy configuration in Java, and see 
+% section~\ref{sec:gettingstarted:sysprop}.
+
+% For GATE Embedded, note that Java \emph{does not} automatically use the system
+% proxy settings by default, you must set \verb!java.net.useSystemProxies=true!
+% explicitly to enable this.
+
+% With effect from build 4723 (14 November 2013), the proxy and other options can
+% be configured in the \texttt{gate.l4j.ini} file on all platforms, as explained
+% in Section~\ref{sec:gettingstarted:launchconfig}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \sect[sec:misc-creole:wn]{WordNet in GATE}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
