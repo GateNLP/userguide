@@ -47,17 +47,7 @@ Twitter provides APIs to search for Tweets according to various criteria, and
 to collect streams of Tweets in real-time.  These APIs return the Tweets in a
 structured JSON format%
 \footnote{\url{https://dev.twitter.com/docs/platform-objects/tweets}} which
-includes the text of the Tweet plus a large amount of supporting metadata.
-The GATE \verb!Format_Twitter! plugin contains a format analyser for this JSON format
-which allows you to load a file of one or more JSON Tweets into a GATE
-document.  The format analyser can handle multiple Tweets in one file,
-represented as any of:
-\begin{itemize}
-\item a top-level JSON array \verb![{...},{...}]!
-\item or simply concatenated together, optionally with white space or newline
-  characters between adjacent objects (this is the format returned by Twitter's
-  streaming APIs).
-\end{itemize}
+
 Loading the plugin registers the
 document format with GATE, so that it will be automatically associated with
 files whose names end in ``\verb!.json!''; otherwise you need to specify
@@ -75,7 +65,12 @@ to the fields from which text and entities were extracted to produce that segmen
 All the JSON data is added as nested features on the top level Tweet annotation.
 
 Multiple tweet objects in the same JSON file are separated by blank lines (which
-are not covered by \emph{Tweet} annotations).
+are not covered by \emph{Tweet} annotations). Should you have such files and
+want to split them into multipe GATE documents, then you can do this using the
+populator provided by the !verb!Format\_JSON! plugin by setting the MIME type
+to \verb!text/x-json-twitter!. You can even set the name of the document to the
+ID of the tweet by setting the document ID parameter in the dialog to \verb!/id_str!.
+See Section~\ref{sec:creole:gatejson} for more details.
 
 \subsect[sec:social:twitter:entities]{Entity annotations in JSON}
 

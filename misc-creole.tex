@@ -3079,6 +3079,17 @@ the text in your document was in a field called text but this wasn't at the
 root of the JSON document but inside an object named document, then you would
 load this by specifying the mime type \texttt{text/json;text-path=document.text}.
 
+The plugin also provides a new right-click action for Corpora allowing a file
+containing multiple JSON objects in a single file to be split into individual
+documents to populate the corpus. This can handle multiple multiple objects
+in one file, represented as any of:
+\begin{itemize}
+\item a top-level JSON array \verb![{...},{...}]!
+\item or simply concatenated together, optionally with white space or newline
+  characters between adjacent objects (this is the format returned by Twitter's
+  streaming APIs).
+\end{itemize}
+
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \sect[sec:creole:datasift]{DataSift Document Format}
