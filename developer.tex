@@ -1120,58 +1120,60 @@ exporting applications together with referenced files and resources to a ZIP fil
 There are three main ways to save annotated documents:
 
 \begin{enumerate}
-\item\label{item:savepreserve}
-preserving the original markup, with optional added annotations;
 \item\label{item:saveasxml}
 in GATE's own XML serialisation format (including all the annotations on the
 document);
+\item\label{item:savepreserve}
+an inline XML format that saves the original markup and selected annotations
 \item
-by writing your own dump algorithm as a processing resource.
+by writing your own exporter algorithm as a processing resource
 \end{enumerate}
 
 This section describes how to use the first two options.
 
 Both types of data export are available in the popup menu triggered by
 right-clicking on a document in the resources tree
-(see Section \ref{sec:developer:gui}):
-type \ref{item:savepreserve}
-is called `Save Preserving Format' and type \ref{item:saveasxml}
-is called `Save as XML'. In addition, all documents in a corpus
+(see Section \ref{sec:developer:gui}) and selecting the ``Save As...''
+menu. In addition, all documents in a corpus
 can be saved as individual XML files into a directory by 
-right-clicking on the corpus in the resources tree and choosing
-the option `Save as XML`.
+right-clicking on the corpus instead of individual documents.
 
-Selecting the save as XML option leads to a file open dialogue; give the name
+Selecting to save as GATE XML leads to a file open dialogue; give the name
 of the file you want to create, and the whole document and all its data will
 be exported to that file. If you later create a document from that file, the
 state will be restored. ({\bf Note:} because GATE's annotation model is
 richer than that of XML, and because our XML dump implementation sometimes
 cuts corners\footnote{Gorey details: features of annotations and documents
-in GATE may be any virtually any Java object; serialising arbitrary binary
+in GATE may be virtually any Java object; serialising arbitrary binary
 data to XML is not simple; instead we serialise them as strings, and
 therefore they will be re-loaded as strings.}, the state may not be identical
 after restoration. If your
 intention is to store the state for later use, use a DataStore instead.)
 
-The `Save Preserving Format' option also leads to a file dialogue; give a name
-and the data you require will be dumped into the file. The action can be used for
-documents that were created from files using the XML or HTML format. It will save
-all the original tags as well as the document annotations that are currently
-displayed in the `Annotations List' view. This option is useful for selectively
-saving only some annotation types.
+The `Inline XML' option leads to a richer dialog than the `GATE XML' option. This
+allows you to select the file to save to at the top of the dialog box, but
+also then allows you to configure extactly what is saved and how. By default
+the exporter is configured to save all the annotations from `Original markups'
+(i.e. those extracted from the source document when it was loaded) as well
+as Person, Organization, and Location from the default set (i.e. the main
+output annotations from running ANNIE). Features of these annotations will
+also be saved.
 
-The annotations are saved as normal document tags, using the annotation type as
-the tag name. If the advanced option `Include annotation features for ``Save
-Preserving Format''' (see Section \ref{sec:gettingstarted:gateconfig}) is set
-to true, then the annotation features will also be saved as tag attributes.
-
-Using this operation for GATE documents that were not created from an HTML or XML
-file results in a plain text file, with in-line tags for the saved annotations.
+The annotations are saved as normal XML document tags, using the annotation type as
+the tag name. If you choose to save features then they will be added as attributes
+to the relevant XML tags.
 
 Note that GATE's model of annotation allows graph structures, which are difficult
 to represent in XML (XML is a tree-structured representation format). During the
 dump process, annotations that cross each other in ways that cannot be represented
 in legal XML will be discarded, and a warning message printed.
+
+Saving documents using this `Inine XML' format that were not created from an HTML or XML
+file often results in a plain text file, with in-line tags for the saved annotations.
+In otherwords, if the set of annotations you are saving does not include an
+annotation which spans the entire document, the result will not be valid XML
+and may not load back into GATE. This format should really be considered a legacy
+format, and it may be removed in future versions of GATE.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsect[sec:developer:datastores]{Saving and Restoring LRs in Datastores}
