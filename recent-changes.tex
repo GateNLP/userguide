@@ -36,6 +36,23 @@
   needs to track changes to the Twitter JSON format so should be more suitable
   for long term strage of GATE documents as JSON files. See
   \ref{sec:creole:gatejson} for more details.
+\item Improved documentation of the two default export formats. See \ref{sec:developer:dump}.
+\item The GAPP Loading Test in `gate-plugin-test-utils' now creates two files
+  in the \verb!target! folder which document the CREOLE dependencies of the
+  plugin under test. This works by looking at which plugins have been loaded
+  when the test completes. This means it sees plugins loaded via requirements
+  specified within \verb!creole.xml! as well as those that are loaded by the
+  sample applications. The first file produced \verb!creole-dependencies.txt!
+  is a simple flat listing of the plugins, with the plugin under test listed
+  first followed by the remaining plugins in the order in which they were
+  loaded (i.e. the plugin under test may be out of sequence as there may be
+  plugins which need to be loaded before it). The second file,
+  \verb!creole-dependencies.gv! details the dependency graph and is in the
+  popular DOT format. This again shows all the plugins, but the links between
+  them are coloured red if the dependency is required via \verb!creole.xml!,
+  or green if it was loaded via a gapp file (i.e. r for red and required, g for
+  green and gapp).
+\item Numerous other small bug fixes and API improvements.
 \end{itemize}
 
 \rcSect[8.5.1]{Version 8.5.1 (June 2018)}
