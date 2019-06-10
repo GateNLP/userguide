@@ -1356,9 +1356,9 @@ as a single command):
 \begin{verbatim}
 mvn archetype:generate -DarchetypeGroupId=uk.ac.gate \
                        -DarchetypeArtifactId=gate-pr-archetype \
-                       -DarchetypeVersion=8.5
+                       -DarchetypeVersion=8.6
 \end{verbatim}
-Replace ``8.5'' with the version of \texttt{gate-core} that you wish to depend
+Replace ``8.6'' with the version of \texttt{gate-core} that you wish to depend
 on.  You will be prompted for several values by Maven:
 \begin{description}
 \item[groupId] the group ID to use in the generated project POM. In Maven terms
@@ -1417,7 +1417,7 @@ want to convert to the Maven style.  The process is exactly the same as
 described above, use the same \texttt{mvn archetype:generate} call as before
 but with \verb!-DarchetypeArtifactId=gate-plugin-archetype!.
 
-\subsection*{Dependencies}
+\subsect[sec:api:bootstrap:dependencies]{Dependencies}
 
 If you need to use other Java libraries in your PR code you should declare them
 in the \verb!<dependencies>! block of the \texttt{pom.xml}.  You can use
@@ -1427,9 +1427,10 @@ each dependency.
 If your plugin requires another GATE plugin to operate (for
 example if it needs to internally create a JAPE transducer PR) then you
 should declare a dependency on the relevant plugin in
-\texttt{src/main/resources/creole.xml} and GATE will ensure that the other
-plugin is always loaded before this one, and that this plugin is unloaded
-whenever the other one is unloaded.
+\texttt{src/main/resources/creole.xml} (see
+section~\ref{sec:creole-model:config}, in particular the \verb!REQUIRES!
+element) and GATE will ensure that the other plugin is always loaded before
+this one, and that this plugin is unloaded whenever the other one is unloaded.
 
 If your plugin has a \emph{compile-time} dependency on another plugin then you
 will also need to declare this in \texttt{pom.xml} as well as in
@@ -1456,6 +1457,27 @@ FeatureMap params = Utils.featureMap("grammarUrl", grammarLocation);
 LanguageAnalyser jape = (LanguageAnalyser)Factory.createResource(
       "gate.creole.Transducer", params);
 \end{lstlisting}
+
+One of the tests created by the archetypes, the \texttt{GappLoadingTest}, will
+look for any saved application files in \texttt{src/main/resources} and test
+that they load successfully into GATE.  As a side effect, this test will also
+create two files in the \texttt{target} folder detailing all the other plugins
+on which this plugin depends.  It captures both direct dependencies
+(\texttt{REQUIRES} entries in \texttt{creole.xml}) and indirect dependencies
+where other plugins are loaded by one of this plugin's saved applications, even
+if there is no hard dependency between them.  For example, many plugins have
+sample applications that require the ANNIE plugin in order to load document
+reset, tokeniser or JAPE transducer PRs.  The information is presented in two
+ways:
+%
+\begin{itemize}
+\item a flat file \texttt{creole-dependencies.txt} listing the plugins with the
+  plugin under test on the first row and then other required plugins in the
+  order they were loaded during the \texttt{GappLoadingTest}.
+\item a representation of the dependency graph in the GraphViz DOT format
+  (\texttt{creole-dependencies.gv}) with a node for each plugin and an edge for
+  each dependency, coloured red for \texttt{REQUIRES} links and coloured green
+  for dependencies only expressed by the sample saved applications.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \sect[sec:api:format]{Adding Support for a New Document Format}
