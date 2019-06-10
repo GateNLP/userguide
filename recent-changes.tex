@@ -19,44 +19,63 @@
   \def\rcSubsubsect#1{\subsubsect{#1}}
 \fi
 
-\rcSect[8.6-SNAPSHOT]{Version 8.6-SNAPSHOT}
+\rcSect[8.6]{Version 8.6 (June 2019)}
+
+GATE Developer 8.6 is mainly a maintenance and stability release, but there are
+some important new features, in particular around the processing of
+Twitter data:
 
 \begin{itemize}
-\item Added recommendation of OpenJDK to
-  Section~\ref{sec:gettingstarted:install}.
-\item Removed obsolete Websphinx plugin (which depended on an unmaintained
-  library).
-\item Added some more details about using the KEA plugin.
-\item Added warnings and explanations about feature value type mismatches to the
-  Annotation Differ and Corpus QA sections.
-\item Removed the RASP plugin.
-\item The \verb!Format_Twitter! plugin has been updated to correctly handle 280
+\item The \verb!Format_Twitter! plugin can now correctly handle extended 280
   character tweets and the latest Twitter JSON format. See
   Section~\ref{sec:social:twitter:format} for full details.
 \item The new \verb!Format_JSON! plugin provides import/export support for GATE
   JSON.  This is essentially the old style Twitter format, but it no longer
   needs to track changes to the Twitter JSON format so should be more suitable
-  for long term strage of GATE documents as JSON files. See
-  Section~\ref{sec:creole:gatejson} for more details.
-\item Improved documentation of the two default export formats. See
-  Section~\ref{sec:developer:dump}.
-\item The GAPP Loading Test in `gate-plugin-test-utils' now creates two files
-  in the \verb!target! folder which document the CREOLE dependencies of the
-  plugin under test. This works by looking at which plugins have been loaded
-  when the test completes. This means it sees plugins loaded via requirements
-  specified within \verb!creole.xml! as well as those that are loaded by the
-  sample applications. The first file produced \verb!creole-dependencies.txt!
-  is a simple flat listing of the plugins, with the plugin under test listed
-  first followed by the remaining plugins in the order in which they were
-  loaded (i.e. the plugin under test may be out of sequence as there may be
-  plugins which need to be loaded before it). The second file,
-  \verb!creole-dependencies.gv! details the dependency graph and is in the
-  popular DOT format. This again shows all the plugins, but the links between
-  them are coloured red if the dependency is required via \verb!creole.xml!,
-  or green if it was loaded via a gapp file (i.e. r for red and required, g for
-  green and gapp).
-\item Numerous other small bug fixes and API improvements.
+  for long term storage of GATE documents as JSON files. See
+  Section~\ref{sec:creole:gatejson} for more details.  This plugin makes use of
+  a new mechanism whereby document format parsers can take parameters via the
+  document MIME type, which may be useful to third party formats too.
 \end{itemize}
+
+Many bugs have been fixed and documentation improved, in particular:
+
+\begin{itemize}
+\item The plugin loading mechanism now properly respects the user's Maven
+  \verb!settings.xml!:
+  \begin{itemize}
+  \item HTTP proxy and ``mirror'' repository settings now work properly,
+  including authentication.  Also plugin resolution will now use the system
+  proxy (if there is one) by default if there is no proxy specified in the
+  Maven settings.
+  \item The ``offline'' setting is respected, and will prevent GATE from trying
+  to fetch plugins from remote repositories altogether -- for this to work, all
+  the plugins you want to use must already be cached locally, or you can use
+  ``Export for GATE Cloud'' to make a self-contained copy of an application
+  including all its plugins.
+  \end{itemize}
+\item Upgraded many dependencies including Tika and Jackson to avoid known
+  security bugs in the previous versions.
+\item Documentation improvements for the Kea plugin, the Corpus QA and
+  annotation diff tools, and the default GATE XML and inline XML formats
+  (section~\ref{sec:developer:dump})
+\item For plugin developers, the standard plugin testing framework generates a
+  report detailing all the plugin-to-plugin dependencies, including those that
+  are only expressed in the plugin's example saved applications
+  (section~\ref{sec:api:bootstrap:dependencies}).
+\end{itemize}
+
+Some obsolete plugins have been removed (Websphinx web crawler, which depends
+on an unmaintained library, and the RASP parser, whose external binary is no
+longer available for modern operating systems), and there are many smaller bug
+fixes and improvements.
+
+Note: following changes to Oracle's JDK licensing scheme, we now recommend
+running GATE using the freely-available OpenJDK.  The
+\htlink{https://adoptopenjdk.net}{AdoptOpenJDK} project offers simple
+installers for all major platforms, and major Linux distributions such as
+Ubuntu and CentOS offer OpenJDK packages as standard.  See
+section~\ref{sec:gettingstarted:install} for full installation instructions.
 
 \rcSect[8.5.1]{Version 8.5.1 (June 2018)}
 
