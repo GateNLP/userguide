@@ -210,6 +210,20 @@ case changes.
 
 More details, and an example usecase, can be found in \cite{Maynard14a}.
 
+The output of the hashtag tokenizer is two fold. Firstly the Token annotations
+with the span of the hashtag are modified so as to accurate reflect the words
+within the hashtag. This allows PRs further down the pipeline to treat the
+sections of the hashtag as individual words for NE or sentiment analysis etc.
+Secondly a \verb|tokenized| feature is added to each Hashtag annotation. This
+is a lower case version of the hashtag with Unicode `HAIR SPACE' (U+200A) characters
+inserted between the separate tokens. This means that the feature continues,
+on first glance, to look like a hashtag (i.e. no spaces) but if two hashtags
+are tokenized differently the spacing becomes more obvious to the human eye.
+This means that in general you can use the \verb|tokenized| feature to group
+tweets by hashtag which takes into account different formatting and case
+while still allowing them to be treated differently when they represent
+semantically different concepts.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \sect[sec:social:twitie]{The TwitIE Pipeline}
 
@@ -223,7 +237,9 @@ following components:
 \item Annotation Set Transfer to transfer Tweet annotations from the Original
   markups annotation set.  For documents loaded using the JSON document format
   or corpus population logic, this means that each Tweet will be covered by a
-  separate Tweet annotation in the final output of TwitIE.
+  separate Tweet annotation in the final output of TwitIE. Hashtags, URLs,
+  UserMentions, and Symbols appearing in the original JSON are also transferred
+  (and renamed appropriately) into the default set.
 \item \emph{Language identification} PR (see
   section~\ref{sec:misc-creole:language-identification}) using language models
   trained on English, French, German, Dutch and Spanish Tweets.  This creates a
