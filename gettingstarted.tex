@@ -115,10 +115,9 @@ following parameters:
      the file \emph{NAME}\texttt{.session} is created from \emph{DIR}\texttt{/default.session}
      if it does not already exist and the file \emph{DIR}\texttt{.xml} is created 
      from \emph{DIR}\texttt{/default.xml} if it does not already exist.
-  \item[-ll] if the current directory contains a file named \texttt{log4j.properties} 
-    then use it instead of the default (\verb|GATE_HOME/bin/log4j.properties|) to
-    configure logging. Alternately, you can specify any log4j configuration file 
-    by setting the \texttt{log4j.configuration} property explicitly (see below).
+  \item[-ll \emph{FILE}] use the file specified to configure the logback logger of Gate Developer.
+    Note that if this is not an absolute path and the name is identical to \texttt{logback.xml}
+    then the default file on the classpath, \verb|${GATE_HOME}/bin/logback.xml| is is still used. 
   \item[-rh \emph{LOCATION}] set the resources home directory to the \emph{LOCATION} provided. 
     If a resources home location is provided, the URLs in a saved application are
     saved relative to this location instead of relative to the application state file
