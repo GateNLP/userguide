@@ -3118,6 +3118,15 @@ CSV files within the directory), which column contains the text data (note that
 the columns are numbered from 0 upwards), if the first row contains column labels,
 and if one GATE document should be created per CSV file or per row within a file.
 
+If you create a new document per row, then a further option allows you to state
+that the document cell contains not the text of the document but the URL of the
+document which should be loaded. This not only allows you to refer to external
+documents from within a large CSV file, but you can also use this feature to
+populate a corpus from a plain text file with just one URL per line should
+you find that useful. Please note that no rate limiting is implemented within
+this feature so you may need to be careful about the number of rows processed
+if they all refer to the same external domain etc.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \sect[sec:creole:termraider]{TermRaider term extraction tools}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
