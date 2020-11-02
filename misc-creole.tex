@@ -3092,6 +3092,30 @@ in one file, represented as any of:
 
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:creole:formatbdoc]{Bdoc Format (JSON, YAML, MsgPack)}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+The \verb!Format_Bdoc! plugin provides support for a storing GATE documents
+as JSON, YAML, compressed JSON, compressed YAML and MsgPack files. 
+This format supports round tripping; i.e. documents saved in
+this format can be reloaded into GATE without loss of information.
+
+The format is different from the ``GATE JSON Document Format'' in what representation
+is used for the JSON / YAML / MsgPack serialization which is closer to the 
+abstractions GATE uses. 
+
+The format is inspired by the original Twitter JSON format (i.e. prior to the
+addition of the extended information in the Twitter JSON to support 280 
+characters and quoted tweets). In essense each document is saved to a JSON
+object which contains two properties \texttt{text} and \texttt{entities}.
+
+The documentation for this plugin is online here \url{https://gatenlp.github.io/gateplugin-Format_Bdoc/}
+
+The JSON/YAML/MsgPack serializations can also be read and written by the
+Python gatenlp package (\url{https://gatenlp.github.io/python-gatenlp/})
+
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \sect[sec:creole:datasift]{DataSift Document Format}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
