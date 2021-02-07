@@ -1051,3 +1051,60 @@ LanguageAnalyser sharedGazetteer = (LanguageAnalyser)Factory.createResource(
 
 The \texttt{SharedDefaultGazetteer} instance will re-use the FSM that was built
 by the \texttt{mainGazetteer} instead of loading its own.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:gazetteers:extended]{Extended Gazetteer}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The \texttt{ExtendedGazetteer} is part of the \texttt{StringAnnotation} plugin and works
+similar to the default ANNIE Gazetteer PR, but with the following changes and 
+additions:
+
+\begin{plist}
+
+\item{} it scales to very large gazetters by implementing an optimized compressed trie data structure
+  which allows to fit huge gazetteer lists into memory. Unlike the LKB Gazetteer it still allows
+  arbitrary features per entry. 
+\item{} it automatically properly supports duplication, the loaded gazetteer gets automatically shared 
+  between all duplicates.
+\item{} the compressed data structre is cashed to disk, so loading the gazetteer is faster once the 
+  cashe file has been created
+\item{} it can be used to match either the original document text (as the default ANNIE Gazetteer) or
+  the "virtual document view" created from the values of some feature for some annotation type 
+  (similar to how the Flexible Gazetteer works)
+\item{} it requires word annotations and non-word/space annotations (e.g. the Token/SpaceToken annotations
+  created by ANNIE) and uses those to determine word boundaries in the document (instead of the whitespace
+  patterns used by the default ANNIE gazetteer). In addition it is possible to define a "Split" annotation 
+  type so that a gazetteer match will never cross or include a split annotation (e.g. to prevent matches
+  across sentence boundaries).
+\item{} All files have to use UTF-8 encoding by default
+\item{} The default feature separator is a tab character, not a colon
+\item{} For case-insensitive matches, the upper-case version of strings from the gazetteer list and 
+  the document are compared, and the language for converting to upper case can be specified 
+  (e.g. in German, a {\ss} character is converted to "SS").   
+
+\end{plist}
+
+More detailed documentation of the \texttt{ExtendedGazetteer} is available online at 
+\url{https://gatenlp.github.io/gateplugin-StringAnnotation/ExtendedGazetteer}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:gazetteers:feature]{Feature Gazetteer}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The \texttt{FeatureGazetteer} is part of the \texttt{StringAnnotation} plugin and 
+can be used to match annotation features against a gazetteer list and if there is a match
+perform one of the following actions:
+
+\begin{plist}
+
+\item{} add new features from the gazetteer entry to the annotation
+\item{} remove that annotation
+\item{} add a new annotation 
+
+\end{plist}
+
+More detailed documentation of the \texttt{FeatureGazetteer} is available online at 
+\url{https://gatenlp.github.io/gateplugin-StringAnnotation/FeatureGazetteer}.
+
+

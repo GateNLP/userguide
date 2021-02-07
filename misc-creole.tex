@@ -3591,3 +3591,95 @@ and the following runtime parameters:
 \subsect{TimeML Event Detection}
 
 The plugin also contains a ``Ready Made'' application for detecting TimeML based events.
+
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:misc-creole:stringannotation]{StringAnnotation Plugin}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+This plugin provides the \texttt{ExtendedGazetter} (see Section~\ref{sec:gazetteers:extended}) and
+the \texttt{FeatureGazetteer} (see Section~\ref{sec:gazetteers:feature}) and in addition the 
+\texttt{JavaRegexpAnnotator} which makes it easy to use Java regular expressions to annotate
+GATE documents. An arbitrary number of regular expressions can be used and they can be
+matched using several different matching strategies. For each regular expression, new 
+annotations and features can be created, optionally based on the content of matching groups
+from the regular expression. 
+
+More detailed documentation of the \texttt{StringAnnotation} plugin is available online at 
+\url{https://gatenlp.github.io/gateplugin-StringAnnotation}, the documentation for 
+the \texttt{JavaRegexpAnnotation} is at \url{https://gatenlp.github.io/gateplugin-StringAnnotation/JavaRegexpAnnotator}.
+
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:misc-creole:corpusstats]{CorpusStats Plugin}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+This plugin provides the following processing resources:
+
+\begin{plist}
+\item{CorpusStatsTfIdfPR} for gathering statistics on the frequencies of terms used in a corpus
+\item{CorposStatsCollocationsPR} for gathering statistics on the frequencies of term pairs/collocations in a corpus
+\item{AssignStatsTfIdfPR} for assigning the statistics previously gathered on a corpus to the terms in a document
+\end{plist}
+
+These processing resources can be used with multiprocessing/duplication to process very large corpora. 
+
+More detailed documentation of the plugin is available online at
+\url{https://gatenlp.github.io/gateplugin-CorpusStats/}
+
+
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:misc-creole:modularpipelines]{ModularPipelines Plugin}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+This plugin provides the following processing resources:
+
+\begin{plist}
+\item{Pipeline PR} for loading another pipeline from a file as part of a containing pipeline. This allows to build 
+  more complex pipelines by combining sub-pipelines which can be kept and maintained separately. 
+\item{Parametrized Corpus Controller} A conditional corpus controller which can be configured from a config file,
+  i.e. the parameters of the contained processing resources can be set from the config file. This allows to 
+  run pipelines with different settings without changing the pipeline files. 
+\end{plist}
+
+More detailed documentation of the plugin is available online at
+\url{https://github.com/GateNLP/gateplugin-ModularPipelines/wiki}
+
+
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:misc-creole:javaplugin]{Java Plugin}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+This plugin provides the \texttt{Java Scripting PR} processing resource, which 
+allows the use of Java code created/edited from within the GATE GUI to 
+process GATE documents (similar to the Groov Scripting PR, see Section~\ref{sec:api:groovy:pr}). 
+
+More detailed documentation of the plugin is available online at
+\url{https://github.com/GateNLP/gateplugin-Java/wiki/JavaScriptingPR}
+
+
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sect[sec:misc-creole:pythonplugin]{Python Plugin}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+This plugin provides the \texttt{PythonPr} processing resource, which 
+allows the use of Python code created/edited from within the GATE GUI to 
+process GATE documents.
+
+The python code makes use of the Python \texttt{gatenlp} package to manipulate 
+GATE documents. 
+
+More detailed documentation of the plugin is available online at
+\url{http://gatenlp.github.io/gateplugin-Python/}
+
+More detailed documentation of the Python \texttt{gatenlp} package is available online at
+\url{https://gatenlp.github.io/python-gatenlp/}
+
+
+
+%% TODO(JP): Evaluation, JdbcLookup, TextRazor, TagMe
+
+
