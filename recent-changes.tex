@@ -19,14 +19,54 @@
   \def\rcSubsubsect#1{\subsubsect{#1}}
 \fi
 
+\rcSect[9.0]{Version 9.0 (February 2021)}
+
+Whilst the majority of changes in GATE Developer 9.0 are small a number of them
+change default behaviour (in the UI or API) hence the change in version number.
+These changes include:
+
+\begin{itemize}
+\item We now recommend users install a 64 bit version of Java whenever possible. This
+      seems to be especially important on Windows.
+\item We now default to assuming documents are UTF-8 encoded unless you specify otherwise.
+      In previous versions if no encoding was specified GATE would use the default platform
+      encoding, but this seemed to cause more problems than it solved (especially for Windows
+      users). If you want the old behaviour then ensure the encoding parameter is set to the
+      empty string when creating a document.
+\item GATE uses a library called XStream for saving and loading GATE XML documents and
+      applications. This allows us to store features of any Java type, but that can be
+      abused by maliciously crafted files. In general use this is unlikely to be a problem,
+      but in situations where GATE may be used as part of a service with no way of vetting
+      input files it could present a serious security threat. XStream now offers a security
+      framework to restrict the types of objects that can be loaded/saved. This can work either
+      by allowing only specific types or by preventing specific types from being used. As we
+      often do not know in advance what features might be used we have opted to use a minimal
+      blacklist as the default security setting. This blocks the Java classes known to be
+      exploitable. This can be further configured via calls to \verb!Gate.setXStreamSecurity()!
+      and we strongly encourage developers who depend on gate-core within larger applications
+      to configure this based on their specific use cases.
+\item Developers wishing to build GATE from source need to use Maven v3.6.0 or above.
+\item Previous versions of GATE used Log4J for some of the logging. This was problematic
+      when using gate-core as a dependency in larger projects and was awkward to configure
+      properly. In this release we've switched to using SLF4J allowing the actual logging
+      back-end to be configured independently. Plugins and code compiled against previous
+      versions of GATE should work with the new release without change (we include the
+      log4j-over-slf4j bridge as a dependency), although Log4J specific methods within
+      gate-core have been deprecated and may be removed in a future release.
+\end{itemize}
+
+Many bugs have been fixed and documentation improved, in particular:
+
 \begin{itemize}
 \item the \verb!Twitter! plugin has been improved to make better use of the information
       provided by Twitter within a JSON Tweet object. The Hashtag tokenizer has been
       updated to provide a \verb!tokenized! feature to make grouping semantically similar
       hashtags easier. Lots of other minor improvements and efficiency changes have been
       made throughout the rest of the TwitIE pipelines.
-\item We now recommend users install a 64 bit version of Java whenever possible. This
-      seems to be especially important on Windows.
+\item the \verb!ANNIE! gazetteers have been updated to better support different ways of referring
+      to countries and a blacklist option to prevent things being wrongly annotated.
+\item A new addition to the JAPE syntax allows you to copy all features from a matched annotation
+      to the new annotation being created
 \item the \verb!Format_CSV! plugin now allows the document cell to be interpreted as being
       a URL pointing to the document to load rather than the contents of the document. See
       Section~\ref{sec:creole:csv} for more details.
