@@ -19,6 +19,12 @@
   \def\rcSubsubsect#1{\subsubsect{#1}}
 \fi
 
+\rcSect[9.0.1]{Version 9.0.1 (March 2021)}
+GATE Developer 9.0.1 is a bugfix release -- the only change is to the way URL redirects
+are handled when loading a document. Support for following redirects from http to https
+was added in 9.0 which, while correct, broke the way URLs were used within GCP. This
+release fixes that bug and adds some additional security checking to the redirect handling.
+
 \rcSect[9.0]{Version 9.0 (February 2021)}
 
 Whilst the majority of changes in GATE Developer 9.0 are small a number of them
