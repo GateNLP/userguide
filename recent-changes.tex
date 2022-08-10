@@ -19,6 +19,16 @@
   \def\rcSubsubsect#1{\subsubsect{#1}}
 \fi
 
+It was brought to our attention that in versions 9.0.1 and below there was a very small
+chance that the GUI action ``Export for GATE Cloud'' could be compromised. This would have
+required malicious code to be running locally on the machine; either by another user
+on a multi-user machine or because the computer had already been compromised. This issue
+only occurred within the GUI action and did not affect API use of the \verb!gate-core!
+Maven artifact. Note that no known exploits exist for this issue, and we do not know for
+certain that the code could be exploited. If, however, you are at all concerned then we
+suggest you regenerate any packaged applications using a recent version of GATE Developer;
+at minimum 9.2-SNAPSHOT built on or after the 10th of August 2022.
+
 \rcSect[9.0.1]{Version 9.0.1 (March 2021)}
 GATE Developer 9.0.1 is a bugfix release -- the only change is to the way URL redirects
 are handled when loading a document. Support for following redirects from http to https
