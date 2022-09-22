@@ -3147,8 +3147,10 @@ all other associated data is added to the annotations FeatureMap.
 \sect[sec:creole:csv]{CSV Document Support}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-The \verb!Format_CSV! plugin provides support for populating a corpus from one
-or more CSV (Comma Separated Value) files. As CSV files vary widly in their
+The \verb!Format_CSV! plugin provides support for both importing from a CSV
+(Comma Separated Value) file and exporting annnotations into CSV files.
+
+As CSV files vary widly in their
 content, support for loading such files is provided through a new right-click
 option on corpus instances. This new option will display a dialog which allows
 you to choose the CSV file (if you select a directory then it will process all
@@ -3164,6 +3166,36 @@ populate a corpus from a plain text file with just one URL per line should
 you find that useful. Please note that no rate limiting is implemented within
 this feature so you may need to be careful about the number of rows processed
 if they all refer to the same external domain etc.
+
+As mentioned the plugin also supports exporting of annotations to a CSV file.
+This support is accessed via the usual ``Save as...'' menu available on both
+documents and corpora. The export is configured via the following parameters:
+
+\begin{itemize}
+\item \textbf{annoationSetName}: The annotation set from which to read annotations
+\item \textbf{annotationType}: Produce one row per annotation of this type, or
+  one row per document if this is not set (which is the default).
+\item \textbf{columnHeaders}: a list of static strings to use as the first row,
+ i.e. column headings, of the output file.
+\item \textbf{columns}: List of columns to produce. These are defined as
+  \verb!<Annotation>.<Feature>!. If you have just \verb!.<Feature>! then that
+  is assumed to be a document feature, whereas just \verb!<Annotation>! is the
+  text under the annotation. Note that if more than one instance of an annotation
+  type appears within the document (or specifiec annotationType) only the first
+  will be output.
+\item \textbf{containedOnly}: if true (which is the default) only use annotations
+  strictly within the row annotation (i.e. the value of annotationType), else
+  allow those which partially overlap.
+\item \textbf{encoding}: the character encoding used to save the output file.
+  This defaults to UTF-8 which is probably the best choice in most cases.
+\item \textbf{quoteCharacter}: the character used to quote text fields when
+  necessary. This defaults to \textquotesingle\ which means that within a cell
+  \textquotesingle\ will be escaped as \verb!\!\textquotesingle.
+\item \textbf{separatorCharacter}: the character used to separate the columns
+  in the exported file. This defaults to using a comma to generate a CSV file
+  but you can use \verb!\t! if you want to generate a TSV (Tab Separated File)
+  instead of a CSV.
+\end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \sect[sec:creole:termraider]{TermRaider term extraction tools}
