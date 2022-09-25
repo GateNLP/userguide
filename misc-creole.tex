@@ -3190,7 +3190,7 @@ documents and corpora. The export is configured via the following parameters:
   This defaults to UTF-8 which is probably the best choice in most cases.
 \item \textbf{quoteCharacter}: the character used to quote text fields when
   necessary. This defaults to \textquotesingle\ which means that within a cell
-  \textquotesingle\ will be escaped as \verb!\!\textquotesingle.
+  \textquotesingle\ will be escaped (this is done by duplicating the character).
 \item \textbf{separatorCharacter}: the character used to separate the columns
   in the exported file. This defaults to using a comma to generate a CSV file
   but you can use \verb!\t! if you want to generate a TSV (Tab Separated File)
