@@ -3084,7 +3084,30 @@ The \texttt{text} field is simply the text of the document, while the
 \texttt{entities} field contains the annotations and their features. The
 format of this field is that same as that used by Twitter to store entities,
 namely a map from annotation type to an array of objects each of which contains
-the offsets of the annotation and any other features. You can load documents
+the offsets of the annotation as \verb!"indices":[start,end]! and any other
+properties which become features of the entity annotation.  The indices count
+in terms of Unicode characters or ``codepoints'', i.e. supplementary characters
+such as emoji count as one ``place'' -- this is different from how GATE (and
+Java in general) count string offsets but the format handles the conversion
+automatically.
+%
+\begin{verbatim}
+{
+  "text": "This is the text of an example document",
+  "entities": {
+    "Token":[
+      {"indices": [0,4], "string": "This"},
+      {"indices": [5,7], "string": "is"},
+      ...
+    ],
+    "DocType":[
+      {"indices": [23,30], "kind": "example"}
+    ]
+  }
+}
+\end{verbatim}
+%
+You can load documents
 using this format by specifying \texttt{text/json} as the mime type. If your
 JSON documents don't quite match this format you can still extract the text
 from them by specifying the path through the JSON to the text element as a
@@ -3092,6 +3115,14 @@ dot separated string as a parameter to the mime type. For example, assume
 the text in your document was in a field called text but this wasn't at the
 root of the JSON document but inside an object named document, then you would
 load this by specifying the mime type \texttt{text/json;text-path=document.text}.
+\begin{verbatim}
+{
+  "metadata":{ ... },
+  "document":{
+    "text": "This JSON has its text more deeply nested"
+  }
+}
+\end{verbatim}
 
 The plugin also provides a new right-click action for Corpora allowing a file
 containing multiple JSON objects in a single file to be split into individual
