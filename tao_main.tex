@@ -98,6 +98,8 @@
     %tex4ht specific stuff
     \usepackage{graphicx}
     \usepackage[colorlinks=false]{hyperref}
+    \let\oldincludegraphics\includegraphics
+    \renewcommand{\includegraphics}[2][]{\oldincludegraphics{#2}}
   \else
     %Latex specific stuff
     \usepackage[dvips]{graphicx}
