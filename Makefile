@@ -67,6 +67,7 @@ tao_main.bbl: tao.pdf
 
 # HTML
 index.html: $(TEXFILES) tao_main.bbl
+	ebb -x *.png *.jpg
 	$(HTLATEX) tao_main.tex "html,0,fn-in,charset=utf-8" " -cunihtf -utf8"
 	mv tao_main.html index.html
 	# correct lot of errors introduced by htlatex
@@ -92,6 +93,7 @@ index.html: $(TEXFILES) tao_main.bbl
 
 # HTML user guide split in one page per chapter
 split.html: $(TEXFILES) tao_main.bbl
+	ebb -x *.png *.jpg
 	cp tao_main.tex split.tex
 	cp tao_main.bbl split.bbl
 	# 2 is the level of sectionning

@@ -234,3 +234,7 @@ TSWLatexianTemp*
 *.lg
 *.tmp
 *.xref
+
+# Bounding boxes
+*.bb
+*.xbb
