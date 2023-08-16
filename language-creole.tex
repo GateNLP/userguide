@@ -52,6 +52,48 @@ different sections using either a Conditional Corpus Pipeline or via the
 Section-By-Section PR (Section \ref{sec:alignment:segment-processing}).
 The problem is, of course, identifying the language.
 
+GATE provides two plugins that implement language identification using
+different underlying libraries.
+
+\subsect[sec:misc-creole:language-identification:optimaize]{The Optimaize Language Detector}
+
+The ``Language Detection (Optimaize)'' plugin is based on the
+\htlink{https://github.com/optimaize/language-detector}{Optimaize language
+detector} library by Fabian Kessler.  The library ships with profiles for seventy
+different languages, and it is easy to train additional profiles if required.
+
+The PR has a number of initialization parameters to control which profiles are
+loaded - by default all the built-in profiles are used, but the PR can be
+restricted to a smaller set of languages using the \texttt{builtInLanguages}
+parameter, or the built-in profiles can be disabled completely using the
+\texttt{loadBuiltInProfiles} parameter.  For some languages the library
+provides optimised profiles for use with shorter texts (the standard models
+work best on longer-form texts of several paragraphs or pages in length);
+the \texttt{textType} parameter selects between the long and short text
+profiles.  Whether or not the built-in profiles are in use, additional custom
+profiles may be loaded using the \texttt{extraProfiles} parameter.
+
+The PR has the following runtime parameters.
+%%
+\begin{description}
+\item[annotationType] If this is supplied, the PR classifies the text underlying
+  each annotation of the specified type and stores the result as a feature on
+  that annotation.  If this is left blank (null or empty), the PR classifies the
+  text of each document and stores the result as a document feature.
+\item[annotationSetName] The annotation set used for input and output; ignored
+  if \emph{annotationType} is blank.
+\item[languageFeatureName] The name of the document or annotation feature used
+  to store the results.
+\item[unknownValue] Normally if the detector does not find any language that
+  meets its probability threshold then it does not set the output feature at all.
+  If this parameter is set then the feature will be set in all cases, using
+  the specified fallback value if necessary (which could be a genuine language
+  code, in order to for example ``classify anything unknown as English'', or
+  it could be a dedicated ``unk'' code to explicitly tag the unknowns).
+\end{description}
+
+
+\subsect[sec:misc-creolt:language-identification:textcat]{Language Identification with TextCat}
 The \texttt{Language\_Identification} plugin contains a
 \htlink{http://textcat.sourceforge.net/}{TextCat} based PR for
 performing language identification. The choice of languages used for
@@ -72,13 +114,14 @@ The PR has the following runtime parameters.
   to store the results.
 \end{description}
 
-Unlike most other PRs (which produce annotations), this one adds either document
+Unlike most other PRs (which produce annotations), these two language
+identifiers both add either document
 features or annotation features.  (To classify both whole documents and spans
-within them, use two instances of this PR.)  Note that classification accuracy
+within them, use two instances of the same PR.)  Note that classification accuracy
 is better over long spans of text (paragraphs rather than sentences, for
-example).
+example), particularly in the case of TextCat.
 
-\textit{Note that an alternative language identification PR is available in the LingPipe plugin,
+\textit{Note that a third language identification PR is available in the LingPipe plugin,
 which is documented in Section \ref{sec:misc-creole:lingpipe:langid}.}
 
 \subsect[sec:misc-creole:language-identification:fingerprints]{Fingerprint Generation}
